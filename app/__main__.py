@@ -22,7 +22,7 @@ VERSION_MINOR = 10
 
 
 def main():
-    print_banner()
+    print_banner() # presentation banner
 
     if not check_version() or not check_requirements():
         return
@@ -47,11 +47,12 @@ def main():
 
 
 def print_banner():
+    """Print the presentation banner."""
     console.print(
         Padding(
             Panel(
                 "[bold white]Big Brain - Thymio Controller\n"
-                + "[grey42]MICRO-452 - Mobile Robotics\n"
+                + "Semester Project - Thymio organic movement\n"
                 + "École Polytechnique Fédérale de Lausanne"
             ),
             (1, 2),
@@ -61,6 +62,7 @@ def print_banner():
 
 
 def check_version():
+    """Check if the Python version is supported."""
     (major, minor, _, _, _) = version_info
 
     if major < VERSION_MAJOR or minor < VERSION_MINOR:
@@ -80,6 +82,7 @@ def check_version():
 
 
 def check_requirements():
+    """Check if the required packages are installed."""
     requirements = parse_requirements(Path("requirements.txt").open())
 
     not_met = []
@@ -131,30 +134,37 @@ async def init():
                     # Signal the Thymio to broadcast variable changes
                     await node.watch(variables=True)
 
-                    info("Would you like to connect a second Thymio? [Y/n]")
-                    connectSecond = input("> ")
 
-                    if connectSecond.lower() != "n":
-                        if len(client.nodes) < 2:
-                            error("No second Thymio node found")
-                            return
+                    ##### Feature to connect a second Thymio #####
+                    ## Not used in the project yet ##
 
-                        status.update("Locking second Thymio node")
-                        status.start()
+                    # info("Would you like to connect a second Thymio? [Y/n]")
+                    # connectSecond = input("> ")
 
-                        with await client.nodes[1].lock() as secondary_node:
-                            ctx.node_top = secondary_node
+                    # if connectSecond.lower() != "n":
+                    #     if len(client.nodes) < 2:
+                    #         error("No second Thymio node found")
+                    #         return
 
-                            status.stop()
-                            status = None
+                    #     status.update("Locking second Thymio node")
+                    #     status.start()
 
-                            info("Secondary node connected")
-                            debug(f"Node lock on {secondary_node}")
+                    #     with await client.nodes[1].lock() as secondary_node:
+                    #         ctx.node_top = secondary_node
 
-                            await start(ctx)
-                    else:
-                        status = None
-                        await start(ctx)
+                    #         status.stop()
+                    #         status = None
+
+                    #         info("Secondary node connected")
+                    #         debug(f"Node lock on {secondary_node}")
+
+                    #         await start(ctx)
+                    # else:
+                    #     status = None
+                    #     await start(ctx)
+
+                    status = None
+                    await start(ctx)
 
     except ConnectionRefusedError:
         warning("Thymio driver connection refused")
@@ -168,13 +178,16 @@ async def init():
 
 
 async def start(ctx: Context):
-    """Start the application, launching the server and instantiating the BigBrain."""
+    """Start the application, instantiating the BigBrain."""
 
-    channel_position = Channel[Vec2]()
+    # channel_position = Channel[Vec2]() # Vec2 is a type alias for Tuple[float, float]
 
-    async with Server(ctx, channel_position):
-        brain = BigBrain(ctx)
-        await brain.start_thinking(channel_position)
+    # async with Server(ctx, channel_position):
+    #     brain = BigBrain(ctx)
+    #     await brain.start_thinking(channel_position)
+
+    brain = BigBrain(ctx)
+    await brain.start_thinking()
 
 
 async def process_messages(client: ClientAsync):

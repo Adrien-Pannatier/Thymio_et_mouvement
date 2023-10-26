@@ -71,11 +71,13 @@ class State:
     last_detection_front: Vec2 | None = None
     last_orientation: float | None = None
 
+    # == Motion Control == #
+    dist: float | None = None
+
     # == Local Navigation == #
     prox_sensors: list[float] | None = None
     relative_distances: list[float] = field(default_factory=list)
     reactive_control: bool | None = None
-    dist: float | None = None
 
     # == Methods == #
 

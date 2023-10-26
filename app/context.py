@@ -15,9 +15,9 @@ class Context:
     """
 
     node: ClientAsyncCacheNode
-    node_top: ClientAsyncCacheNode | None
+    # node_top: ClientAsyncCacheNode | None
     pool: Pool
     state: State
-    scene_update: Signal = Signal()
+    # scene_update: Signal = Signal()
     pose_update: Signal = Signal()
     debug_update: bool = False

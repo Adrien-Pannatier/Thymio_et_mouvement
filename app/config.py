@@ -3,8 +3,7 @@ DEBUG = False
 LOG_LEVEL = 6
 RAISE_DEPRECATION_WARNINGS = False
 POOL_SIZE = 4
-SUBDIVISIONS = 64
-
+SLEEP_DURATION = 0.5
 
 # tdmclient
 PROCESS_MSG_INTERVAL = 0.1  # time interval between checks if incoming messages
@@ -16,19 +15,18 @@ DIAMETER = 9.5  # wheel to wheel distance
 # == Big Brain == #
 UPDATE_FREQUENCY = 0.2  # frequency of big brain internal loop refresh
 
-# == Vision == #
-USE_EXTERNAL_CAMERA = True  # use external camera or webcam
-USE_LIVE_CAMERA = True  # use camera or only fix image
-
-SCENE_THRESHOLD = 10  # number of obstacles changes to trigger a scene update
-PIXELS_PER_CM = 5  # number of pixels in each cm
-TABLE_LEN = 58  # size in cm of the table
-LM_FRONT = 2.7  # diameter of the front landmark in cm
-LM_BACK = 2.3  # diameter of the back landmark in cm
-SAFE_DISTANCE = 15  # distance from the hole of the robot until the further point in cm
-
 # == Second Thymio == #
 DROP_SPEED = 50  # speed of the motors to drop the bauble
 DROP_TIME = 1.5  # drop duration in seconds
 HALF_TURN_SPEED = 50  # speed of the half turn
 HALF_TURN_TIME = 8  # time for the thymio to do a 180° turn
+
+# == Motion Control == #
+MAX_WAIT = 0.1
+INDEX_FW = 1 # follow next waypoint by index
+KP_speed = 1
+KI_speed = 0.1
+KD_speed = 0.1
+KP_orientation = 1
+KI_orientation = 0.1
+KD_orientation = 0.1
