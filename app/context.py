@@ -19,5 +19,5 @@ class Context:
     pool: Pool
     state: State
     # scene_update: Signal = Signal()
-    pose_update: Signal = Signal()
+    pose_speed_update: Signal = Signal()
     debug_update: bool = False
