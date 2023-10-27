@@ -30,3 +30,6 @@ KD_speed = 0.1
 KP_orientation = 1
 KI_orientation = 0.1
 KD_orientation = 0.1
+
+# == Choreography manager == #
+DEFAULT_SPEED_FACT = 1

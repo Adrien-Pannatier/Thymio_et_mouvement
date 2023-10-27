@@ -1,0 +1,8 @@
+[
+    {"time": 0.0, "forward_speed": 1.0, "angular_speed": 0.0},
+    {"time": 1.0, "forward_speed": 0.5, "angular_speed": 0.2},
+    {"time": 2.0, "forward_speed": 0.0, "angular_speed": -0.3},
+    {"time": 0.0, "forward_speed": 1.0, "angular_speed": 0.0},
+    {"time": 1.0, "forward_speed": 0.5, "angular_speed": 0.2},
+    {"time": 2.0, "forward_speed": 0.0, "angular_speed": -0.3}
+]
