@@ -61,7 +61,7 @@ class Filtering(Module):
 
         self.predict(vl, vr)
 
-        self.ctx.pose_update.trigger()
+        self.ctx.pose_speed_update.trigger()
         self.ctx.state.changed()
 
     def predict(self, vl, vr):

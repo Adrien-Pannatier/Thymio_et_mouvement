@@ -49,6 +49,8 @@ class State:
     # == Filtering == #
     position: Vec2 | None = None
     orientation: float | None = None
+    forward_speed: float | None = None
+    angular_speed: float | None = None
 
     # == Navigation == #
     end: Vec2 | None = None
@@ -57,19 +59,19 @@ class State:
     # == Global Navigation == #
     path: list[Vec2] | None = None
     next_waypoint_index: int | None = None
-    obstacles: npt.NDArray[np.int8] | None = None
-    extra_obstacles: list[ObstacleQuad] = field(default_factory=list)
-    boundary_map: Map | None = None
-    computation_time: float | None = None
-    nodes: list[Location] | None = None
-    optimise: bool = False
+    # obstacles: npt.NDArray[np.int8] | None = None
+    # extra_obstacles: list[ObstacleQuad] = field(default_factory=list)
+    # boundary_map: Map | None = None
+    # computation_time: float | None = None
+    # nodes: list[Location] | None = None
+    # optimise: bool = False
 
     # == Vision == #
-    subdivisions: int = SUBDIVISIONS
-    physical_size: float = PHYSICAL_SIZE_CM
-    last_detection: Vec2 | None = None
-    last_detection_front: Vec2 | None = None
-    last_orientation: float | None = None
+    # subdivisions: int = SUBDIVISIONS
+    # physical_size: float = PHYSICAL_SIZE_CM
+    # last_detection: Vec2 | None = None
+    # last_detection_front: Vec2 | None = None
+    # last_orientation: float | None = None
 
     # == Motion Control == #
     dist: float | None = None

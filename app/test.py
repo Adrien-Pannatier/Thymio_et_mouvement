@@ -18,7 +18,7 @@ class PIDController:
         self.last_error = error
         return output
 
-def simulate_vehicle(initpose, target_position, target_speed, target_orientation, time, dt, Kp, Ki, Kd):
+def simulate_vehicle(initpose, target_speed, target_orientation, time, dt, Kp, Ki, Kd):
     pid_speed_controller = PIDController(Kp, Ki, Kd, dt)
     pid_orientation_controller = PIDController(Kp, Ki, Kd, dt)
     # pid_position_controller = PIDController(Kp, Ki, Kd, dt)
@@ -33,16 +33,16 @@ def simulate_vehicle(initpose, target_position, target_speed, target_orientation
 
     for t in np.arange(0, time, dt):
         # print(t)
-        speed_error = target_speed - speed
-        orientation_error = target_orientation - orientation
+        # speed_error = target_speed - speed
+        # orientation_error = target_orientation - orientation
         # position_error = target_position - pose
 
-        speed_output = pid_speed_controller.update(speed_error, 0)
-        orientation_output = pid_orientation_controller.update(orientation_error, 0)
+        speed_output = pid_speed_controller.update(target_speed, 0)
+        orientation_output = pid_orientation_controller.update(target_orientation, 0)
         # position_output = pid_position_controller.update(np.linalg.norm(position_error), 0)
 
-        speed += speed_output * dt
-        orientation += orientation_output * dt
+        speed = speed + speed_output * dt
+        orientation = orientation + orientation_output * dt
 
         pose = pose + speed * np.array([np.cos(orientation), np.sin(orientation)]) * dt
         print(initpose)
@@ -51,17 +51,13 @@ def simulate_vehicle(initpose, target_position, target_speed, target_orientation
         orientation_history.append(orientation)
         pose_history.append(pose)
 
-        if np.linalg.norm(pose - target_position) < 0.1:
-            break
-
     return pose, pose_history, speed_history, orientation_history
 
 if __name__ == "__main__":
     initial_pose = np.array([0.1, 0.1])
-    target_position = np.array([5.0, 5.0])
-    target_speed = 1.0
-    target_orientation = 0
-    total_time = 50
+    target_speed = 1
+    target_orientation = 3.14
+    total_time = 200
     time_step = 0.1
 
     Kp = 1.0
@@ -69,7 +65,7 @@ if __name__ == "__main__":
     Kd = 0.1
 
     print(initial_pose)
-    final_pose, pose_history, speed_history, orientation_history = simulate_vehicle(initial_pose, target_position, target_speed, target_orientation, total_time, time_step, Kp, Ki, Kd)
+    final_pose, pose_history, speed_history, orientation_history = simulate_vehicle(initial_pose, target_speed, target_orientation, total_time, time_step, Kp, Ki, Kd)
 
 
     plt.plot(speed_history)
@@ -88,7 +84,6 @@ if __name__ == "__main__":
     print(initial_pose)
     for pose in pose_history:
         plt.plot(pose[0], pose[1], 'o')
-    plt.plot(target_position[0], target_position[1], '+')
     plt.plot(initial_pose[0], initial_pose[1], '+')
     plt.title("Pose")
     plt.xlabel("X")
