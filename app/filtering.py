@@ -7,6 +7,9 @@ from app.Pose_estimator import PoseEstimator
 from app.utils.module import Module
 from app.utils.types import Vec2
 
+from app.utils.console import *
+
+
 
 class Filtering(Module):
     """
@@ -30,6 +33,7 @@ class Filtering(Module):
 
     async def run(self):
         while True:
+            debug("filtering")
             await sleep(SLEEP_DURATION)
 
     def process_event(self, variables):

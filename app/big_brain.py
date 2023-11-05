@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from app.config import *
 from app.context import Context
 from app.filtering import Filtering
-from app.global_navigation import GlobalNavigation
+# from app.global_navigation import GlobalNavigation
 from app.motion_control import MotionControl
 from app.utils.console import *
 from app.utils.types import Channel, Vec2
@@ -17,7 +17,7 @@ class Modules:
     """A class to hold all the modules"""
 
     filtering: Filtering
-    global_nav: GlobalNavigation
+    # global_nav: GlobalNavigation
     motion_control: MotionControl
 
 
@@ -25,12 +25,12 @@ class BigBrain:
     def __init__(self, ctx: Context):
         self.ctx = ctx
 
-    async def start_thinking(self, rx_pos: Channel[Vec2]):
+    async def start_thinking(self: Channel[Vec2]):
         self.init()
 
-        modules = self.init_modules(rx_pos)
+        modules = self.init_modules()
 
-        with modules.filtering, modules.motion_control, modules.global_nav: 
+        with modules.filtering, modules.motion_control: 
             await self.loop(modules)
 
     def init(self):
@@ -42,15 +42,14 @@ class BigBrain:
         """Initialise the modules"""
 
         filtering = Filtering(self.ctx)
-        global_nav = GlobalNavigation(self.ctx)
+        # global_nav = GlobalNavigation(self.ctx)
         motion_control = MotionControl(self.ctx)
 
-        return Modules(filtering, global_nav, motion_control)
+        return Modules(filtering, motion_control)
 
     async def loop(self, modules: Modules):
 
         while True:
-
             # update pose
             modules.filtering.predict()
 

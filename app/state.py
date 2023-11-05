@@ -4,7 +4,7 @@ from typing import Any
 import numpy as np
 import numpy.typing as npt
 
-from app.config import PHYSICAL_SIZE_CM, SUBDIVISIONS
+from app.config import PHYSICAL_SIZE_CM
 from app.path_finding.types import Location, Map
 from app.utils.types import Signal, Vec2
 

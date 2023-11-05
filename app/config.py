@@ -24,12 +24,12 @@ HALF_TURN_TIME = 8  # time for the thymio to do a 180° turn
 # == Motion Control == #
 MAX_WAIT = 0.1
 INDEX_FW = 1 # follow next waypoint by index
-KP_speed = 1
-KI_speed = 0.1
-KD_speed = 0.1
-KP_orientation = 1
-KI_orientation = 0.1
-KD_orientation = 0.1
+KP_fwspeed = 0.5 # proportional gain for forward speed
+KI_fwspeed = 0.1 # integral gain for forward speed
+KD_fwspeed = 0.1 # derivative gain for forward speed
+KP_anspeed = 0.5 # proportional gain for angular speed
+KI_anspeed = 0.1 # integral gain for angular speed
+KD_anspeed = 0.1 # derivative gain for angular speed
 
 # == Choreography manager == #
 DEFAULT_SPEED_FACT = 1

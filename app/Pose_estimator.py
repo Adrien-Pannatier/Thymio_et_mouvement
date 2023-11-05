@@ -2,6 +2,7 @@ import math
 import numpy as np
 from app.utils.console import *
 from app.config import DIAMETER
+from app.utils.types import Vec2
 
 class PoseEstimator:
     """
@@ -17,7 +18,7 @@ class PoseEstimator:
     """
 
     def __init__(self, position, orientation) -> None:
-        self.position = position
+        self.position = Vec2(position)
         self.orientation = orientation
 
     def update(self, speed_r_mot, speed_l_mot):
@@ -33,5 +34,7 @@ class PoseEstimator:
         self.position[0] += (speed_r_mot + speed_l_mot) / 2 * math.cos(self.orientation)
         self.position[1] += (speed_r_mot + speed_l_mot) / 2 * math.sin(self.orientation)
         self.orientation += (speed_r_mot - speed_l_mot) / DIAMETER
+
+        debug(f"Pose: {self.position[0]}, {self.position[1]}, {self.orientation}")
 
         return self.position[0], self.position[1], self.orientation

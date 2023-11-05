@@ -11,7 +11,7 @@ from tdmclient import ClientAsync
 from app.big_brain import BigBrain
 from app.config import DEBUG, PROCESS_MSG_INTERVAL, RAISE_DEPRECATION_WARNINGS
 from app.context import Context
-from app.server import Server
+# from app.server import Server
 from app.state import State
 from app.utils.console import *
 from app.utils.pool import Pool
@@ -126,7 +126,7 @@ async def init():
                     status.stop()
 
                     # Construct the application context
-                    ctx = Context(node, None, pool, State())
+                    ctx = Context(node, pool, State())
 
                     info("Primary node connected")
                     debug(f"Node lock on {node}")
