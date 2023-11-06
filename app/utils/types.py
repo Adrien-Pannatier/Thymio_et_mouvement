@@ -5,7 +5,7 @@ from typing import Generic, TypeVar
 
 Coords = tuple[int, int]
 Vec2 = tuple[float, float]
-
+Step = tuple[float, float, float, float]
 
 class Signal:
     """
