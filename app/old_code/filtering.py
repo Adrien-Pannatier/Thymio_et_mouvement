@@ -1,51 +1,40 @@
 import math
-from time import time
-import numpy as np
+from asyncio import sleep
 
-from app.config import PHYSICAL_SIZE_CM, THYMIO_TO_CM
+from app.config import SLEEP_DURATION, THYMIO_TO_CM
 from app.context import Context
-# from app.EKF import ExtendedKalmanFilter
+from app.Pose_estimator import PoseEstimator
 from app.utils.module import Module
-from app.utils.types import Channel, Vec2
+from app.utils.types import Vec2
+
+from app.utils.console import *
+
 
 
 class Filtering(Module):
     """
-    Class containing the Extended Kalman Filter
+    Class containing the pose estimator
 
     @variables:
     Var ctx: context of the application
-    Var rx_pos: channel to receive the position from the vision system
-    Var last_update: time of the last update
-    Var ekf: Extended Kalman Filter
+    Var estimator: estimator of the pose
 
     @functions:
     Func __init__: initiates the class
-    Func run: runs the module
+    # Func run: runs the module
     Func process_event: callback function for sensor update
     Func predict: predict the next position of the thymio
-    Func update: updates the position of the thymio
     """
 
-    def __init__(self, ctx: Context, rx_pos: Channel[Vec2] | None = None):
+    def __init__(self, ctx: Context):
         super().__init__(ctx)
 
-        self.rx_pos = rx_pos
-
-        self.last_update = None
-
-        # initial position of the thymio if no vision, middle, facing north
-        self.ekf = ExtendedKalmanFilter(
-            (PHYSICAL_SIZE_CM/2, PHYSICAL_SIZE_CM/2),  math.pi/2)
+        self.estimator = PoseEstimator((0,0), math.pi/2) # initial position of the thymio 0,0 facing north
 
     async def run(self):
-        if self.rx_pos is None:
-            return
-
         while True:
-            match await self.rx_pos.recv():
-                case (x, y):
-                    self.update((x, y, 0.0))
+            debug("filtering")
+            await sleep(SLEEP_DURATION)
 
     def process_event(self, variables):
         """
@@ -71,33 +60,7 @@ class Filtering(Module):
         param vl: left wheel speed sensor in cm/s
         param vr: right wheel speed sensor in cm/s
         """
-        if self.last_update is None:
-            self.last_update = time()
-            return
-
-        now = time()
-        dt = now - self.last_update
-
-        pose_x_est, pose_y_est, orientation_est = self.ekf.predict_ekf(
-            vl, vr, dt)
+        pose_x_est, pose_y_est, orientation_est = self.estimator.update(vl, vr)
 
         self.ctx.state.position = (pose_x_est, pose_y_est)
         self.ctx.state.orientation = orientation_est
-
-        self.last_update = now
-
-    def update(self, pose):
-        """ 
-        Updates the thymio position by correcting the predictions and updating the state
-
-        param vl: left wheel speed sensor in cm/s
-        param vr: right wheel speed sensor in cm/s
-        """
-        self.ekf.predict_ekf(0, 0, 0.01)
-
-        z = np.array([pose])
-
-        pose_x_est, pose_y_est, orientation_est = self.ekf.update_ekf(z)
-
-        self.ctx.state.position = (float(pose_x_est), float(pose_y_est))
-        self.ctx.state.orientation = float(orientation_est)
