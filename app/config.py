@@ -1,6 +1,6 @@
 # == General == #
 DEBUG = False
-LOG_LEVEL = 6
+LOG_LEVEL = 7
 RAISE_DEPRECATION_WARNINGS = False
 POOL_SIZE = 4
 SLEEP_DURATION = 0.5
@@ -22,11 +22,15 @@ HALF_TURN_SPEED = 50  # speed of the half turn
 HALF_TURN_TIME = 8  # time for the thymio to do a 180° turn
 
 # == Motion Control == #
-MAX_WAIT = 0.1
-INDEX_FW = 1 # follow next waypoint by index
+DEFAULT_PLAY_MODE = "once"
+T = 0 # time index
+DT = 1 # delta time index
+LS = 3 # left wheel speed index
+RS = 4 # right wheel speed index
 
 # == Choreography manager == #
 DEFAULT_SPEED_FACT = 1
+DEFAULT_PATH = "choreographies/"
 
 # == Process controller data == #
 PIXELS_TO_METERS = 0.01  # replace with actual value

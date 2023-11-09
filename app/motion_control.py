@@ -1,75 +1,90 @@
-import math
-from time import time
+from asyncio import create_task, sleep
+from app.utils.console import *
+from tdmclient import ClientAsync
 
-from app.config import MAX_WAIT, INDEX_FW, DIAMETER
-from app.context import Context
-from app.utils.module import Module
-from app.utils.types import Vec2
+from app.config import PROCESS_MSG_INTERVAL, DEFAULT_PLAY_MODE, T, DT, LS, RS
 
-class MotionControl(Module):
 
-    def __init__(self, ctx: Context):
-        super().__init__(ctx)
-        self.ctx = ctx
-        self.step = None
-        self.next_step_index = None
-        self.last_update = None
+class MotionControl():
 
-    def set_new_step(self, index_offset):
-        if self.ctx.state.next_step_index is None:
+    def __init__(self):
+        self.node = None
+
+    async def init_thymio_connection(self):
+        status = console.status("Connecting to Thymio driver", spinner_style="cyan")
+        
+        status.start()
+
+        try:
+            with ClientAsync() as client:
+                status.update("Waiting for Thymio node")
+
+                # Start processing Thymio driver messages
+                create_task(process_messages(client))
+
+                with await client.lock() as node:
+                    status.stop()
+
+                    # Construct the application context
+                    self.node = node
+
+                    info("Thymio node connected")
+                    debug(f"Node lock on {node}")
+
+                    # Signal the Thymio to broadcast variable changes
+                    await node.watch(variables=True)
+
+                    status = None
+
+        except ConnectionRefusedError:
+            warning("Thymio driver connection refused")
+
+        except ConnectionResetError:
+            warning("Thymio driver connection closed")
+
+        finally:
+            if status is not None:
+                status.stop()
+                
+    def play_choreography(self, choreography, speed_factor, play_mode=DEFAULT_PLAY_MODE):
+        """Play a choreography"""
+        if self.node is None:
+            error("No Thymio node connected")
             return
-        if self.ctx.state.path is None:
+
+        if play_mode == "loop":
+            self.play_loop(choreography, speed_factor)
+        elif play_mode == "once":
+            self.play_once(choreography, speed_factor)
+        else:
+            error("Invalid play mode")
             return
         
-        index = min(self.ctx.state.next_step_index + index_offset, len(self.ctx.state.path) - 1)
-
-        if index == -1:  # no more path
-            return
-        if self.ctx.state.path[index] is None:  # not defined waypoint problem
-            return
-        
-        self.waypoint = self.ctx.state.path[index]
-        self.ctx.state.next_step_index = index
-
-    async def run(self):  # update function
+    def play_loop(self, choreography, speed_factor, speed_mode):
+        """Play a choreography in loop"""
         while True:
-            await self.update_motor_control()  # update the control function
+            self.play_once(choreography, speed_factor, speed_mode)
 
-    async def update_motor_control(self):  # control function
-        if self.step is None: # start WP list if WP is none
-            self.set_new_step(INDEX_FW)
+    async def play_once(self, choreography, speed_factor, speed_mode):
+        """Play a choreography once"""
+        for step in choreography:
+            left_motor_speed = step[LS]*speed_factor
+            right_motor_speed = step[RS]*speed_factor
 
-        command_info = self.get_and_process_step() # get step info from big brain
-
-        if command_info is None:
-            return
-        (reached, speed_left_controller, speed_right_controller) = command_info
-
-        if reached:
-            if self.ctx.state.next_step_index is None:
-                return
-            if self.ctx.state.path is None:
-                return
-            self.set_new_step(INDEX_FW)
-
-        await self.ctx.node.set_variables(  # apply the control on the wheels
-            {"motor.left.target": [int(speed_left_controller)], "motor.right.target": [int(speed_right_controller)]}
-        )
+            await self.node.set_variables(  # apply the control on the wheels
+                {"motor.left.target": [int(left_motor_speed)], "motor.right.target": [int(right_motor_speed)]})
+            
+            sleep(step[DT])
         
-    def get_and_process_step(self):
+async def process_messages(client: ClientAsync):
+    """Process waiting messages from the Thymio driver."""
 
-        # get step from big brain and update forward and angular speed
+    try:
+        while True:
+            client.process_waiting_messages()
+            await sleep(PROCESS_MSG_INTERVAL)
 
-        # if no position waypoint or rientation, return none
-        if self.ctx.state.forward_speed is None or self.ctx.state.angular_speed is None or self.waypoint is None:
-            return None 
-        
-        # calculate the speed of the left and right wheels
-        wheel_base = 0.1  # replace with your actual wheel base
-        speed_left = self.ctx.state.forward_speed - DIAMETER/2 * self.ctx.state.angular_speed
-        speed_right = self.ctx.state.forward_speed + DIAMETER/2 * self.ctx.state.angular_speed
-
-        # return the calculated speeds
-        return speed_left, speed_right
+    except Exception:
+        pass
 
         

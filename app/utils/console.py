@@ -35,6 +35,10 @@ def debug(*msg: Any) -> None:
     if LOG_LEVEL >= 6:
         _log("[purple] DEBUG    [/]", *msg)
 
+def  ui(*msg: Any) -> None:
+    if LOG_LEVEL >= 7:
+        _log("[cyan] 🤖       [/]", *msg)
+
 
 def _log(prefix: str, *msg: Any) -> None:
     console.print(f"{prefix} ", *msg)

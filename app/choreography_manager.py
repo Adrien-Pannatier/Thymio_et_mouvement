@@ -1,56 +1,48 @@
+# to add: sequence manager
+
 import os
 import json
 from asyncio import sleep
 
 from app.utils.console import *
-from app.config import DEFAULT_SPEED_FACT, SLEEP_DURATION
-from app.context import Context
+from app.config import DEFAULT_SPEED_FACT, SLEEP_DURATION, DEFAULT_PATH
 
 class ChoreographyManager:
-    def __init__(self, ctx: Context):
-        super().__init__(ctx)
+    def __init__(self):
         self.choreography_dict = {}
+        self.load_choreography_dict()
 
-    async def run(self):
-        while True:
-            await sleep(SLEEP_DURATION)
-
-    def process_event(self, name, step):
-        """
-        when info is sent from the big brain, add it to the choreography
-        """
-        if name not in self.choreography_dict:
-            self.create_choreography(name)
-        self.add_step_to_choreography(name, step)
-
-    def create_choreography(self, name, path=None, speed_fact=DEFAULT_SPEED_FACT):
+    def create_choreography(self, name, data_array, path=DEFAULT_PATH, speed_fact=DEFAULT_SPEED_FACT):
         """
         Creates a choreography
         """
-        choreography = Choreography(name, path, speed_fact)
+        choreography = Choreography(name, data_array, path, speed_fact)
         self.choreography_dict[name] = choreography
+        self.save_choreography_dict(name)
 
-    def add_step_to_choreography(self, name, step):
+    def load_choreography_dict(self, path=DEFAULT_PATH):
         """
-        Adds a step to the choreography
+        Loads the choreography dictionary
         """
-        self.choreography_dict[name].data.append(step)
-
-    def save_choreography(self, name):
+        for file in os.listdir(path):
+            if file.endswith(".json"):
+                name = file[:-5]
+                step_list = []
+                with open(path + file, "r") as file:
+                    data = json.load(file)
+                    for step in data:
+                        step_list.append(step)
+                if name not in self.choreography_dict:
+                    self.choreography_dict[name] = Choreography(name, step_list, path)
+    
+    def save_choreography_dict(self, path=DEFAULT_PATH):
         """
-        Saves a choreography
+        Saves the choreography dictionary
         """
-        # check if the choreography is complete
-        if not self.choreography_dict[name].complete:
-            console.print(f"[bold red]Error:[/] The choreography {name} is not complete. do you want to save it anyway? [Y/n]")
-            answer = input()
-            if answer == "n":
-                return
-
-        console.print(f"[bold green]Saving choreography {name}...[/]")
-        with open(self.choreography_dict[name].path, "w") as file:
-            json.dump(self.choreography_dict[name].data, file, indent=4)
-            console.print(f"[bold green]Choreography {name} saved![/]")
+        for choreography in self.choreography_dict.values():
+            with open(path + choreography.name + ".json", "w") as file:
+                if not os.path.isfile(path + choreography.name + ".json"):
+                    json.dump(choreography.data, file, indent=4)
 
     def delete_choreography(self, name):
         """
@@ -62,13 +54,17 @@ class ChoreographyManager:
             return
         console.print(f"[bold red]Deleting choreography {name}...[/]")
         os.remove(self.choreography_dict[name].path)
+        del self.choreography_dict[name]
         console.print(f"[bold red]Choreography {name} deleted![/]")
 
     def displays_choreography_dict(self):
         """
-        Displays the choreography dictionary
+        Displays the choreography dictionary names
         """
-        print(self.choreography_dict)
+        console.print(f"[bold green]Choreographies:[/]")
+        for name in self.choreography_dict:
+            console.print(name)
+        # print(self.choreography_dict)
 
 class Choreography:
     """
@@ -76,6 +72,7 @@ class Choreography:
 
     @variables:
     Var name: name of the choreography
+    Var step_list: array of the choreography data
     Var path: path of the choreography file
     Var speed_fact: speed factor of the choreography
     Var data: data of the choreography
@@ -84,36 +81,34 @@ class Choreography:
     @functions:
     Func __init__: initiates the class
     Func __str__: returns the name of the choreography
-    Func read_choreography: reads the choreography file and returns the list of waypoints
-    Func apply_speed_fact: applies the speed factor to the choreography
+    Func get_info: returns the info of the choreography
     """
-    def __init__(self, name, path=None, speed_fact=DEFAULT_SPEED_FACT):
+    def __init__(self, name, step_list, path=DEFAULT_PATH, speed_fact=DEFAULT_SPEED_FACT):
 
         self.name = name
+        self.step_list = step_list
+        self.path = path + name + ".json"
         self.speed_fact = speed_fact
-        self.data = None
-        self.complete = False
-        
-        if path is None:
-            self.path = "app/choreographies/" + name + ".json"
-
-        self.read_choreography()
-        self.apply_speed_fact()
 
     def __str__(self):
         return self.name
     
-    def read_choreography(self):
+    def get_info(self):
         """
-        Reads the choreography file and returns the list of waypoints
+        Returns the info of the choreography
         """
-        with open(self.path, "r") as file:
-            self.data = json.load(file)
+        return self.name, self.speed_fact, self.path
     
-    def apply_speed_fact(self):
+class Sequence:
+    def __init__(self, name, choregraphy_list):
+        self.name = name
+        self.choregraphy_list = choregraphy_list
+
+    def __str__(self):
+        return self.name
+    
+    def get_info(self):
         """
-        Applies the speed factor to the choreography
+        Returns the info of the sequence
         """
-        for step in self.data:
-            step["forward_speed"] *= self.speed_fact
-            step["angular_speed"] *= self.speed_fact
+        return self.name, self.choregraphy_list

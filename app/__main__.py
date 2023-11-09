@@ -110,97 +110,14 @@ def check_requirements():
 
 
 async def init():
-    status = console.status("Connecting to Thymio driver", spinner_style="cyan")
+    info("Initializing...")
+    await start()
 
-    status.start()
-
-    try:
-        with Pool() as pool:
-            with ClientAsync() as client:
-                status.update("Waiting for Thymio node")
-
-                # Start processing Thymio driver messages
-                create_task(process_messages(client))
-
-                with await client.lock() as node:
-                    status.stop()
-
-                    # Construct the application context
-                    ctx = Context(node, pool, State())
-
-                    info("Primary node connected")
-                    debug(f"Node lock on {node}")
-
-                    # Signal the Thymio to broadcast variable changes
-                    await node.watch(variables=True)
-
-
-                    ##### Feature to connect a second Thymio #####
-                    ## Not used in the project yet ##
-
-                    # info("Would you like to connect a second Thymio? [Y/n]")
-                    # connectSecond = input("> ")
-
-                    # if connectSecond.lower() != "n":
-                    #     if len(client.nodes) < 2:
-                    #         error("No second Thymio node found")
-                    #         return
-
-                    #     status.update("Locking second Thymio node")
-                    #     status.start()
-
-                    #     with await client.nodes[1].lock() as secondary_node:
-                    #         ctx.node_top = secondary_node
-
-                    #         status.stop()
-                    #         status = None
-
-                    #         info("Secondary node connected")
-                    #         debug(f"Node lock on {secondary_node}")
-
-                    #         await start(ctx)
-                    # else:
-                    #     status = None
-                    #     await start(ctx)
-
-                    status = None
-                    await start(ctx)
-
-    except ConnectionRefusedError:
-        warning("Thymio driver connection refused")
-
-    except ConnectionResetError:
-        warning("Thymio driver connection closed")
-
-    finally:
-        if status is not None:
-            status.stop()
-
-
-async def start(ctx: Context):
+async def start():
     """Start the application, instantiating the BigBrain."""
 
-    # channel_position = Channel[Vec2]() # Vec2 is a type alias for Tuple[float, float]
-
-    # async with Server(ctx, channel_position):
-    #     brain = BigBrain(ctx)
-    #     await brain.start_thinking(channel_position)
-
-    brain = BigBrain(ctx)
+    brain = BigBrain()
     await brain.start_thinking()
-
-
-async def process_messages(client: ClientAsync):
-    """Process waiting messages from the Thymio driver."""
-
-    try:
-        while True:
-            client.process_waiting_messages()
-            await sleep(PROCESS_MSG_INTERVAL)
-
-    except Exception:
-        pass
-
 
 if __name__ == "__main__":
     main()
