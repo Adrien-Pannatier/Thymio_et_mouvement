@@ -4,18 +4,20 @@
 
 
 // Wi-Fi info
-char ssid[] = "HOME TEAM";      // Your WiFi network SSID
-char pass[] = "jesaispas";  // Your WiFi network password
+char ssid[] = "bwm-11914";      // Your WiFi network SSID
+char pass[] = "Bruniere11?";  // Your WiFi network password
 int status = WL_IDLE_STATUS;   // WiFi status
 
 WiFiClient client;
-const char server[] = "192.168.43.183"; // IP address of your Python script
+const char server[] = "192.168.1.111"; // IP address of your Python script
 const int port = 8888;                // Port number for communication
-
 
 // Mouse info
 #define MOUSE_DATA 5
 #define MOUSE_CLOCK 6
+
+// Mode info
+int mode = 0; // 0 = idle, 1 = record
 
 PS2MouseHandler mouse(MOUSE_CLOCK, MOUSE_DATA, PS2_MOUSE_REMOTE);
 
@@ -65,6 +67,7 @@ void setup() {
     IMU.end();
     while (1);
   }
+
   Serial.println();
 }
 
@@ -74,31 +77,64 @@ void setup() {
 void loop() {
   float gx, gy, gz;  // gyroscope values
   unsigned long last_run = millis(); // mouse check
+  unsigned long time, last_time, dt; // time values
   float status_mouse, x_mvt_raw, y_mvt_raw; // mouse values
+  
   if (client.connected()) {
 
+    if (mode == 1) {
+      // get optical mouse data
+      if (millis() - last_run > 200) {
+        last_run = millis();
+        mouse.get_data();
+        status_mouse = mouse.status(); // Status Byte
+        x_mvt_raw = mouse.x_movement(); // X Movement Data
+        y_mvt_raw = mouse.y_movement(); // Y Movement Data
+      }
 
-    // get optical mouse data
-    if (millis() - last_run > 200) {
-      last_run = millis();
-      mouse.get_data();
-      status_mouse = mouse.status(); // Status Byte
-      x_mvt_raw = mouse.x_movement(); // X Movement Data
-      y_mvt_raw = mouse.y_movement(); // Y Movement Data
+      // get IMU data
+      if (IMU.gyroscopeAvailable()) {
+        IMU.readGyroscope(gx, gy, gz);
+        }
+
+      // get time
+      time = millis();
+      dt = time - last_time;
+
+      // Convert data to strings
+      String gxStr = String(gx);
+      String gyStr = String(gy);
+      String gzStr = String(gz);
+      String xMvtRawStr = String(x_mvt_raw);
+      String yMvtRawStr = String(y_mvt_raw);
+      String timeStr = String(time);
+      String timeDiffStr = String(dt);
+
+      //create the message to send
+      String dataStr = timeStr + "," + timeDiffStr + "," + gxStr + "," + gyStr + "," + gzStr + "," + xMvtRawStr + "," + yMvtRawStr;
+
+      // Send your string to the Python script
+      client.println(dataStr);
+
+      last_time = time;
     }
-
-    // get IMU data
-    if (IMU.gyroscopeAvailable()) {
-      IMU.readGyroscope(gx, gy, gz))}
-
-    // Send your string to the Python script
-    client.println(gx, gy, gz, x_mvt_raw, y_mvt_raw);
 
     // Check for a response from the server
     while (client.available()) {
-      char c = client.read();
-      Serial.write(c);
+      String msg = client.readString();
+      
+      // Serial.write(c);
+      Serial.println(msg);
+      if (msg == "strt"){
+        mode = 1;
+        Serial.println("Mode changed to record");
+      }
+      else if (msg == "stop"){
+        mode = 0;
+        Serial.println("Mode changed to idle");
+      }
     }
+  
   } else {
     Serial.println("Connection lost. Reconnecting...");
     client.stop();

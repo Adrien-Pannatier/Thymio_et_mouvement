@@ -25,8 +25,8 @@ HALF_TURN_TIME = 8  # time for the thymio to do a 180° turn
 DEFAULT_PLAY_MODE = "once"
 T = 0 # time index
 DT = 1 # delta time index
-LS = 3 # left wheel speed index
-RS = 4 # right wheel speed index
+LS = 2 # left wheel speed index
+RS = 3 # right wheel speed index
 
 # == Choreography manager == #
 DEFAULT_SPEED_FACT = 1

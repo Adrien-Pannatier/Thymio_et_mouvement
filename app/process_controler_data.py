@@ -23,7 +23,7 @@ class ProcessControlerData:
             self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.server_socket.bind((host, port))
             self.server_socket.listen(1)
-            console.print(f"Listening on {host}:{port}...")
+            # console.print(f"Listening on {host}:{port}...")
 
         except OSError: # A vérifier ----------------------------------------------------------------------------
             warning(f"[bold red]Error:[/] The mock Thymio is not running. Please run it and try again.")
@@ -91,6 +91,21 @@ class ProcessControlerData:
 
         except Exception as e:
             print(f"Exception: {e}")
+
+    def debug(self):
+        
+        
+        for i in range(20):
+            print("debug")
+            client_socket, client_address = self.server_socket.accept()
+            print(f"Accepted connection from {client_address}")
+
+            client_socket.send("start".encode('utf-8'))
+            data_str = client_socket.recv(1024).decode('utf-8')
+            print(f"Received data: {data_str}")
+
+        client_socket.send("stop".encode('utf-8'))
+        client_socket.close()
 
     def compute_speeds(self, current_pos, current_gyro_z, timestep, last_pos):
         # Convert position from pixels to meters

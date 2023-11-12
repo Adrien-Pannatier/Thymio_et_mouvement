@@ -33,7 +33,7 @@ def main():
         )
 
     try:
-        run(init(), debug=DEBUG)
+        init()
 
     except KeyboardInterrupt:
         warning("Interrupted by user")
@@ -109,15 +109,16 @@ def check_requirements():
     return True
 
 
-async def init():
+def init():
     info("Initializing...")
-    await start()
+    start()
 
-async def start():
+def start():
     """Start the application, instantiating the BigBrain."""
 
     brain = BigBrain()
-    await brain.start_thinking()
+    brain.start_thinking()
+    
 
 if __name__ == "__main__":
     main()

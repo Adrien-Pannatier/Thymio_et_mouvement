@@ -2,7 +2,9 @@
 
 import os
 import json
+import numpy as np
 from asyncio import sleep
+
 
 from app.utils.console import *
 from app.config import DEFAULT_SPEED_FACT, SLEEP_DURATION, DEFAULT_PATH
@@ -26,12 +28,15 @@ class ChoreographyManager:
         """
         for file in os.listdir(path):
             if file.endswith(".json"):
-                name = file[:-5]
-                step_list = []
+                name, _ = os.path.splitext(file)
+                # print(name)
+                # step_list = []
                 with open(path + file, "r") as file:
                     data = json.load(file)
-                    for step in data:
-                        step_list.append(step)
+                #     for step in data:
+                #         step_list.append(step)
+                step_list = np.array([[item['time'], item['timestep'], item['left_wheel_speed'], item['right_wheel_speed']] for item in data['data']])
+                # print(step_list)
                 if name not in self.choreography_dict:
                     self.choreography_dict[name] = Choreography(name, step_list, path)
     

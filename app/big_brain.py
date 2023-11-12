@@ -1,8 +1,11 @@
 # todo: add color change if in mode
-from asyncio import sleep
+# from asyncio import sleep
 from dataclasses import dataclass
 import time
 import os
+import sys
+from rich.padding import Padding
+from rich.panel import Panel
 
 from app.config import *
 from app.process_controler_data import ProcessControlerData
@@ -24,13 +27,16 @@ class BigBrain:
     def __init__(self):
         self.wanted_mode = "No mode"
 
-    async def start_thinking(self):
+        # record script choices
+        self.r_asw = None
+
+    def start_thinking(self):
         self.init()
 
         modules = self.init_modules()
         ui("Welcome!")
         time.sleep(1) # USER EXPERIENCE
-        await self.loop(modules)
+        self.loop(modules)
 
     def init(self):
         """Initialise the big brain"""
@@ -45,19 +51,19 @@ class BigBrain:
 
         return Modules(process_controler_data, choreographer, motion_control)
 
-    async def loop(self, modules: Modules):
+    def loop(self, modules: Modules):
 
         while True:
+            
 
-            if self.wanted_mode == "No mode":
-                ui("What mode would you like to do? (you can type 'help' for more information)")
-                self.wanted_mode = input(">")
-
-            elif self.wanted_mode == "help":
-                ui("'record' to record a choreography")
-                ui("'play' to play a choreography")
-                ui("'info' to get information about the choreographies")
-                ui("'quit' to quit the program")
+            if self.wanted_mode == "help":
+                ui("[bold white]'record'[/] to record a choreography")
+                ui("[bold white]'play'[/] to play a choreography")
+                ui("[bold white]'info'[/] to get information about the choreographies")
+                ui("[bold white]'quit'[/] to quit the program")
+                print("\n")
+                ui("press enter to continue")
+                input(">")
                 time.sleep(1) # USER EXPERIENCE
                 self.wanted_mode = "No mode"
 
@@ -72,7 +78,23 @@ class BigBrain:
 
             elif self.wanted_mode == "quit":
                 ui("Goodbye!")
-                return
+                if modules.motion_control.node is not None:
+                    modules.motion_control.disconnect_thymio()
+                sys.exit()
+
+            elif self.wanted_mode == "No mode":
+                """Print the presentation banner."""
+                console.print(
+                    Padding(
+                        Panel(
+                            "[bold green] MODE SELECTION"
+                        ),
+                        (1, 2),
+                    ),
+                    justify="left",
+                )
+                ui("What mode would you like to do? (you can type 'help' for more information)")
+                self.wanted_mode = input(">")
             
             else:
                 ui("I don't understand")
@@ -86,29 +108,41 @@ class BigBrain:
     def record_script(self, modules: Modules):
         """Record a choreography"""
 
+        console.print(
+            Padding(
+                Panel(
+                    "[bold yellow] RECORDING MODE"
+                ),
+                (1, 2),
+            ),
+            justify="left",
+        )        
+
         # initialisation of record mode
         modules.process_controler_data.init_record()
-        print("_________________________________________________________________________________________")
-        info("RECORDING MODE")
-        print("_________________________________________________________________________________________")
+
         ui("Welcome to the recording mode!")
         time.sleep(1) # USER EXPERIENCE
         ui("What can I do for you? (you can type 'help' for more information)")
-        answer = input(">")
+        self.r_asw = input(">")
 
-        if answer == "help":
-            ui("'display' to display the choreographies")
-            ui("'add' to add a choreography")
-            ui("'remove' to remove a choreography")
-            ui("'edit' to edit a choreography")
-            time.sleep(1) # USER EXPERIENCE
+        if self.r_asw == "help":
+            ui("[bold white]'display'[/] to display the choreographies")
+            ui("[bold white]'add'[/] to add a choreography")
+            ui("[bold white]'remove'[/] to remove a choreography")
+            ui("[bold white]'edit'[/] to edit a choreography")
+            ui("[bold white]'debug'[/] to debug the record mode")
+            ui("[bold white]'quit'[/] to quit the recording mode")
+            ui("press enter to continue")
+            input(">")
             # return to question in record mode
+            return
 
-        elif answer == "display":
+        elif self.r_asw == "display":
             ui("Here are the choreographies:")
             modules.choreographer.displays_choreography_dict()
 
-        elif answer == "add":
+        elif self.r_asw == "add":
             ui("What is the name of the choreography?")
             name = input(">")
             # check if the choreography already exists
@@ -116,6 +150,8 @@ class BigBrain:
                 warning("This choreography already exists")
                 return
             else:
+                ui("Press enter to start recording the choreography")
+                input(">")
                 status = console.status("Recording choreography", spinner_style="yellow")
                 status.start()
                 recorded_choreography = modules.process_controler_data.record()
@@ -124,9 +160,12 @@ class BigBrain:
                 modules.choreographer.create_choreography(name, recorded_choreography)
                 ui("Choreography created! " + name)
         
-        elif answer == "remove":
+        elif self.r_asw == "remove":
             ui("What is the name of the choreography you want to remove?")
             name = input(">")
+            if name == "quit":
+                self.r_asw
+                return
             # check if the choreography exists
             if name not in modules.choreographer.choreography_dict:
                 warning("This choreography does not exist")
@@ -134,12 +173,22 @@ class BigBrain:
             else:
                 modules.choreographer.delete_choreography(name)
 
-        elif answer == "edit":
+        elif self.r_asw == "edit":
             ui("not implemented yet")
+
+        elif self.r_asw == "debug":
+            ui("welcome to the debug mode!")
+            ui("press enter to start debuging")
+            input(">")
+            ui("starting debuging")
+            modules.process_controler_data.debug()
 
         else:
             ui("I don't understand")
-        
+
+        time.sleep(1) # USER EXPERIENCE
+        ui("getting back to mode selection")
+        self.r_asw = None
         self.wanted_mode = "No mode"
 
     def play_script(self, modules: Modules):
