@@ -4,12 +4,18 @@
 
 
 // Wi-Fi info
-char ssid[] = "bwm-11914";      // Your WiFi network SSID
-char pass[] = "Bruniere11?";  // Your WiFi network password
+// char ssid[] = "bwm-11914";      // Your WiFi network SSID
+// char pass[] = "Bruniere11?";  // Your WiFi network password
+// const char server[] = "192.168.1.111"; // IP address of your Python script
+
+char ssid[] = "Adrien's Galaxy A52 5G";      // Your WiFi network SSID
+char pass[] = "mqbm9064";  // Your WiFi network password
+const char server[] = "192.168.249.225"; // IP address of your Python script
 int status = WL_IDLE_STATUS;   // WiFi status
+unsigned long last_time;
 
 WiFiClient client;
-const char server[] = "192.168.1.111"; // IP address of your Python script
+
 const int port = 8888;                // Port number for communication
 
 // Mouse info
@@ -75,21 +81,20 @@ void setup() {
 
 
 void loop() {
-  float gx, gy, gz;  // gyroscope values
-  unsigned long last_run = millis(); // mouse check
-  unsigned long time, last_time, dt; // time values
+  float gx, gy, gz;  // gyroscope values [in rad/s]
+  unsigned long time, dt; // time values [in ms]
   float status_mouse, x_mvt_raw, y_mvt_raw; // mouse values
   
   if (client.connected()) {
 
     if (mode == 1) {
       // get optical mouse data
-      if (millis() - last_run > 200) {
-        last_run = millis();
+      if (millis() - last_time > 200) {
+        Serial.println("getting mouse data");
         mouse.get_data();
         status_mouse = mouse.status(); // Status Byte
-        x_mvt_raw = mouse.x_movement(); // X Movement Data
-        y_mvt_raw = mouse.y_movement(); // Y Movement Data
+        x_mvt_raw = mouse.x_movement(); // X Movement Data [in pixels]
+        y_mvt_raw = mouse.y_movement(); // Y Movement Data [in pixels]
       }
 
       // get IMU data
@@ -114,7 +119,11 @@ void loop() {
       String dataStr = timeStr + "," + timeDiffStr + "," + gxStr + "," + gyStr + "," + gzStr + "," + xMvtRawStr + "," + yMvtRawStr;
 
       // Send your string to the Python script
-      client.println(dataStr);
+      if (last_time != 0) { // Do not send the first value
+        client.println(dataStr); 
+        }
+      Serial.print("message sent: ");
+      Serial.println(dataStr);
 
       last_time = time;
     }
@@ -124,8 +133,9 @@ void loop() {
       String msg = client.readString();
       
       // Serial.write(c);
+      Serial.print("Message recieved: ");
       Serial.println(msg);
-      if (msg == "strt"){
+      if (msg == "start"){
         mode = 1;
         Serial.println("Mode changed to record");
       }
@@ -133,6 +143,7 @@ void loop() {
         mode = 0;
         Serial.println("Mode changed to idle");
       }
+
     }
   
   } else {
@@ -144,7 +155,7 @@ void loop() {
     }
   }
 
-  delay(1000);  // Send data every 1 second
+  delay(500);  // Send data every 0.5 second
 }
 
 

@@ -78,6 +78,29 @@ class BigBrain:
 
             elif self.wanted_mode == "quit":
                 ui("Goodbye!")
+                print('''　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　
+　　　　　　　　　　　　 　◇　　　　　　　　　　　　　　　　
+　　　　　　　　　　　　　ｉ　　　　　　　　　　　　　　　　
+　　　　　　　　　　　　　＼　　　　　　　　　　　　　　　　
+　　　　　　　　　　　　　　╲　　　　　　　　　　　　　　　
+　　　　　　　　　　　　　　〔　　　　　　　　　　　　　　　
+　　　　　　　　　　　　╭～⌒ ～╮　　　　　　　　　　　　　
+　　　　　　　　　　　　│　　　│　　　　　　　　　　　　　
+　　　　　　　　　　　　│　　　│　　　　　　　　　　　　　
+　　　　　　　　　 　　╭⌒ ╮  ╭⌒ ╮　　　　　　　　　　　　
+　　　　　　　　　 　　│Ｏ│  │Ｏ│　　　　　　　　　　　　
+　　　　　　　　　 　　╰╮ ╯  ╰ ╭╯　　　　　　　　　　　　
+　　　　　　　　　　　　│　 v　│　　　　　　　　　　　　　
+　　　　　　　　　　　　│      │　　　　　　　　　　　　　
+　　　　　　　　　　　　│　  　│　　　　　　　　　　　　　
+　　　　　　　　　▕︸︸︸︸︸︸︸︸︸－～　　　　　　　　　
+　　　　　　　　　︷　　　　　　 　▕－～╲　　　　　　　　
+　　　　　　　　╱＞〉　⌒╮　　＿　  ▕　  　╲╲　　　　　　　
+　　　　　　　╱╱  ▕　〈　ノ　╱┐｝  ▕　  　　╲╲　　　　　　
+　 　　　　　╱╱ 　▕　　︶　　＼　｝▕　　　　╲╲　　　　　
+　　　　　╱╱　　  ▕　　　︷　　︶　▕　　　　　╮╮　　　　
+　　　　∠╱　　  　▕　　〈　〉　　　▕　　　　　〈ｉ　　　　
+　　　　□　　　 　▕　　　︶　　　　▕　　　　　▕⌒　　　　''')
                 if modules.motion_control.node is not None:
                     modules.motion_control.disconnect_thymio()
                 sys.exit()

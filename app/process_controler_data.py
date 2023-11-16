@@ -1,6 +1,7 @@
 from app.utils.console import *
 from app.config import PIXELS_TO_METERS, GYRO_SCALING, AS_THRESH, DIAMETER
 import numpy as np
+import time
 import socket
 
 class ProcessControlerData:
@@ -42,12 +43,13 @@ class ProcessControlerData:
         client_socket.send("start".encode('utf-8'))
         
         while self.recording_state:
-            data_str = client_socket.recv(1024).decode('utf-8')
-            print(f"Received data: {data_str}")
+            data_str = client_socket.recv(37).decode('utf-8')
+            print(f"Received data is: {data_str}")
             data = [float(x) for x in data_str.split(',')]
             data_array.append(data)
 
             if data[0] >= self.record_length:
+                print("Recording stopped")
                 self.recording_state = False
 
         client_socket.send("stop".encode('utf-8'))
@@ -93,18 +95,20 @@ class ProcessControlerData:
             print(f"Exception: {e}")
 
     def debug(self):
-        
-        
-        for i in range(20):
-            print("debug")
-            client_socket, client_address = self.server_socket.accept()
-            print(f"Accepted connection from {client_address}")
+        counter = 0
+        client_socket, client_address = self.server_socket.accept()
+        print(f"Accepted connection from {client_address}")
+        client_socket.send("start".encode('utf-8'))
 
-            client_socket.send("start".encode('utf-8'))
-            data_str = client_socket.recv(1024).decode('utf-8')
-            print(f"Received data: {data_str}")
-
+        while counter <= 20:
+            data_str = client_socket.recv(37).decode('utf-8')
+            if len(data_str) > 35:
+                print(counter)
+                print(f"Received data: {data_str}")    
+                counter += 1
+        print("message over")
         client_socket.send("stop".encode('utf-8'))
+        time.sleep(1)
         client_socket.close()
 
     def compute_speeds(self, current_pos, current_gyro_z, timestep, last_pos):
