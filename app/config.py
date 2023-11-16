@@ -23,7 +23,7 @@ MAX_SPEED_FACTOR = 20
 
 # == Choreography manager == #
 DEFAULT_SPEED_FACT = 1
-DEFAULT_PATH = "choreographies/"
+DEFAULT_PATH = "C:/Users/adrie/Desktop/PDS_Thymio/001_code/Python/Thymio_et_mouvement/app/choreographies/"
 
 # == Process controller data == #
 PIXELS_TO_METERS = 0.01  # replace with actual value
