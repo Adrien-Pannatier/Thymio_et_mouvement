@@ -28,7 +28,7 @@ def info(*msg: Any) -> None:
 
 def verbose(*msg: Any) -> None:
     if LOG_LEVEL >= 5:
-        _log("[blue] VERBOSE  [/]", *msg)
+        _log("[blue]          [/]", *msg)
 
 
 def debug(*msg: Any) -> None:

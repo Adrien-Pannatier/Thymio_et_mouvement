@@ -3,7 +3,6 @@ from pathlib import Path
 from sys import version_info
 
 import numpy as np
-from pkg_resources import DistributionNotFound, parse_requirements, require
 from rich.padding import Padding
 from rich.panel import Panel
 from tdmclient import ClientAsync
@@ -24,7 +23,7 @@ VERSION_MINOR = 10
 def main():
     print_banner() # presentation banner
 
-    if not check_version() or not check_requirements():
+    if not check_version(): # check if the Python version is supported
         return
 
     if RAISE_DEPRECATION_WARNINGS:
@@ -79,35 +78,6 @@ def check_version():
         return False
 
     return True
-
-
-def check_requirements():
-    """Check if the required packages are installed."""
-    requirements = parse_requirements(Path("requirements.txt").open())
-
-    not_met = []
-
-    for requirement in requirements:
-        try:
-            require(str(requirement))
-        except DistributionNotFound:
-            not_met.append(str(requirement))
-
-    if not_met != []:
-        console.print(
-            "\n".join(
-                [
-                    "[bold red]Requirements not met![/]",
-                    "The following requirements are not met:\n",
-                    *not_met,
-                ]
-            )
-        )
-
-        return False
-
-    return True
-
 
 def init():
     info("Initializing...")

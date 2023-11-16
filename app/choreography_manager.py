@@ -14,11 +14,11 @@ class ChoreographyManager:
         self.choreography_dict = {}
         self.load_choreography_dict()
 
-    def create_choreography(self, name, data_array, path=DEFAULT_PATH, speed_fact=DEFAULT_SPEED_FACT):
+    def create_choreography(self, name, data_array, description="", path=DEFAULT_PATH, speed_fact=DEFAULT_SPEED_FACT):
         """
         Creates a choreography
         """
-        choreography = Choreography(name, data_array, path, speed_fact)
+        choreography = Choreography(name, data_array, description, path, speed_fact)
         self.choreography_dict[name] = choreography
         self.save_choreography_dict(name)
 
@@ -38,7 +38,7 @@ class ChoreographyManager:
                 step_list = np.array([[item['time'], item['timestep'], item['left_wheel_speed'], item['right_wheel_speed']] for item in data['data']])
                 # print(step_list)
                 if name not in self.choreography_dict:
-                    self.choreography_dict[name] = Choreography(name, step_list, path)
+                    self.choreography_dict[name] = Choreography(name, step_list, path=path)
     
     def save_choreography_dict(self, path=DEFAULT_PATH):
         """
@@ -53,22 +53,25 @@ class ChoreographyManager:
         """
         Deletes a choreography
         """
-        console.print(f"[bold red]Are you sure you want to delete the choreography {name}? [Y/n]")
-        answer = input()
+        ui(f"[bold red]Are you sure you want to delete the choreography [/][white]{name}[/][bold red]? [Y/n][/]")
+        answer = input(">")
         if answer == "n":
             return
-        console.print(f"[bold red]Deleting choreography {name}...[/]")
+        ui(f"[bold orange]Deleting choreography [/][white]{name}[/][bold orange]...[/]")
         os.remove(self.choreography_dict[name].path)
         del self.choreography_dict[name]
-        console.print(f"[bold red]Choreography {name} deleted![/]")
+        ui(f"[bold green]Choreography [/][white]{name}[/][bold green] deleted![/]")
 
     def displays_choreography_dict(self):
         """
         Displays the choreography dictionary names
         """
-        console.print(f"[bold green]Choreographies:[/]")
-        for name in self.choreography_dict:
-            console.print(name)
+        verbose(f"[bold green]Choreographies:[/]")
+        i = 1
+        for choreography in self.choreography_dict:
+            console.print(f"           {i} - {choreography}")
+            i = i + 1
+
         # print(self.choreography_dict)
 
 class Choreography:
@@ -77,6 +80,7 @@ class Choreography:
 
     @variables:
     Var name: name of the choreography
+    Var description: description of the choreography
     Var step_list: array of the choreography data
     Var path: path of the choreography file
     Var speed_fact: speed factor of the choreography
@@ -88,10 +92,10 @@ class Choreography:
     Func __str__: returns the name of the choreography
     Func get_info: returns the info of the choreography
     """
-    def __init__(self, name, step_list, path=DEFAULT_PATH, speed_fact=DEFAULT_SPEED_FACT):
-
+    def __init__(self, name, step_list, description="", path=DEFAULT_PATH, speed_fact=DEFAULT_SPEED_FACT):
         self.name = name
         self.step_list = step_list
+        self.description = description
         self.path = path + name + ".json"
         self.speed_fact = speed_fact
 
@@ -102,7 +106,7 @@ class Choreography:
         """
         Returns the info of the choreography
         """
-        return self.name, self.speed_fact, self.path
+        return self.name, self.description, self.speed_fact, self.path
     
 class Sequence:
     def __init__(self, name, choregraphy_list):

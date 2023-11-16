@@ -2,7 +2,6 @@
 # from asyncio import sleep
 from dataclasses import dataclass
 import time
-import os
 import sys
 from rich.padding import Padding
 from rich.panel import Panel
@@ -12,8 +11,6 @@ from app.process_controler_data import ProcessControlerData
 from app.choreography_manager import ChoreographyManager
 from app.motion_control import MotionControl
 from app.utils.console import *
-
-POSITION_THRESHOLD = 0.5
 
 @dataclass
 class Modules:
@@ -54,7 +51,6 @@ class BigBrain:
     def loop(self, modules: Modules):
 
         while True:
-            
 
             if self.wanted_mode == "help":
                 ui("[bold white]'record'[/] to record a choreography")
@@ -63,7 +59,7 @@ class BigBrain:
                 ui("[bold white]'quit'[/] to quit the program")
                 print("\n")
                 ui("press enter to continue")
-                input(">")
+                input(">") 
                 time.sleep(1) # USER EXPERIENCE
                 self.wanted_mode = "No mode"
 
@@ -77,8 +73,8 @@ class BigBrain:
                 self.info_script(modules)
 
             elif self.wanted_mode == "quit":
-                ui("Goodbye!")
-                print('''　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　
+                # ui("Goodbye!")
+                console.print('''[cyan]　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　
 　　　　　　　　　　　　 　◇　　　　　　　　　　　　　　　　
 　　　　　　　　　　　　　ｉ　　　　　　　　　　　　　　　　
 　　　　　　　　　　　　　＼　　　　　　　　　　　　　　　　
@@ -86,23 +82,20 @@ class BigBrain:
 　　　　　　　　　　　　　　〔　　　　　　　　　　　　　　　
 　　　　　　　　　　　　╭～⌒ ～╮　　　　　　　　　　　　　
 　　　　　　　　　　　　│　　　│　　　　　　　　　　　　　
-　　　　　　　　　　　　│　　　│　　　　　　　　　　　　　
-　　　　　　　　　 　　╭⌒ ╮  ╭⌒ ╮　　　　　　　　　　　　
-　　　　　　　　　 　　│Ｏ│  │Ｏ│　　　　　　　　　　　　
+　　　　　　　　　　　　│　　　│　　　　　　Goodbye!　　　　
+　　　　　　　　　 　　╭⌒ ╮  ╭⌒ ╮　　　   /　　　　　　　　
+　　　　　　　　　 　　│Ｏ│  │Ｏ│　　　　/　　　　　　
 　　　　　　　　　 　　╰╮ ╯  ╰ ╭╯　　　　　　　　　　　　
-　　　　　　　　　　　　│　 v　│　　　　　　　　　　　　　
+　　　　　　　　　　　　│  \_/ │　　　　　　　　　　　　　
 　　　　　　　　　　　　│      │　　　　　　　　　　　　　
 　　　　　　　　　　　　│　  　│　　　　　　　　　　　　　
 　　　　　　　　　▕︸︸︸︸︸︸︸︸︸－～　　　　　　　　　
-　　　　　　　　　︷　　　　　　 　▕－～╲　　　　　　　　
-　　　　　　　　╱＞〉　⌒╮　　＿　  ▕　  　╲╲　　　　　　　
-　　　　　　　╱╱  ▕　〈　ノ　╱┐｝  ▕　  　　╲╲　　　　　　
-　 　　　　　╱╱ 　▕　　︶　　＼　｝▕　　　　╲╲　　　　　
-　　　　　╱╱　　  ▕　　　︷　　︶　▕　　　　　╮╮　　　　
-　　　　∠╱　　  　▕　　〈　〉　　　▕　　　　　〈ｉ　　　　
-　　　　□　　　 　▕　　　︶　　　　▕　　　　　▕⌒　　　　''')
-                if modules.motion_control.node is not None:
-                    modules.motion_control.disconnect_thymio()
+　　　　　　　　　︷　　　　　　 　 ▕－～╲　　　　　　　　
+　　　　　　　　╱＞〉　⌒╮　　 　    ▕　  　╲╲　　　　　　　
+　　　　　　　╱╱  ▕　〈　ノ　       ▕　    ╲╲　　　　　　
+　 　　　　　╱╱ 　▕　　︶　　 　    ▕　　　　╲╲　　　　　[/]''')
+                # if modules.motion_control.node is not None:
+                #     modules.motion_control.disconnect_thymio()
                 sys.exit()
 
             elif self.wanted_mode == "No mode":
@@ -164,6 +157,8 @@ class BigBrain:
         elif self.r_asw == "display":
             ui("Here are the choreographies:")
             modules.choreographer.displays_choreography_dict()
+            time.sleep(1)
+            return
 
         elif self.r_asw == "add":
             ui("What is the name of the choreography?")
@@ -218,26 +213,47 @@ class BigBrain:
         """Play a choreography"""
 
         # initialisation of play mode
-        modules.motion_control.init_thymio_connection()
+        if modules.motion_control.node is None:
+            if not modules.motion_control.init_thymio_connection():
+                ui("Do you want to try again? [Y/n]")
+                try_asw = input(">")
+                if try_asw == "y":
+                    pass
+                else:
+                    self.wanted_mode = "No mode"
+                    return
 
-        ui("Do you want to play a choreography or a sequence? [choreography/sequence]")
+        ui(f"Do you want to play a choreography or a sequence?")
         answer = input(">")
 
         if answer == "choreography":
+            modules.choreographer.displays_choreography_dict() # display choreographies
             ui("What is the name of the choreography you want to play?")
             name = input(">")
+            # check if the name is a number
+            name = self.nbr_to_choreography_name(modules, name)
+
             # check if the choreography exists
             if name not in modules.choreographer.choreography_dict:
                 warning("This choreography does not exist")
                 return
             else:
-                ui("In what mode do you want to play the choreography? [loop/once]")
+                ui("In what mode do you want to play the choreography? /loop/mult/once/")
                 play_mode = input(">")
                 # check if the play mode exists
-                if play_mode not in ["loop", "once"]:
+                if play_mode not in ["loop", "mult", "once"]:
                     warning("This play mode does not exist")
                     return
-                ui("What is the speed factor of the choreography? [1-10]")
+                if play_mode == "mult":
+                    ui("How many times do you want to play the choreography?")
+                    nbr_repetition = input(">")
+                    # check if the number of repetition is valid
+                    try:
+                        nbr_repetition = int(nbr_repetition)
+                    except ValueError:
+                        warning("This number of repetition is not valid")
+                        return
+                ui(f"What is the speed factor of the choreography? [{MIN_SPEED_FACTOR}-{MAX_SPEED_FACTOR}]")
                 speed_factor = input(">")
                 # check if the speed factor is valid
                 try:
@@ -245,18 +261,26 @@ class BigBrain:
                 except ValueError:
                     warning("This speed factor is not valid")
                     return
-                if speed_factor not in range(1, 11):
+                if speed_factor not in range(MIN_SPEED_FACTOR, MAX_SPEED_FACTOR + 1):
                     warning("This speed factor is not valid")
                     return
 
                 # play the choreography
-                modules.motion_control.play_choreography(modules.choreographer.choreography_dict[name], speed_factor, play_mode)
+                modules.motion_control.play_choreography(modules.choreographer.choreography_dict[name], speed_factor, play_mode, nbr_repetition)
+                ui("Choreography played!")
+                
 
         elif answer == "sequence":
             ui("not implemented yet")
             pass
 
+        else:
+            ui("I don't understand")
+            time.sleep(1) # USER EXPERIENCE
+    
         self.wanted_mode = "No mode"
+        if modules.motion_control.node is not None:
+                    modules.motion_control.disconnect_thymio()
 
     def info_script(self, modules):
         """Info about the choreographies"""
@@ -277,19 +301,46 @@ class BigBrain:
         if answer == "y":
             ui("What is the name of the choreography you want to know more about?")
             name = input(">")
+            # check if the name is a number
+            name = self.nbr_to_choreography_name(modules, name)
+            
             # check if the choreography exists
-            if name not in modules.choreographer.choreography_dict:
+            if name == None:
+                return
+            elif name not in modules.choreographer.choreography_dict:
                 warning("This choreography does not exist")
                 return
             else:
                 ui("Here is the choreography " + name)
-                choreography_name, speed_factor, path = modules.choreographer.choreography_dict[name].get_info()
-                ui("Name: " + choreography_name)
-                ui("Speed factor: " + str(speed_factor))
-                ui("Path: " + path)
+                choreography_name, description, speed_factor, path = modules.choreographer.choreography_dict[name].get_info()
+                ui(f"Name:           [white]{choreography_name}[/]")
+                ui(f"Description:    [white]{description}[/]")
+                ui(f"Speed factor:   [white]{str(speed_factor)}[/]")
+                ui(f"Path:           [white]{path}[/]")
         
+        elif answer == "n":
+            pass
+
+        elif answer == "quit":
+            self.wanted_mode = "No mode"
+
+        else:
+            return
+
+        time.sleep(1)
         self.wanted_mode = "No mode"
 
-        
+    def nbr_to_choreography_name(self,modules, name):
+        """Convert a number to a choreography name"""
+        try:
+            nbr = int(name)
+            if nbr > len(modules.choreographer.choreography_dict):
+                raise ValueError
+            name = list(modules.choreographer.choreography_dict.keys())[nbr-1]
+            return name
+        except ValueError:
+            warning("This choreography does not exist")
+            return None
+            
 
         

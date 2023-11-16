@@ -2,17 +2,10 @@ from dataclasses import dataclass, field
 from typing import Any
 
 import numpy as np
-import numpy.typing as npt
 
-from app.config import PHYSICAL_SIZE_CM
-from app.path_finding.types import Location, Map
 from app.utils.types import Signal, Vec2
 
-ObstacleQuad = tuple[Vec2, Vec2]
-
-
 OMITTED_KEYS = ["_dirty", "_changes"]
-
 
 class ChangeListener:
     def __init__(self, state: "State"):

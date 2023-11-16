@@ -32,12 +32,15 @@ class MotionControl():
                 # await node.watch(variables=True)
 
             status = None
+            return True
 
         except ConnectionRefusedError:
             warning("Thymio driver connection refused")
+            return False
 
         except ConnectionResetError:
             warning("Thymio driver connection closed")
+            return False
 
         finally:
             if status is not None:
@@ -53,7 +56,7 @@ class MotionControl():
         self.node = None
         info("Thymio node disconnected")
     
-    def play_choreography(self, choreography, speed_factor, play_mode=DEFAULT_PLAY_MODE):
+    def play_choreography(self, choreography, speed_factor, play_mode=DEFAULT_PLAY_MODE, nbr_repetition=0):
         """Play a choreography"""
         if self.node is None:
             error("No Thymio node connected")
@@ -64,6 +67,11 @@ class MotionControl():
         elif play_mode == "once":
             info("Playing choreography once")
             self.play_once(choreography, speed_factor)
+        elif play_mode == "mult":
+            info(f"Playing choreography {nbr_repetition} times")
+            for i in range(nbr_repetition):
+                self.play_once(choreography, speed_factor)
+
         else:
             error("Invalid play mode")
             return

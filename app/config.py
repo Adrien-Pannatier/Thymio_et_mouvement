@@ -27,6 +27,8 @@ T = 0 # time index
 DT = 1 # delta time index
 LS = 2 # left wheel speed index
 RS = 3 # right wheel speed index
+MIN_SPEED_FACTOR = -20
+MAX_SPEED_FACTOR = 20
 
 # == Choreography manager == #
 DEFAULT_SPEED_FACT = 1
