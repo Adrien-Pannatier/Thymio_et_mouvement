@@ -1,5 +1,3 @@
-# todo: add color change if in mode
-# from asyncio import sleep
 from dataclasses import dataclass
 import time
 import sys

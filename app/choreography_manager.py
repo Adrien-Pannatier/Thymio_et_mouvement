@@ -3,8 +3,6 @@
 import os
 import json
 import numpy as np
-from asyncio import sleep
-
 
 from app.utils.console import *
 from app.config import DEFAULT_SPEED_FACT, SLEEP_DURATION, DEFAULT_PATH
