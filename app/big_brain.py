@@ -62,8 +62,10 @@ class BigBrain:
             ), 
             justify="left",
         )
+        time.sleep(1) # USER EXPERIENCE
         ui("Hi! I'm UI, your personal assistant. I am not a real AI, but I can help you with the program.\n"
             + SPC + "Now you are in the mode selection mode, here you can choose between different modes.")
+        time.sleep(1) # USER EXPERIENCE
         print("\n")
         ui("[bold deep_pink4]Here are the modes available:[/]\n"
         + SPC + "[bold white]'record'[/] to record a choreography\n"
@@ -71,6 +73,7 @@ class BigBrain:
         + SPC + "[bold white]'editor'[/] to edit choreographies, create sequences and more\n"
         + SPC + "[bold white]'info'[/] to get information about the choreographies\n"
         + SPC + "[bold white]'quit'[/] to quit the program")
+        time.sleep(1) # USER EXPERIENCE
         print("\n")
         ui("Which mode would you like to select?")
         self.wanted_mode = input(">")
@@ -129,6 +132,7 @@ class BigBrain:
                     justify="left",
                 )
                 ui("Welcome back to the mode selection mode!")
+                time.sleep(1) # USER EXPERIENCE
                 print("\n")
                 ui("[bold deep_pink4]Here are the modes available:[/]\n"
                 + SPC + "[bold white]'record'[/] to record a choreography\n"
@@ -136,6 +140,7 @@ class BigBrain:
                 + SPC + "[bold white]'editor'[/] to edit choreographies, create sequences and more\n"
                 + SPC + "[bold white]'info'[/] to see what sequences and choreographies exist in detail\n"
                 + SPC + "[bold white]'quit'[/] to quit the program")
+                time.sleep(1) # USER EXPERIENCE
                 print("\n")
                 ui("Which mode would you like to select?")
                 self.wanted_mode = input(">")
@@ -184,31 +189,6 @@ class BigBrain:
                 modules.choreographer.create_choreography(name, recorded_choreography)
                 ui("Choreography created! " + name)
             self.r_asw = None
-            
-        
-        elif self.r_asw == "remove":
-            modules.choreographer.displays_choreography_dict()
-            ui("What is the name of the choreography you want to remove?")
-            name = input(">")
-            print("_________________________________________________________________________________________")
-            if name == "quit":
-                self.r_asw = None
-                return
-            # check if the choreography exists
-            if name not in modules.choreographer.choreography_dict:
-                warning("This choreography does not exist")
-                return
-            else:
-                modules.choreographer.delete_choreography(name)
-                ui("Press enter to get back to editor mode")
-                input(">")
-                print("_________________________________________________________________________________________")
-            self.r_asw = None
-            
-
-        elif self.r_asw == "edit":
-            ui("not implemented yet")
-            self.r_asw = None
 
         elif self.r_asw == "debug":
             ui("welcome to the debug mode!")
@@ -235,14 +215,14 @@ class BigBrain:
                 ),
                 justify="left",
             )
+            time.sleep(1) # USER EXPERIENCE
             ui("You are in the recording mode, here you can record new choreographies using the fake thymio. \n"
                 + "           You can also manage the different choreographies")
+            time.sleep(1) # USER EXPERIENCE
             print("\n")
             ui("[bold gold1]Welcome to the recording mode! here is what I can do for you:[/]\n"
             + SPC + "[bold white]'display'[/] to display the choreographies\n"
             + SPC + "[bold white]'add'[/] to add a choreography\n"
-            + SPC + "[bold white]'remove'[/] to remove a choreography\n"
-            + SPC + "[bold white]'edit'[/] to edit a choreography\n"
             + SPC + "[bold white]'debug'[/] to debug the record mode\n"
             + SPC + "[bold white]'quit'[/] to quit the recording mode")
             print("\n")
@@ -271,7 +251,7 @@ class BigBrain:
             ),
             justify="left",
         )      
-
+        time.sleep(1) # USER EXPERIENCE
         ui("[bold chartreuse3]Welcome to the play mode![/]\n"
         + SPC + "here is what I can do for you:\n"
         + SPC + "[bold white]'choreography'[/] to play a choreography\n"
@@ -373,17 +353,17 @@ class BigBrain:
             ),
             justify="left",
         )      
+        time.sleep(1) # USER EXPERIENCE
         ui("Welcome to the editor! In the editor mode, you can edit choreographies, create sequences and more")
         print("\n")
-
+        time.sleep(1) # USER EXPERIENCE
         ui("[bold dark_cyan]Here are the commands available:[/]\n"
-        + SPC + "[bold white]'disp chor'[/] to display the choreographies\n"
-        + SPC + "[bold white]'disp seq'[/] to display the sequences\n"
+        + SPC + "[bold white]'delete chor'[/] to delete a choreography\n"
         + SPC + "[bold white]'create seq'[/] to create a sequence\n"
         + SPC + "[bold white]'delete seq'[/] to delete a sequence\n"
         + SPC + "[bold white]'quit'[/] to quit the editor")
         print("\n")
-
+        time.sleep(1) # USER EXPERIENCE
         ui("What can I do for you?")
         self.e_asw = input(">")
         print("_________________________________________________________________________________________")
@@ -398,6 +378,25 @@ class BigBrain:
             modules.choreographer.displays_sequence_dict()
             time.sleep(1)
             return
+        elif self.e_asw == "delete chor":
+            modules.choreographer.displays_choreography_dict()
+            ui("What is the name/number of the choreography you want to delete?")
+            name = input(">")
+            print("_________________________________________________________________________________________")
+            if name == "quit":
+                self.r_asw = None
+                return
+            # check if the choreography exists
+            if name not in modules.choreographer.choreography_dict:
+                warning("This choreography does not exist")
+                return
+            else:
+                modules.choreographer.delete_choreography(name)
+                ui("Press enter to get back to editor mode")
+                input(">")
+                print("_________________________________________________________________________________________")
+            self.e_asw = None
+
         elif self.e_asw == "create seq":
             sequence_order = []
             ui("How do you want to name your sequence?")
@@ -413,9 +412,12 @@ class BigBrain:
                 print("_________________________________________________________________________________________")
                 correct_seq = False
                 while correct_seq == False:
-                    ui("What is the sequence order? (type the numbers of the choreographies you want to add to the sequence, separated by a '>' sign)\n"
+                    ui("What is the sequence order? (type the numbers of the choreographies you want to add\n"
+                    + SPC + "to the sequence, separated by a '>' sign)\n"
+                    + SPC + "Example: 1>2>3>4\n"
                     + SPC + "Here are the choreographies available:")
                     modules.choreographer.displays_choreography_dict()
+                    ui("once you are done, press enter")
                     sequence_order_str = input(">")
                     print("_________________________________________________________________________________________")
                     if sequence_order_str == "quit":
@@ -432,7 +434,7 @@ class BigBrain:
                         warning("This sequence order is not valid\n")
                         pass
                 modules.choreographer.create_sequence(name, description, sequence_order)
-                ui("Sequence created!")
+                info("Sequence created!")
                 print("\n")
                 ui("Press enter to get back to the editor")
                 input(">")
@@ -441,7 +443,7 @@ class BigBrain:
         elif self.e_asw == "delete seq":
             ui("Here are the sequences:")
             modules.choreographer.displays_sequence_dict()
-            ui("What is the name of the sequence you want to delete?")
+            ui("What is the name/number of the sequence you want to delete?")
             name = input(">")
             print("_________________________________________________________________________________________")
             if name == "quit":
@@ -461,16 +463,19 @@ class BigBrain:
                 print("_________________________________________________________________________________________")
             self.e_asw = None
             return
-
         elif self.e_asw == "quit":
             self.wanted_mode = "No mode"
             self.e_asw = None
             ui("getting back to mode selection")
+            return        
+        else:
+            ui("I don't understand")
+            time.sleep(1) # USER EXPERIENCE
             return
 
     def info_script(self, modules):
         """Info about the choreographies and sequences"""
-        ui("The choreographies available are the following:")
+        ui("The choreographies and sequences available are the following:")
         print("\n")
         modules.choreographer.displays_choreography_dict()
         print("\n")
@@ -479,14 +484,14 @@ class BigBrain:
         print("\n")
         time.sleep(1) # USER EXPERIENCE
 
-        ui("What do you want to know more about? /choreography/sequence/")
-        answer = input(">")
+        ui("Which do you want to know more about? example: 'c1' for choreography 1, 'sname_sequence1' for sequence 'name_sequence1'")
+        entry = input(">")
         print("_________________________________________________________________________________________")
 
-        if answer == "choreography":
-            ui("If you want more information about a choreography, type the name/number of the choreography")
-            name = input(">")
-            print("_________________________________________________________________________________________")
+        answer = entry[0] 
+        name = entry[1:] 
+
+        if answer == "c":
             # check if the name is a number
             if name.isdigit():
                 name = self.nbr_to_choreography_name(modules, name)
@@ -512,7 +517,7 @@ class BigBrain:
             self.wanted_mode = "No mode"
             ui("getting back to mode selection")
             
-        elif answer == "sequence":
+        elif answer == "s":
             ui("If you want more information about a sequence, type the name/number of the sequence")
             name = input(">")
             print("_________________________________________________________________________________________")
