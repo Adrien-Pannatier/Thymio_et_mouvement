@@ -8,6 +8,7 @@ from app.config import *
 from app.process_controler_data import ProcessControlerData
 from app.choreography_manager import ChoreographyManager
 from app.motion_control import MotionControl
+from app.editor import Editor
 from app.utils.console import *
 
 @dataclass
@@ -16,14 +17,18 @@ class Modules:
     process_controler_data: ProcessControlerData
     choreographer: ChoreographyManager
     motion_control: MotionControl
+    editor: Editor
 
 
 class BigBrain:
     def __init__(self):
-        self.wanted_mode = "No mode"
+        self.wanted_mode = "First time"
 
         # record script choices
         self.r_asw = None
+
+        # editor script choice
+        self.e_asw = None
 
     def start_thinking(self):
         self.init()
@@ -43,29 +48,44 @@ class BigBrain:
         process_controler_data = ProcessControlerData()
         choreographer = ChoreographyManager()
         motion_control = MotionControl()
+        editor = Editor()
 
-        return Modules(process_controler_data, choreographer, motion_control)
+        return Modules(process_controler_data, choreographer, motion_control, editor)
 
     def loop(self, modules: Modules):
+        console.print(
+            Padding(
+                Panel(
+                    "[bold deep_pink4] MODE SELECTION "
+                ),
+                (1, 2),
+            ), 
+            justify="left",
+        )
+        ui("Hi! I'm UI, your personal assistant. I am not a real AI, but I can help you with the program.\n"
+            + SPC + "Now you are in the mode selection mode, here you can choose between different modes.")
+        print("\n")
+        ui("[bold deep_pink4]Here are the modes available:[/]\n"
+        + SPC + "[bold white]'record'[/] to record a choreography\n"
+        + SPC + "[bold white]'play'[/] to play a choreography\n"
+        + SPC + "[bold white]'editor'[/] to edit choreographies, create sequences and more\n"
+        + SPC + "[bold white]'info'[/] to get information about the choreographies\n"
+        + SPC + "[bold white]'quit'[/] to quit the program")
+        print("\n")
+        ui("Which mode would you like to select?")
+        self.wanted_mode = input(">")
+        print("_________________________________________________________________________________________")
 
         while True:
 
-            if self.wanted_mode == "help":
-                ui("[bold white]'record'[/] to record a choreography")
-                ui("[bold white]'play'[/] to play a choreography")
-                ui("[bold white]'info'[/] to get information about the choreographies")
-                ui("[bold white]'quit'[/] to quit the program")
-                print("\n")
-                ui("press enter to continue")
-                input(">") 
-                time.sleep(1) # USER EXPERIENCE
-                self.wanted_mode = "No mode"
-
-            elif self.wanted_mode == "record":
+            if self.wanted_mode == "record":
                 self.record_script(modules)
 
             elif self.wanted_mode == "play":
                 self.play_script(modules)
+
+            elif self.wanted_mode == "editor":
+                self.editor_script(modules)
 
             elif self.wanted_mode == "info":
                 self.info_script(modules)
@@ -84,7 +104,7 @@ class BigBrain:
 　　　　　　　　　 　　╭⌒ ╮  ╭⌒ ╮　　　   /　　　　　　　　
 　　　　　　　　　 　　│Ｏ│  │Ｏ│　　　　/　　　　　　
 　　　　　　　　　 　　╰╮ ╯  ╰ ╭╯　　　　　　　　　　　　
-　　　　　　　　　　　　│  \_/ │　　　　　　　　　　　　　
+　　　　　　　　　　　　│   o  │　　　　　　　　　　　　　
 　　　　　　　　　　　　│      │　　　　　　　　　　　　　
 　　　　　　　　　　　　│　  　│　　　　　　　　　　　　　
 　　　　　　　　　▕︸︸︸︸︸︸︸︸︸－～　　　　　　　　　
@@ -92,6 +112,7 @@ class BigBrain:
 　　　　　　　　╱＞〉　⌒╮　　 　    ▕　  　╲╲　　　　　　　
 　　　　　　　╱╱  ▕　〈　ノ　       ▕　    ╲╲　　　　　　
 　 　　　　　╱╱ 　▕　　︶　　 　    ▕　　　　╲╲　　　　　[/]''')
+                time.sleep(3) # USER EXPERIENCE
                 # if modules.motion_control.node is not None:
                 #     modules.motion_control.disconnect_thymio()
                 sys.exit()
@@ -101,14 +122,25 @@ class BigBrain:
                 console.print(
                     Padding(
                         Panel(
-                            "[bold green] MODE SELECTION"
+                            "[bold deep_pink4] MODE SELECTION "
                         ),
                         (1, 2),
-                    ),
+                    ), 
                     justify="left",
                 )
-                ui("What mode would you like to do? (you can type 'help' for more information)")
+                ui("Welcome back to the mode selection mode!")
+                print("\n")
+                ui("[bold deep_pink4]Here are the modes available:[/]\n"
+                + SPC + "[bold white]'record'[/] to record a choreography\n"
+                + SPC + "[bold white]'play'[/] to play a choreography\n"
+                + SPC + "[bold white]'editor'[/] to edit choreographies, create sequences and more\n"
+                + SPC + "[bold white]'info'[/] to see what sequences and choreographies exist in detail\n"
+                + SPC + "[bold white]'quit'[/] to quit the program")
+                print("\n")
+                ui("Which mode would you like to select?")
                 self.wanted_mode = input(">")
+                print("_________________________________________________________________________________________")
+
             
             else:
                 ui("I don't understand")
@@ -122,45 +154,20 @@ class BigBrain:
     def record_script(self, modules: Modules):
         """Record a choreography"""
 
-        console.print(
-            Padding(
-                Panel(
-                    "[bold yellow] RECORDING MODE"
-                ),
-                (1, 2),
-            ),
-            justify="left",
-        )        
-
-        # initialisation of record mode
-        modules.process_controler_data.init_record()
-
-        ui("Welcome to the recording mode!")
-        time.sleep(1) # USER EXPERIENCE
-        ui("What can I do for you? (you can type 'help' for more information)")
-        self.r_asw = input(">")
-
-        if self.r_asw == "help":
-            ui("[bold white]'display'[/] to display the choreographies")
-            ui("[bold white]'add'[/] to add a choreography")
-            ui("[bold white]'remove'[/] to remove a choreography")
-            ui("[bold white]'edit'[/] to edit a choreography")
-            ui("[bold white]'debug'[/] to debug the record mode")
-            ui("[bold white]'quit'[/] to quit the recording mode")
-            ui("press enter to continue")
-            input(">")
-            # return to question in record mode
-            return
-
-        elif self.r_asw == "display":
+        if self.r_asw == "display":
             ui("Here are the choreographies:")
             modules.choreographer.displays_choreography_dict()
             time.sleep(1)
-            return
+            ui("press enter to get back to record mode")
+            input(">")
+            print("_________________________________________________________________________________________")
+            self.r_asw = None
+            pass
 
         elif self.r_asw == "add":
             ui("What is the name of the choreography?")
             name = input(">")
+            print("_________________________________________________________________________________________")
             # check if the choreography already exists
             if name in modules.choreographer.choreography_dict:
                 warning("This choreography already exists")
@@ -168,6 +175,7 @@ class BigBrain:
             else:
                 ui("Press enter to start recording the choreography")
                 input(">")
+                print("_________________________________________________________________________________________")
                 status = console.status("Recording choreography", spinner_style="yellow")
                 status.start()
                 recorded_choreography = modules.process_controler_data.record()
@@ -175,12 +183,16 @@ class BigBrain:
                 # add the choreography to the choreography dictionary
                 modules.choreographer.create_choreography(name, recorded_choreography)
                 ui("Choreography created! " + name)
+            self.r_asw = None
+            
         
         elif self.r_asw == "remove":
+            modules.choreographer.displays_choreography_dict()
             ui("What is the name of the choreography you want to remove?")
             name = input(">")
+            print("_________________________________________________________________________________________")
             if name == "quit":
-                self.r_asw
+                self.r_asw = None
                 return
             # check if the choreography exists
             if name not in modules.choreographer.choreography_dict:
@@ -188,33 +200,90 @@ class BigBrain:
                 return
             else:
                 modules.choreographer.delete_choreography(name)
+                ui("Press enter to get back to editor mode")
+                input(">")
+                print("_________________________________________________________________________________________")
+            self.r_asw = None
+            
 
         elif self.r_asw == "edit":
             ui("not implemented yet")
+            self.r_asw = None
 
         elif self.r_asw == "debug":
             ui("welcome to the debug mode!")
             ui("press enter to start debuging")
             input(">")
+            print("_________________________________________________________________________________________")
             ui("starting debuging")
             modules.process_controler_data.debug()
+            self.r_asw = None
+
+        elif self.r_asw == "quit":
+            self.r_asw = None
+            self.wanted_mode = "No mode"
+            ui("getting back to mode selection")
+            return
+        
+        elif self.r_asw == None:
+            console.print(
+                Padding(
+                    Panel(
+                        "[bold gold1] RECORDING MODE"
+                    ),
+                    (1, 2),
+                ),
+                justify="left",
+            )
+            ui("You are in the recording mode, here you can record new choreographies using the fake thymio. \n"
+                + "           You can also manage the different choreographies")
+            print("\n")
+            ui("[bold gold1]Welcome to the recording mode! here is what I can do for you:[/]\n"
+            + SPC + "[bold white]'display'[/] to display the choreographies\n"
+            + SPC + "[bold white]'add'[/] to add a choreography\n"
+            + SPC + "[bold white]'remove'[/] to remove a choreography\n"
+            + SPC + "[bold white]'edit'[/] to edit a choreography\n"
+            + SPC + "[bold white]'debug'[/] to debug the record mode\n"
+            + SPC + "[bold white]'quit'[/] to quit the recording mode")
+            print("\n")
+
+            # initialisation of record mode
+            modules.process_controler_data.init_record()
+            time.sleep(1) # USER EXPERIENCE
+            ui("What can I do for you?")
+            self.r_asw = input(">")
+            print("_________________________________________________________________________________________")
 
         else:
             ui("I don't understand")
 
         time.sleep(1) # USER EXPERIENCE
-        ui("getting back to mode selection")
-        self.r_asw = None
-        self.wanted_mode = "No mode"
 
     def play_script(self, modules: Modules):
         """Play a choreography"""
+
+        console.print(
+            Padding(
+                Panel(
+                    "[bold chartreuse3]PLAY MODE"
+                ),
+                (1, 2),
+            ),
+            justify="left",
+        )      
+
+        ui("[bold chartreuse3]Welcome to the play mode![/]\n"
+        + SPC + "here is what I can do for you:\n"
+        + SPC + "[bold white]'choreography'[/] to play a choreography\n"
+        + SPC + "[bold white]'sequence'[/] to play a sequence\n"
+        + SPC + "[bold white]'quit'[/] to quit the play mode")
 
         # initialisation of play mode
         if modules.motion_control.node is None:
             if not modules.motion_control.init_thymio_connection():
                 ui("Do you want to try again? [Y/n]")
                 try_asw = input(">")
+                print("_________________________________________________________________________________________")
                 if try_asw == "y":
                     pass
                 else:
@@ -223,13 +292,16 @@ class BigBrain:
 
         ui(f"Do you want to play a choreography or a sequence?")
         answer = input(">")
+        print("_________________________________________________________________________________________")
 
         if answer == "choreography":
             modules.choreographer.displays_choreography_dict() # display choreographies
             ui("What is the name of the choreography you want to play?")
             name = input(">")
+            print("_________________________________________________________________________________________")
             # check if the name is a number
-            name = self.nbr_to_choreography_name(modules, name)
+            if name.isdigit():
+                name = self.nbr_to_choreography_name(modules, name)
 
             # check if the choreography exists
             if name not in modules.choreographer.choreography_dict:
@@ -238,6 +310,7 @@ class BigBrain:
             else:
                 ui("In what mode do you want to play the choreography? /loop/mult/once/")
                 play_mode = input(">")
+                print("_________________________________________________________________________________________")
                 # check if the play mode exists
                 if play_mode not in ["loop", "mult", "once"]:
                     warning("This play mode does not exist")
@@ -245,6 +318,8 @@ class BigBrain:
                 if play_mode == "mult":
                     ui("How many times do you want to play the choreography?")
                     nbr_repetition = input(">")
+                    print("_________________________________________________________________________________________")
+
                     # check if the number of repetition is valid
                     try:
                         nbr_repetition = int(nbr_repetition)
@@ -253,6 +328,8 @@ class BigBrain:
                         return
                 ui(f"What is the speed factor of the choreography? [{MIN_SPEED_FACTOR}-{MAX_SPEED_FACTOR}]")
                 speed_factor = input(">")
+                print("_________________________________________________________________________________________")
+
                 # check if the speed factor is valid
                 try:
                     speed_factor = int(speed_factor)
@@ -272,6 +349,11 @@ class BigBrain:
             ui("not implemented yet")
             pass
 
+        elif answer == "quit":
+            ui("getting back to mode selection")
+            self.wanted_mode = "No mode"
+            return
+
         else:
             ui("I don't understand")
             time.sleep(1) # USER EXPERIENCE
@@ -280,34 +362,143 @@ class BigBrain:
         if modules.motion_control.node is not None:
                     modules.motion_control.disconnect_thymio()
 
-    def info_script(self, modules):
-        """Info about the choreographies"""
-        ui("The choreographies available are the following:")
-        modules.choreographer.displays_choreography_dict()
-        time.sleep(1) # USER EXPERIENCE
-        
-        # check if choreographies exist
-        if len(modules.choreographer.choreography_dict) == 0:
-            ui("There are no choreographies")
-            self.wanted_mode = "No mode"
-            time.sleep(1) # USER EXPERIENCE
-            return
-        
-        ui("Do you want to know more about a choreography? [Y/n]")
-        answer = input(">")
+    def editor_script(self, modules: Modules):
+        """Edit choreographies"""
+        console.print(
+            Padding(
+                Panel(
+                    "[bold dark_cyan] EDITOR MODE"
+                ),
+                (1, 2),
+            ),
+            justify="left",
+        )      
+        ui("Welcome to the editor! In the editor mode, you can edit choreographies, create sequences and more")
+        print("\n")
 
-        if answer == "y":
-            ui("What is the name of the choreography you want to know more about?")
+        ui("[bold dark_cyan]Here are the commands available:[/]\n"
+        + SPC + "[bold white]'disp chor'[/] to display the choreographies\n"
+        + SPC + "[bold white]'disp seq'[/] to display the sequences\n"
+        + SPC + "[bold white]'create seq'[/] to create a sequence\n"
+        + SPC + "[bold white]'delete seq'[/] to delete a sequence\n"
+        + SPC + "[bold white]'quit'[/] to quit the editor")
+        print("\n")
+
+        ui("What can I do for you?")
+        self.e_asw = input(">")
+        print("_________________________________________________________________________________________")
+
+        if self.e_asw == "disp chor":
+            ui("Here are the choreographies:")
+            modules.choreographer.displays_choreography_dict()
+            time.sleep(1)
+            return
+        elif self.e_asw == "disp seq":
+            ui("Here are the sequences:")
+            modules.choreographer.displays_sequence_dict()
+            time.sleep(1)
+            return
+        elif self.e_asw == "create seq":
+            sequence_order = []
+            ui("How do you want to name your sequence?")
             name = input(">")
+            print("_________________________________________________________________________________________")
+            # check if the sequence already exists
+            if name in modules.choreographer.sequence_dict:
+                warning("This sequence already exists")
+                return
+            else:
+                ui("Could you describe the sequence a bit?")
+                description = input(">")
+                print("_________________________________________________________________________________________")
+                correct_seq = False
+                while correct_seq == False:
+                    ui("What is the sequence order? (type the numbers of the choreographies you want to add to the sequence, separated by a '>' sign)\n"
+                    + SPC + "Here are the choreographies available:")
+                    modules.choreographer.displays_choreography_dict()
+                    sequence_order_str = input(">")
+                    print("_________________________________________________________________________________________")
+                    if sequence_order_str == "quit":
+                        return
+                    try: 
+                        sequence_order = sequence_order_str.split(">")
+                        sequence_order = [int(i) for i in sequence_order]
+                        # check if the choreographies exist
+                        for chor in sequence_order:
+                            if chor not in range(1, len(modules.choreographer.choreography_dict) + 1):
+                                raise ValueError
+                        correct_seq = True
+                    except ValueError:
+                        warning("This sequence order is not valid\n")
+                        pass
+                modules.choreographer.create_sequence(name, description, sequence_order)
+                ui("Sequence created!")
+                print("\n")
+                ui("Press enter to get back to the editor")
+                input(">")
+                print("_________________________________________________________________________________________")
+                time.sleep(1)
+        elif self.e_asw == "delete seq":
+            ui("Here are the sequences:")
+            modules.choreographer.displays_sequence_dict()
+            ui("What is the name of the sequence you want to delete?")
+            name = input(">")
+            print("_________________________________________________________________________________________")
+            if name == "quit":
+                self.e_asw = None
+                return
+            # check if name is a number
+            if name.isdigit():
+                name = self.nbr_to_sequence_name(modules, name)
+            # check if the sequence exists
+            if name not in modules.choreographer.sequence_dict:
+                warning("This sequence does not exist")
+                return
+            else:
+                modules.choreographer.delete_sequence(name)
+                ui("Press enter to get back to editor mode")
+                input(">")
+                print("_________________________________________________________________________________________")
+            self.e_asw = None
+            return
+
+        elif self.e_asw == "quit":
+            self.wanted_mode = "No mode"
+            self.e_asw = None
+            ui("getting back to mode selection")
+            return
+
+    def info_script(self, modules):
+        """Info about the choreographies and sequences"""
+        ui("The choreographies available are the following:")
+        print("\n")
+        modules.choreographer.displays_choreography_dict()
+        print("\n")
+        time.sleep(1) # USER EXPERIENCE
+        modules.choreographer.displays_sequence_dict()
+        print("\n")
+        time.sleep(1) # USER EXPERIENCE
+
+        ui("What do you want to know more about? /choreography/sequence/")
+        answer = input(">")
+        print("_________________________________________________________________________________________")
+
+        if answer == "choreography":
+            ui("If you want more information about a choreography, type the name/number of the choreography")
+            name = input(">")
+            print("_________________________________________________________________________________________")
             # check if the name is a number
-            name = self.nbr_to_choreography_name(modules, name)
+            if name.isdigit():
+                name = self.nbr_to_choreography_name(modules, name)
             
             # check if the choreography exists
-            if name == None:
-                return
+            if name == None or name == "quit":
+                pass
+                
             elif name not in modules.choreographer.choreography_dict:
                 warning("This choreography does not exist")
                 return
+            
             else:
                 ui("Here is the choreography " + name)
                 choreography_name, description, speed_factor, path = modules.choreographer.choreography_dict[name].get_info()
@@ -315,18 +506,49 @@ class BigBrain:
                 ui(f"Description:    [white]{description}[/]")
                 ui(f"Speed factor:   [white]{str(speed_factor)}[/]")
                 ui(f"Path:           [white]{path}[/]")
-        
-        elif answer == "n":
-            pass
+                ui("Press enter to get back to mode selection")
+                input(">")
+                print("_________________________________________________________________________________________")
+            self.wanted_mode = "No mode"
+            ui("getting back to mode selection")
+            
+        elif answer == "sequence":
+            ui("If you want more information about a sequence, type the name/number of the sequence")
+            name = input(">")
+            print("_________________________________________________________________________________________")
+            # check if the name is a number
+            if name.isdigit():
+                name = self.nbr_to_sequence_name(modules, name)
+
+            # check if the sequence exists
+            if name == None or name == "quit":
+                pass
+            elif name not in modules.choreographer.sequence_dict:
+                warning("This sequence does not exist")
+                return
+            
+            else:
+                ui("Here is the sequence " + name)
+                sequence_name, description, path, sequence_order = modules.choreographer.sequence_dict[name].get_info()
+                print("\n")
+                ui(f"Name:           [white]{sequence_name}[/]")
+                ui(f"Description:    [white]{description}[/]")
+                ui(f"Path:           [white]{path}[/]")
+                ui(f"Sequence order: [white]{sequence_order}[/]")
+                print("\n")
+                ui("Press enter to get back to mode selection")
+                input(">")
+                print("_________________________________________________________________________________________")
+            self.wanted_mode = "No mode"
+            ui("getting back to mode selection")
 
         elif answer == "quit":
             self.wanted_mode = "No mode"
-
-        else:
-            return
-
+            ui("getting back to mode selection")
+            
+        else :
+            ui("I don't understand")
         time.sleep(1)
-        self.wanted_mode = "No mode"
 
     def nbr_to_choreography_name(self,modules, name):
         """Convert a number to a choreography name"""
@@ -340,5 +562,14 @@ class BigBrain:
             warning("This choreography does not exist")
             return None
             
-
-        
+    def nbr_to_sequence_name(self,modules, name):
+        """Convert a number to a sequence name"""
+        try:
+            nbr = int(name)
+            if nbr > len(modules.choreographer.sequence_dict):
+                raise ValueError
+            name = list(modules.choreographer.sequence_dict.keys())[nbr-1]
+            return name
+        except ValueError:
+            warning("This sequence does not exist")
+            return None

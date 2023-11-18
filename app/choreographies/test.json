@@ -1,5 +1,7 @@
 {
-    "data": [
+    "description": "A simple test of the robot's ability to follow a path",
+
+    "choreography": [
         {
             "time": 0,
             "timestep": 0.1,
