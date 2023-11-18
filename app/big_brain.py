@@ -35,7 +35,7 @@ class BigBrain:
 
         modules = self.init_modules()
         ui("Welcome!")
-        time.sleep(1) # USER EXPERIENCE
+        time.sleep(0.5) # USER EXPERIENCE
         self.loop(modules)
 
     def init(self):
@@ -62,10 +62,10 @@ class BigBrain:
             ), 
             justify="left",
         )
-        time.sleep(1) # USER EXPERIENCE
+        time.sleep(0.5) # USER EXPERIENCE
         ui("Hi! I'm UI, your personal assistant. I am not a real AI, but I can help you with the program.\n"
             + SPC + "Now you are in the mode selection mode, here you can choose between different modes.")
-        time.sleep(1) # USER EXPERIENCE
+        time.sleep(0.5) # USER EXPERIENCE
         print("\n")
         ui("[bold deep_pink4]Here are the modes available:[/]\n"
         + SPC + "[bold white]'record'[/] to record a choreography\n"
@@ -73,7 +73,7 @@ class BigBrain:
         + SPC + "[bold white]'editor'[/] to edit choreographies, create sequences and more\n"
         + SPC + "[bold white]'info'[/] to get information about the choreographies\n"
         + SPC + "[bold white]'quit'[/] to quit the program")
-        time.sleep(1) # USER EXPERIENCE
+        time.sleep(0.5) # USER EXPERIENCE
         print("\n")
         ui("Which mode would you like to select?")
         self.wanted_mode = input(">")
@@ -132,7 +132,7 @@ class BigBrain:
                     justify="left",
                 )
                 ui("Welcome back to the mode selection mode!")
-                time.sleep(1) # USER EXPERIENCE
+                time.sleep(0.5) # USER EXPERIENCE
                 print("\n")
                 ui("[bold deep_pink4]Here are the modes available:[/]\n"
                 + SPC + "[bold white]'record'[/] to record a choreography\n"
@@ -140,7 +140,7 @@ class BigBrain:
                 + SPC + "[bold white]'editor'[/] to edit choreographies, create sequences and more\n"
                 + SPC + "[bold white]'info'[/] to see what sequences and choreographies exist in detail\n"
                 + SPC + "[bold white]'quit'[/] to quit the program")
-                time.sleep(1) # USER EXPERIENCE
+                time.sleep(0.5) # USER EXPERIENCE
                 print("\n")
                 ui("Which mode would you like to select?")
                 self.wanted_mode = input(">")
@@ -149,7 +149,7 @@ class BigBrain:
             
             else:
                 ui("I don't understand")
-                time.sleep(1) # USER EXPERIENCE
+                time.sleep(0.5) # USER EXPERIENCE
                 self.wanted_mode = "No mode"
             
             # os.system("cls")
@@ -162,7 +162,7 @@ class BigBrain:
         if self.r_asw == "display":
             ui("Here are the choreographies:")
             modules.choreographer.displays_choreography_dict()
-            time.sleep(1)
+            time.sleep(0.5)
             ui("press enter to get back to record mode")
             input(">")
             print("_________________________________________________________________________________________")
@@ -215,10 +215,10 @@ class BigBrain:
                 ),
                 justify="left",
             )
-            time.sleep(1) # USER EXPERIENCE
+            time.sleep(0.5) # USER EXPERIENCE
             ui("You are in the recording mode, here you can record new choreographies using the fake thymio. \n"
                 + "           You can also manage the different choreographies")
-            time.sleep(1) # USER EXPERIENCE
+            time.sleep(0.5) # USER EXPERIENCE
             print("\n")
             ui("[bold gold1]Welcome to the recording mode! here is what I can do for you:[/]\n"
             + SPC + "[bold white]'display'[/] to display the choreographies\n"
@@ -229,7 +229,7 @@ class BigBrain:
 
             # initialisation of record mode
             modules.process_controler_data.init_record()
-            time.sleep(1) # USER EXPERIENCE
+            time.sleep(0.5) # USER EXPERIENCE
             ui("What can I do for you?")
             self.r_asw = input(">")
             print("_________________________________________________________________________________________")
@@ -237,7 +237,7 @@ class BigBrain:
         else:
             ui("I don't understand")
 
-        time.sleep(1) # USER EXPERIENCE
+        time.sleep(0.5) # USER EXPERIENCE
 
     def play_script(self, modules: Modules):
         """Play a choreography"""
@@ -251,7 +251,7 @@ class BigBrain:
             ),
             justify="left",
         )      
-        time.sleep(1) # USER EXPERIENCE
+        time.sleep(0.5) # USER EXPERIENCE
         ui("[bold chartreuse3]Welcome to the play mode![/]\n"
         + SPC + "here is what I can do for you:\n"
         + SPC + "[bold white]'choreography'[/] to play a choreography\n"
@@ -336,7 +336,7 @@ class BigBrain:
 
         else:
             ui("I don't understand")
-            time.sleep(1) # USER EXPERIENCE
+            time.sleep(0.5) # USER EXPERIENCE
     
         self.wanted_mode = "No mode"
         if modules.motion_control.node is not None:
@@ -353,17 +353,17 @@ class BigBrain:
             ),
             justify="left",
         )      
-        time.sleep(1) # USER EXPERIENCE
+        time.sleep(0.5) # USER EXPERIENCE
         ui("Welcome to the editor! In the editor mode, you can edit choreographies, create sequences and more")
         print("\n")
-        time.sleep(1) # USER EXPERIENCE
+        time.sleep(0.5) # USER EXPERIENCE
         ui("[bold dark_cyan]Here are the commands available:[/]\n"
         + SPC + "[bold white]'delete chor'[/] to delete a choreography\n"
         + SPC + "[bold white]'create seq'[/] to create a sequence\n"
         + SPC + "[bold white]'delete seq'[/] to delete a sequence\n"
         + SPC + "[bold white]'quit'[/] to quit the editor")
         print("\n")
-        time.sleep(1) # USER EXPERIENCE
+        time.sleep(0.5) # USER EXPERIENCE
         ui("What can I do for you?")
         self.e_asw = input(">")
         print("_________________________________________________________________________________________")
@@ -371,12 +371,12 @@ class BigBrain:
         if self.e_asw == "disp chor":
             ui("Here are the choreographies:")
             modules.choreographer.displays_choreography_dict()
-            time.sleep(1)
+            time.sleep(0.5)
             return
         elif self.e_asw == "disp seq":
             ui("Here are the sequences:")
             modules.choreographer.displays_sequence_dict()
-            time.sleep(1)
+            time.sleep(0.5)
             return
         elif self.e_asw == "delete chor":
             modules.choreographer.displays_choreography_dict()
@@ -439,7 +439,7 @@ class BigBrain:
                 ui("Press enter to get back to the editor")
                 input(">")
                 print("_________________________________________________________________________________________")
-                time.sleep(1)
+                time.sleep(0.5)
         elif self.e_asw == "delete seq":
             ui("Here are the sequences:")
             modules.choreographer.displays_sequence_dict()
@@ -470,7 +470,7 @@ class BigBrain:
             return        
         else:
             ui("I don't understand")
-            time.sleep(1) # USER EXPERIENCE
+            time.sleep(0.5) # USER EXPERIENCE
             return
 
     def info_script(self, modules):
@@ -479,10 +479,10 @@ class BigBrain:
         print("\n")
         modules.choreographer.displays_choreography_dict()
         print("\n")
-        time.sleep(1) # USER EXPERIENCE
+        time.sleep(0.5) # USER EXPERIENCE
         modules.choreographer.displays_sequence_dict()
         print("\n")
-        time.sleep(1) # USER EXPERIENCE
+        time.sleep(0.5) # USER EXPERIENCE
 
         ui("Which do you want to know more about? example: 'c1' for choreography 1, 'sname_sequence1' for sequence 'name_sequence1'")
         entry = input(">")
@@ -553,7 +553,7 @@ class BigBrain:
             
         else :
             ui("I don't understand")
-        time.sleep(1)
+        time.sleep(0.5)
 
     def nbr_to_choreography_name(self,modules, name):
         """Convert a number to a choreography name"""
