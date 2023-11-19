@@ -2,7 +2,7 @@ from app.utils.console import *
 from tdmclient import ClientAsync,aw
 import time
 
-from app.config import PROCESS_MSG_INTERVAL, DEFAULT_PLAY_MODE, T, DT, LS, RS
+from app.config import THYMIO_TO_CM, DEFAULT_PLAY_MODE, T, DT, LS, RS
 
 
 class MotionControl():
@@ -52,9 +52,10 @@ class MotionControl():
             error("No Thymio node connected")
             return
 
+        info("Disconnecting Thymio node")
         aw(self.node.unlock())
         self.node = None
-        info("Thymio node disconnected")
+        info("Thymio node disconnected")        
     
     def play_choreography(self, choreography, speed_factor, play_mode=DEFAULT_PLAY_MODE, nbr_repetition=0):
         """Play a choreography"""
@@ -64,14 +65,10 @@ class MotionControl():
 
         if play_mode == "loop":
             self.play_loop(choreography, speed_factor)
-        elif play_mode == "once":
-            info("Playing choreography once")
-            self.play_once(choreography, speed_factor)
         elif play_mode == "mult":
             info(f"Playing choreography {nbr_repetition} times")
             for i in range(nbr_repetition):
                 self.play_once(choreography, speed_factor)
-
         else:
             error("Invalid play mode")
             return
@@ -85,10 +82,13 @@ class MotionControl():
         """Play a choreography once"""
         step_list = choreography.step_list
         for step in step_list:
-            left_motor_speed = step[LS]*speed_factor
-            right_motor_speed = step[RS]*speed_factor
+            info(step)
+            info(f"sleeping for {step[DT/speed_factor]} seconds")
+            time.sleep(step[DT/speed_factor])
+
+            left_motor_speed = step[LS]*speed_factor/THYMIO_TO_CM # convert the speed from cm/s to thymio speed
+            right_motor_speed = step[RS]*speed_factor/THYMIO_TO_CM
 
             aw(self.node.set_variables(  # apply the control on the wheels
                 {"motor.left.target": [int(left_motor_speed)], "motor.right.target": [int(right_motor_speed)]}))
             
-            time.sleep(step[DT])

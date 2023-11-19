@@ -1,4 +1,4 @@
-from sys import version_info
+from sys import version_info, exit
 
 import numpy as np
 from rich.padding import Padding
@@ -36,7 +36,7 @@ def main():
 
     finally:
         print("")
-
+    
 
 def print_banner():
     """Print the presentation banner."""
@@ -85,3 +85,7 @@ def start():
 
 if __name__ == "__main__":
     main()
+    try:
+        exit()
+    except Exception as e:
+        print(e)

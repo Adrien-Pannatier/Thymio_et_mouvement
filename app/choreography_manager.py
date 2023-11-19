@@ -24,6 +24,14 @@ class ChoreographyManager:
             os.mkdir(DEFAULT_PATH_SEQUENCE)
             info("Sequence folder created")
 
+    def update_database(self):
+        """
+        Updates the database
+        """
+        self.load_choreography_dict()
+        self.load_sequence_dict()
+        info("Database updated")
+
     # CHOREOGRAPHY FUNCTIONS
     def create_choreography(self, name, data_array, description="", path=DEFAULT_PATH_CHOREO, speed_fact=DEFAULT_SPEED_FACT):
         """
@@ -70,12 +78,11 @@ class ChoreographyManager:
         """
         ui(f"[bold red]Are you sure you want to delete the choreography [/][white]{name}[/][bold red]? [Y/n][/]")
         answer = input(">")
-        if answer == "n":
-            return
-        ui(f"[bold orange]Deleting choreography [/][white]{name}[/][bold orange]...[/]")
-        os.remove(self.choreography_dict[name].path)
-        del self.choreography_dict[name]
-        ui(f"[bold green]Choreography [/][white]{name}[/][bold green] deleted![/]")
+        if answer == "y":
+            ui(f"[bold orange]Deleting choreography [/][white]{name}[/][bold orange]...[/]")
+            os.remove(self.choreography_dict[name].path)
+            del self.choreography_dict[name]
+            ui(f"[bold green]Choreography [/][white]{name}[/][bold green] deleted![/]")
 
     def displays_choreography_dict(self):
         """

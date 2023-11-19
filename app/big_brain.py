@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 import time
-import sys
 from rich.padding import Padding
 from rich.panel import Panel
 
@@ -37,6 +36,7 @@ class BigBrain:
         ui("Welcome!")
         time.sleep(0.5) # USER EXPERIENCE
         self.loop(modules)
+
 
     def init(self):
         """Initialise the big brain"""
@@ -116,9 +116,16 @@ class BigBrain:
 　　　　　　　╱╱  ▕　〈　ノ　       ▕　    ╲╲　　　　　　
 　 　　　　　╱╱ 　▕　　︶　　 　    ▕　　　　╲╲　　　　　[/]''')
                 time.sleep(3) # USER EXPERIENCE
-                # if modules.motion_control.node is not None:
-                #     modules.motion_control.disconnect_thymio()
-                sys.exit()
+                if modules.motion_control.node is not None:
+                    print(f"node: {modules.motion_control.node}")
+                    modules.motion_control.disconnect_thymio()
+                    print(f"node: {modules.motion_control.node}")
+                break
+
+            elif self.wanted_mode == "update":
+                info("Updating database...")
+                modules.choreographer.update_database()
+                self.wanted_mode = "No mode"
 
             elif self.wanted_mode == "No mode":
                 """Print the presentation banner."""
@@ -155,6 +162,7 @@ class BigBrain:
             # os.system("cls")
             print("_________________________________________________________________________________________")
 
+        info("Shutting down...")
 
     def record_script(self, modules: Modules):
         """Record a choreography"""
@@ -252,11 +260,12 @@ class BigBrain:
             justify="left",
         )      
         time.sleep(0.5) # USER EXPERIENCE
-        ui("[bold chartreuse3]Welcome to the play mode![/]\n"
-        + SPC + "here is what I can do for you:\n"
+        ui("[bold chartreuse3]Welcome to the play mode![/]\n\n")
+        time.sleep(0.5) # USER EXPERIENCE
+        ui("Here is what I can do for you:\n"
         + SPC + "[bold white]'choreography'[/] to play a choreography\n"
         + SPC + "[bold white]'sequence'[/] to play a sequence\n"
-        + SPC + "[bold white]'quit'[/] to quit the play mode")
+        + SPC + "[bold white]'quit'[/] to quit the play mode\n")
 
         # initialisation of play mode
         if modules.motion_control.node is None:
@@ -269,7 +278,7 @@ class BigBrain:
                 else:
                     self.wanted_mode = "No mode"
                     return
-
+        
         ui(f"Do you want to play a choreography or a sequence?")
         answer = input(">")
         print("_________________________________________________________________________________________")
@@ -280,23 +289,83 @@ class BigBrain:
             name = input(">")
             print("_________________________________________________________________________________________")
             # check if the name is a number
-            if name.isdigit():
-                name = self.nbr_to_choreography_name(modules, name)
+            _, name = self.check_if_number(modules, name, "chor")
 
+            if name == "quit":
+                modules.motion_control.disconnect_thymio()
+                self.wanted_mode = "No mode"
+                ui("getting back to mode selection")
+                return
             # check if the choreography exists
-            if name not in modules.choreographer.choreography_dict:
+            elif name not in modules.choreographer.choreography_dict:
                 warning("This choreography does not exist")
                 return
             else:
-                ui("In what mode do you want to play the choreography? /loop/mult/once/")
+                ui("In what mode do you want to play the choreography? either 'loop' or the number of times you want to play it")
+                nbr_repetition = None
                 play_mode = input(">")
+                print("_________________________________________________________________________________________")
+                # check if play mode is a number
+                if play_mode.isdigit():
+                    if play_mode < 1:
+                        warning("This number of repetition is not valid")
+                        return
+                    else:
+                        play_mode = "mult"
+                        nbr_repetition = int(play_mode)
+                elif play_mode == "quit":
+                    modules.motion_control.disconnect_thymio()
+                    self.wanted_mode = "No mode"
+                    ui("getting back to mode selection")
+                    return
+                elif play_mode == "loop" or play_mode == "mult":
+                    ui(f"What is the speed factor of the choreography? [{MIN_SPEED_FACTOR}-{MAX_SPEED_FACTOR}]")
+                    speed_factor = input(">")
+                    print("_________________________________________________________________________________________")
+                    # check if the speed factor is valid
+                    try:
+                        speed_factor = int(speed_factor)
+                    except ValueError:
+                        warning("This speed factor is not valid")
+                        return
+                    if speed_factor not in range(MIN_SPEED_FACTOR, MAX_SPEED_FACTOR + 1):
+                        warning("This speed factor is not valid")
+                        return
+
+                # play the choreography
+                modules.motion_control.play_choreography(modules.choreographer.choreography_dict[name], speed_factor, play_mode, nbr_repetition)
+                ui("Choreography played!")
+                
+        elif answer == "sequence":
+            ui("What is the name/number of the sequence you want to play?")
+            ui("Here are the sequences:")
+            modules.choreographer.displays_sequence_dict()
+            name = input(">")
+            print("_________________________________________________________________________________________")
+            # check if the name is a number
+            _, name = self.check_if_number(modules, name, "seq")
+            
+            if input == "quit":
+                modules.motion_control.disconnect_thymio()
+                self.wanted_mode = "No mode"
+                ui("getting back to mode selection")
+                return    
+            # check if the sequence exists
+            elif name not in modules.choreographer.sequence_dict:
+                warning("This sequence does not exist")
+                return
+            else:
+                # ui("In what mode do you want to play the sequence? /loop/mult/once/")
+                nbr_repetition = None
+                # play_mode = input(">")
+                play_mode = "once"
                 print("_________________________________________________________________________________________")
                 # check if the play mode exists
                 if play_mode not in ["loop", "mult", "once"]:
                     warning("This play mode does not exist")
                     return
                 if play_mode == "mult":
-                    ui("How many times do you want to play the choreography?")
+                    ui("How many times do you want to play the sequence?")
                     nbr_repetition = input(">")
                     print("_________________________________________________________________________________________")
 
@@ -306,7 +375,7 @@ class BigBrain:
                     except ValueError:
                         warning("This number of repetition is not valid")
                         return
-                ui(f"What is the speed factor of the choreography? [{MIN_SPEED_FACTOR}-{MAX_SPEED_FACTOR}]")
+                ui(f"What is the speed factor of the sequence? [{MIN_SPEED_FACTOR}-{MAX_SPEED_FACTOR}]")
                 speed_factor = input(">")
                 print("_________________________________________________________________________________________")
 
@@ -320,17 +389,21 @@ class BigBrain:
                     warning("This speed factor is not valid")
                     return
 
-                # play the choreography
-                modules.motion_control.play_choreography(modules.choreographer.choreography_dict[name], speed_factor, play_mode, nbr_repetition)
-                ui("Choreography played!")
-                
-
-        elif answer == "sequence":
-            ui("not implemented yet")
-            pass
+                # play the sequence
+                # get the choreographies in the sequence
+                print(modules.choreographer.sequence_dict[name].sequence_l)
+                sequence_order = modules.choreographer.sequence_dict[name].sequence_l
+                for chor in sequence_order:
+                    # transform the number to the name of the choreography
+                    chor = self.nbr_to_choreography_name(modules, str(chor))
+                    modules.motion_control.play_choreography(modules.choreographer.choreography_dict[chor], speed_factor, play_mode)
+                # modules.motion_control.play_sequence(modules.choreographer.sequence_dict[name], speed_factor, play_mode, nbr_repetition)
+                ui("Sequence played!")
 
         elif answer == "quit":
             ui("getting back to mode selection")
+            # disconnect the thymio
+            modules.motion_control.disconnect_thymio()
             self.wanted_mode = "No mode"
             return
 
@@ -383,6 +456,9 @@ class BigBrain:
             ui("What is the name/number of the choreography you want to delete?")
             name = input(">")
             print("_________________________________________________________________________________________")
+
+            # check if name is a number 
+            nbr, name = self.check_if_number(modules, name, "chor")
             if name == "quit":
                 self.r_asw = None
                 return
@@ -391,6 +467,14 @@ class BigBrain:
                 warning("This choreography does not exist")
                 return
             else:
+                # check if a sequence uses this choreography
+                for sequence in modules.choreographer.sequence_dict:
+                    if nbr in modules.choreographer.sequence_dict[sequence].sequence_l:
+                        warning("This choreography is used in a sequence, you can't delete it. Please delete the sequence first")
+                        ui("Press enter to get back to editor mode")
+                        input(">")
+                        print("_________________________________________________________________________________________")
+                        return
                 modules.choreographer.delete_choreography(name)
                 ui("Press enter to get back to editor mode")
                 input(">")
@@ -446,12 +530,11 @@ class BigBrain:
             ui("What is the name/number of the sequence you want to delete?")
             name = input(">")
             print("_________________________________________________________________________________________")
+            # check if name is a number
+            _, name = self.check_if_number(modules, name, "seq")
             if name == "quit":
                 self.e_asw = None
                 return
-            # check if name is a number
-            if name.isdigit():
-                name = self.nbr_to_sequence_name(modules, name)
             # check if the sequence exists
             if name not in modules.choreographer.sequence_dict:
                 warning("This sequence does not exist")
@@ -488,15 +571,21 @@ class BigBrain:
         entry = input(">")
         print("_________________________________________________________________________________________")
 
+        if entry == "quit":
+            self.wanted_mode = "No mode"
+            ui("getting back to mode selection")
+            return
+
         answer = entry[0] 
         name = entry[1:] 
 
         if answer == "c":
-            # check if the name is a number
-            if name.isdigit():
-                name = self.nbr_to_choreography_name(modules, name)
-            
             # check if the choreography exists
+
+
+            # check if the name is a number
+            _, name = self.check_if_number(modules, name, "chor")
+
             if name == None or name == "quit":
                 pass
                 
@@ -518,12 +607,8 @@ class BigBrain:
             ui("getting back to mode selection")
             
         elif answer == "s":
-            ui("If you want more information about a sequence, type the name/number of the sequence")
-            name = input(">")
-            print("_________________________________________________________________________________________")
             # check if the name is a number
-            if name.isdigit():
-                name = self.nbr_to_sequence_name(modules, name)
+            _, name = self.check_if_number(modules, name, "seq")
 
             # check if the sequence exists
             if name == None or name == "quit":
@@ -555,7 +640,31 @@ class BigBrain:
             ui("I don't understand")
         time.sleep(0.5)
 
-    def nbr_to_choreography_name(self,modules, name):
+    def check_if_number(self, modules, entry, seq_or_chor):
+        """Check if an entry is a number
+        @param modules: modules
+        @param entry: entry to check
+        @param seq_or_chor: "seq" or "chor"
+        @return: the number and the name
+        """
+        if entry == "quit":
+            return None, "quit"
+        if entry.isdigit():
+            nbr = entry
+            if seq_or_chor == "seq":
+                name = self.nbr_to_sequence_name(modules, nbr)
+            elif seq_or_chor == "chor":
+                name = self.nbr_to_choreography_name(modules, nbr)
+            return int(nbr), name
+        else:
+            name = entry
+            if seq_or_chor == "seq":
+                nbr = self.sequence_name_to_nbr(modules, name)
+            elif seq_or_chor == "chor":
+                nbr = self.choreography_name_to_nbr(modules, name)
+            return int(nbr), name
+
+    def nbr_to_choreography_name(self, modules,  name):
         """Convert a number to a choreography name"""
         try:
             nbr = int(name)
@@ -567,7 +676,7 @@ class BigBrain:
             warning("This choreography does not exist")
             return None
             
-    def nbr_to_sequence_name(self,modules, name):
+    def nbr_to_sequence_name(self, modules,  name):
         """Convert a number to a sequence name"""
         try:
             nbr = int(name)
@@ -575,6 +684,24 @@ class BigBrain:
                 raise ValueError
             name = list(modules.choreographer.sequence_dict.keys())[nbr-1]
             return name
+        except ValueError:
+            warning("This sequence does not exist")
+            return None
+
+    def choreography_name_to_nbr(self, modules, name):
+        """Convert a choreography name to a number"""
+        try:
+            nbr = list(modules.choreographer.choreography_dict.keys()).index(name) + 1
+            return nbr
+        except ValueError:
+            warning("This choreography does not exist")
+            return None
+
+    def sequence_name_to_nbr(self, modules, name):
+        """Convert a sequence name to a number"""
+        try:
+            nbr = list(modules.choreographer.sequence_dict.keys()).index(name) + 1
+            return nbr
         except ValueError:
             warning("This sequence does not exist")
             return None
