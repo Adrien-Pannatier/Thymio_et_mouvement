@@ -1,0 +1,40 @@
+import json
+import random
+import os
+
+# Define constraints
+min_speed = 0
+max_speed = 10
+max_time = 15
+path = "app/choreographies/"
+
+
+# check which is the highest choreography number
+n = 1
+while os.path.exists(path + f"random_chor{n}.json"):
+    n += 1
+
+description = f"random choreography {n}"
+
+# Create list of time steps
+time_steps = []
+for time in range(max_time):
+    time_step = {
+        "time": time,
+        "timestep": 1,
+        "left_wheel_speed": random.randint(min_speed, max_speed),
+        "right_wheel_speed": random.randint(min_speed, max_speed)
+    }
+    time_steps.append(time_step)
+
+# Create choreography dictionary
+choreography = {
+    "description": description,
+    "choreography": time_steps
+}
+
+
+
+# Write to JSON file
+with open(path + f"random_chor{n}.json", 'w') as f:
+    json.dump(choreography, f)
