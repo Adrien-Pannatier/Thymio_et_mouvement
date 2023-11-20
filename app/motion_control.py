@@ -58,6 +58,7 @@ class MotionControl():
         info("Thymio node disconnected")        
     
     def play_choreography(self, choreography, speed_factor, play_mode=DEFAULT_PLAY_MODE, nbr_repetition=0):
+        
         """Play a choreography"""
         if self.node is None:
             error("No Thymio node connected")
@@ -68,22 +69,29 @@ class MotionControl():
         elif play_mode == "mult":
             info(f"Playing choreography {nbr_repetition} times")
             for i in range(nbr_repetition):
-                self.play_once(choreography, speed_factor)
+                last_dt = self.play_once(choreography, speed_factor)
+            time.sleep(last_dt)
+            aw(self.node.set_variables(  # apply the control on the wheels
+                {"motor.left.target": [int(0)], "motor.right.target": [int(0)]}))
         else:
             error("Invalid play mode")
             return
-        
+
     def play_loop(self, choreography, speed_factor):
         """Play a choreography in loop"""
-        while True:
-            self.play_once(choreography, speed_factor)
+        for i in range(10): # MODIFY TO INFINITE LOOP -----------------------------------------------------------------------------
+            last_dt = self.play_once(choreography, speed_factor)
+        time.sleep(last_dt)
+        aw(self.node.set_variables(  # apply the control on the wheels
+            {"motor.left.target": [int(0)], "motor.right.target": [int(0)]}))
 
     def play_once(self, choreography, speed_factor):
         """Play a choreography once"""
         step_list = choreography.step_list
+        last_dt = step_list[-1][DT/speed_factor]
         for step in step_list:
-            info(step)
-            info(f"sleeping for {step[DT/speed_factor]} seconds")
+            # info(step)
+            # info(f"sleeping for {step[DT/speed_factor]} seconds")
             time.sleep(step[DT/speed_factor])
 
             left_motor_speed = step[LS]*speed_factor/THYMIO_TO_CM # convert the speed from cm/s to thymio speed
@@ -91,4 +99,8 @@ class MotionControl():
 
             aw(self.node.set_variables(  # apply the control on the wheels
                 {"motor.left.target": [int(left_motor_speed)], "motor.right.target": [int(right_motor_speed)]}))
+        
+        return last_dt
+        
+        
             
