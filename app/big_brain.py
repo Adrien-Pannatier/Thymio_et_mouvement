@@ -115,7 +115,7 @@ class BigBrain:
 　　　　　　　　╱＞〉　⌒╮　　 　    ▕　  　╲╲　　　　　　　
 　　　　　　　╱╱  ▕　〈　ノ　       ▕　    ╲╲　　　　　　
 　 　　　　　╱╱ 　▕　　︶　　 　    ▕　　　　╲╲　　　　　[/]''')
-                time.sleep(3) # USER EXPERIENCE
+                time.sleep(1.5) # USER EXPERIENCE
                 if modules.motion_control.node is not None:
                     print(f"node: {modules.motion_control.node}")
                     modules.motion_control.disconnect_thymio()
@@ -277,7 +277,7 @@ class BigBrain:
                     pass
                 else:
                     self.wanted_mode = "No mode"
-                    return
+                return
         
         ui(f"Do you want to play a choreography or a sequence?")
         answer = input(">")
