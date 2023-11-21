@@ -307,13 +307,14 @@ class BigBrain:
                 print("_________________________________________________________________________________________")
                 # check if play mode is a number
                 if play_mode.isdigit():
-                    if play_mode < 1:
+                    nbr_repetition = int(play_mode)
+                    if nbr_repetition < 1:
                         warning("This number of repetition is not valid")
                         return
                     else:
                         play_mode = "mult"
-                        nbr_repetition = int(play_mode)
-                elif play_mode == "quit":
+                
+                if play_mode == "quit":
                     modules.motion_control.disconnect_thymio()
                     self.wanted_mode = "No mode"
                     ui("getting back to mode selection")
@@ -394,9 +395,10 @@ class BigBrain:
                 print(modules.choreographer.sequence_dict[name].sequence_l)
                 sequence_order = modules.choreographer.sequence_dict[name].sequence_l
                 for chor in sequence_order:
+                    play_mode = "mult"
                     # transform the number to the name of the choreography
                     chor = self.nbr_to_choreography_name(modules, str(chor))
-                    modules.motion_control.play_choreography(modules.choreographer.choreography_dict[chor], speed_factor, play_mode)
+                    modules.motion_control.play_choreography(modules.choreographer.choreography_dict[chor], speed_factor, play_mode, nbr_repetition=1)
                 # modules.motion_control.play_sequence(modules.choreographer.sequence_dict[name], speed_factor, play_mode, nbr_repetition)
                 ui("Sequence played!")
 
@@ -662,6 +664,8 @@ class BigBrain:
                 nbr = self.sequence_name_to_nbr(modules, name)
             elif seq_or_chor == "chor":
                 nbr = self.choreography_name_to_nbr(modules, name)
+            if nbr == None:
+                return None, None
             return int(nbr), name
 
     def nbr_to_choreography_name(self, modules,  name):

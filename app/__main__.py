@@ -8,6 +8,7 @@ from app.big_brain import BigBrain
 from app.config import DEBUG, PROCESS_MSG_INTERVAL, RAISE_DEPRECATION_WARNINGS
 from app.utils.console import *
 
+import inspect
 
 VERSION_MAJOR = 3
 VERSION_MINOR = 10

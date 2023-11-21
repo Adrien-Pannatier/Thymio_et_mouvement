@@ -54,6 +54,8 @@ class MotionControl():
 
         info("Disconnecting Thymio node")
         aw(self.node.unlock())
+        # aw(self.node.stop())
+        
         self.node = None
         info("Thymio node disconnected")        
     
@@ -88,11 +90,11 @@ class MotionControl():
     def play_once(self, choreography, speed_factor):
         """Play a choreography once"""
         step_list = choreography.step_list
-        last_dt = step_list[-1][DT/speed_factor]
+        last_dt = step_list[-1][DT]
         for step in step_list:
             # info(step)
             # info(f"sleeping for {step[DT/speed_factor]} seconds")
-            time.sleep(step[DT/speed_factor])
+            time.sleep(step[DT]/speed_factor)
 
             left_motor_speed = step[LS]*speed_factor/THYMIO_TO_CM # convert the speed from cm/s to thymio speed
             right_motor_speed = step[RS]*speed_factor/THYMIO_TO_CM
