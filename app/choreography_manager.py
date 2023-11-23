@@ -211,17 +211,34 @@ class Choreography:
         """
         Graphs the speeds of the choreography
         """
+        ax = plt.gca()
         plt.plot(self.step_list[:,0], self.step_list[:,2], label="left wheel speed")
         plt.plot(self.step_list[:,0], self.step_list[:,3], label="right wheel speed")
-        plt.xlabel("time (s)")
-        plt.ylabel("speed (m/s)")
-        plt.legend()
-        # set de dimensions of the figure
+        # plt.xlabel("time (s)")
+        # plt.ylabel("speed (m/s)")
+        # plt.legend()
+        ax.set(ylabel=None)
+        ax.set(yticklabels=[])
+        ax.set(yticks=[])
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        ax.spines['left'].set_visible(False)
+        ax.set_facecolor("#dbdbdb")
         plt.gcf().set_size_inches(10, 5)
         # plt.show()
-        # save the figure in the assets folder
         plt.savefig(f"app/GUI_assets/temp_fig/{self.name}_light_graph.png")
-        # plt.savefig(f"app/GUI_assets/temp_fig/{self.name}_dark_graph.png")
+        # change background color
+        ax.set_facecolor('#2b2b2b')
+        ax.spines['bottom'].set_color('white')
+        ax.spines['top'].set_color('white')
+        ax.spines['right'].set_color('white')
+        ax.spines['left'].set_color('white')
+        ax.tick_params(axis='x', colors='white')
+        ax.tick_params(axis='y', colors='white')
+        ax.set(ylabel=None)
+        # plt.xlabel("time (s)", color='white')
+        # plt.ylabel("speed (m/s)", color='white')
+        plt.savefig(f"app/GUI_assets/temp_fig/{self.name}_dark_graph.png", transparent=True)   
         plt.clf()
         plt.close()
     

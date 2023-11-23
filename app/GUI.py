@@ -9,6 +9,9 @@ customtkinter.set_default_color_theme("blue")  # Themes: "blue" (standard), "gre
 DARK_COLOR = "#242424"
 LIGHT_COLOR = "#ebebeb"
 
+DEFAULT_LIGHT = "#dbdbdb"
+DEFAULT_DARK = "#2b2b2b"
+
 class App(customtkinter.CTk):
     def __init__(self, modules):
         super().__init__()
@@ -175,11 +178,8 @@ class App(customtkinter.CTk):
         
         # EDIT TAB CREATION ================================================================================================
         # add option menu mode between Manager and Create sequence
-        self.editor_optionemenu = customtkinter.CTkOptionMenu(self.tabview.tab("Edit"), values=["Manage", "Create sequence"], command=self.editor_mode_select_event)
+        self.editor_optionemenu = customtkinter.CTkOptionMenu(self.tabview.tab("Edit"), values=["Manage", "Create Sequence"], command=self.editor_mode_select_event)
         self.editor_optionemenu.place(relx=0.01, rely=0.01, relwidth=0.25, relheight=0.05)
-        # add frame underneath
-        self.editor_frame = customtkinter.CTkFrame(self.tabview.tab("Edit"))
-        self.editor_frame.place(relx=0, rely=0.08, relwidth=1, relheight=0.90)
 
         # SET DEFAULT VALUES ===============================================================================================
         self.appearance_mode_optionemenu.set("Dark")
@@ -476,17 +476,17 @@ class App(customtkinter.CTk):
         if new_editor_mode == "Manage":
             self.editor_display_manage_layout()
         elif new_editor_mode == "Create Sequence":
-            # self.editor_display_create_seq_layout()
-            pass
+            self.editor_manage_delete_layout()
+            self.editor_display_create_seq_layout()
 
     def editor_display_manage_layout(self):
+        # add frame underneath
+        self.editor_frame = customtkinter.CTkFrame(self.tabview.tab("Edit"))
+        self.editor_frame.place(relx=0, rely=0.08, relwidth=1, relheight=0.90)
         # add choregraphy or sequence option underneath
         self.editor_manage_optionemenu = customtkinter.CTkOptionMenu(self.editor_frame, values=["Choreography", "Sequence"], command=self.editor_manage_select_event)
         self.editor_manage_optionemenu.set("Chore or Seq")
         self.editor_manage_optionemenu.place(relx=0.01, rely=0.01, relwidth=0.25, relheight=0.05)
-        # add "list" frame
-        self.editor_manage_label = customtkinter.CTkLabel(self.editor_frame, text="", anchor="w")
-        self.editor_manage_label.place(relx=0.01, rely=0.07)
         self.editor_manage_radiobutton_frame = customtkinter.CTkScrollableFrame(self.editor_frame)
         self.editor_manage_radiobutton_frame.place(relx=0.01, rely=0.13, relwidth=0.33, relheight=0.75)
         self.editor_manage_radio_var = tkinter.IntVar(value=0)
@@ -497,7 +497,7 @@ class App(customtkinter.CTk):
         self.editor_manage_title_label.place(relx=0.38, rely=0.02, relwidth=0.25, relheight=0.05)
 
         # add buttons frame underneath
-        self.editor_manage_buttons_frame = customtkinter.CTkFrame(self.editor_frame)
+        self.editor_manage_buttons_frame = customtkinter.CTkFrame(self.editor_frame, fg_color=(DEFAULT_LIGHT, DEFAULT_DARK))
         self.editor_manage_buttons_frame.place(relx=0.4, rely=0.13, relwidth=0.55, relheight=0.10)
         # add delete button and trim button inside
         self.editor_manage_delete_button = customtkinter.CTkButton(self.editor_manage_buttons_frame, text="🗑", command=self.editor_manage_delete_event)
@@ -506,16 +506,16 @@ class App(customtkinter.CTk):
         self.editor_manage_trim_button.place(relx=0.2, rely=0.5, relwidth=0.15, relheight=0.7, anchor="w")
 
         # add graph display underneath
-        self.editor_manage_graph_frame = customtkinter.CTkFrame(self.editor_frame)
+        self.editor_manage_graph_frame = customtkinter.CTkFrame(self.editor_frame, fg_color=(DEFAULT_LIGHT, DEFAULT_DARK))
         self.editor_manage_graph_frame.place(relx=0.4, rely=0.25, relwidth=0.55, relheight=0.5)
         # add image inside
         self.editor_manage_graph_image = Image.open("app\\GUI_assets\\thymio-nuitg.jpg")
-        self.editor_manage_graph_image = customtkinter.CTkImage(self.editor_manage_graph_image,  size=(400,200))
+        self.editor_manage_graph_image = customtkinter.CTkImage(self.editor_manage_graph_image,  size=(300,200))
         self.editor_manage_graph_image_label = customtkinter.CTkLabel(self.editor_manage_graph_frame, image=self.editor_manage_graph_image, text="")
         self.editor_manage_graph_image_label.place(relx=0.5, rely=0.5, relwidth=0.98, relheight=0.98, anchor="center")
 
         # add trim sliders frame underneath
-        self.editor_manage_trim_frame = customtkinter.CTkFrame(self.editor_frame)
+        self.editor_manage_trim_frame = customtkinter.CTkFrame(self.editor_frame, fg_color=(DEFAULT_LIGHT, DEFAULT_DARK))
         self.editor_manage_trim_frame.place(relx=0.4, rely=0.77, relwidth=0.55, relheight=0.20)
         
     def editor_manage_select_event(self, new_editor_manage_mode: str):
@@ -581,12 +581,13 @@ class App(customtkinter.CTk):
         # get the choreography name
         name = self.choreographies_list[index] 
         self.editor_manage_graph_image_light = Image.open(f"app/GUI_assets/temp_fig/{name}_light_graph.png") # open the image
-        self.editor_manage_graph_image_light = customtkinter.CTkImage(self.editor_manage_graph_image_light, size=(400,200)) # convert the image to tkinter format
-        self.editor_manage_graph_image_label.configure(image=self.editor_manage_graph_image_light) # display the image
+        self.editor_manage_graph_image_dark = Image.open(f"app/GUI_assets/temp_fig/{name}_dark_graph.png") # open the image
+        self.editor_manage_graph_image = customtkinter.CTkImage(light_image=self.editor_manage_graph_image_light, dark_image=self.editor_manage_graph_image_dark, size=(400,200)) # convert the image to tkinter format
+        self.editor_manage_graph_image_label.configure(image=self.editor_manage_graph_image) # display the image
 
         # add two sliders in the slider box for start and end of trim
         self.editor_manage_trim_start_label = customtkinter.CTkLabel(self.editor_manage_trim_frame, text="Start:", anchor="w")
-        self.editor_manage_trim_start_label.place(relx=0.01, rely=0.01, relwidth=0.98, relheight=0.2)
+        self.editor_manage_trim_start_label.place(relx=0.01, rely=0.1, relwidth=0.98, relheight=0.2)
         self.editor_manage_trim_start_slider_var = tkinter.IntVar(value=0)
         self.editor_manage_trim_start_slider = customtkinter.CTkSlider(self.editor_manage_trim_frame, orientation="horizontal", variable=self.editor_manage_trim_start_slider_var, command=self.editor_manage_trim_start_event)
         self.editor_manage_trim_start_slider.configure()
@@ -613,6 +614,91 @@ class App(customtkinter.CTk):
         self.editor_manage_graph_image = Image.open("app\\GUI_assets\\thymio-nuitg.jpg")
         self.editor_manage_graph_image = customtkinter.CTkImage(self.editor_manage_graph_image, size=(400,200))
         self.editor_manage_graph_image_label.configure(image=self.editor_manage_graph_image)
+
+    def editor_manage_delete_layout(self):
+        # removes all the manage frames if any
+        if hasattr(self, "editor_frame"):
+            self.editor_frame.destroy()
+
+    # sequence creator
+    def editor_display_create_seq_layout(self):
+        # add frame underneath
+        self.editor_frame = customtkinter.CTkFrame(self.tabview.tab("Edit"))
+        self.editor_frame.place(relx=0, rely=0.08, relwidth=1, relheight=0.90)
+        # add "choreography list" frame
+        self.editor_create_seq_chor_label = customtkinter.CTkLabel(self.editor_frame, text="Choreographies ", anchor="w")
+        self.editor_create_seq_chor_label.place(relx=0.01, rely=0.07)
+        self.editor_create_seq_chor_radiobutton_frame = customtkinter.CTkScrollableFrame(self.editor_frame, fg_color=(LIGHT_COLOR, DARK_COLOR))
+        self.editor_create_seq_chor_radiobutton_frame.place(relx=0.01, rely=0.13, relwidth=0.33, relheight=0.35)
+        self.editor_create_seq_chor_radio_var = tkinter.IntVar(value=-1)
+        self.editor_create_seq_scrollable_frame_chor = []
+        for i in range(len(self.choreographies_list)):
+            newbutton = customtkinter.CTkRadioButton(master=self.editor_create_seq_chor_radiobutton_frame, corner_radius=0, state="disabled", radiobutton_width=5, radiobutton_height=5, variable=self.editor_create_seq_chor_radio_var, value=i, text=self.choreographies_list[i], command=self.editor_create_seq_refresh_info_chor)
+            newbutton.grid(row=i, column=0, padx=10, pady=(0, 10), sticky="w")
+            self.scrollable_frame_chor.append(newbutton)
+        # add "sequence list" frame
+        self.editor_create_seq_seq_label = customtkinter.CTkLabel(self.editor_frame, text="Sequences ", anchor="w")
+        self.editor_create_seq_seq_label.place(relx=0.01, rely=0.55)
+        self.editor_create_seq_seq_radiobutton_frame = customtkinter.CTkScrollableFrame(self.editor_frame, fg_color=(LIGHT_COLOR, DARK_COLOR))
+        self.editor_create_seq_seq_radiobutton_frame.place(relx=0.01, rely=0.61, relwidth=0.33, relheight=0.35)
+        self.editor_create_seq_seq_radio_var = tkinter.IntVar(value=-1)
+        self.editor_create_seq_scrollable_frame_seq = []
+        for i in range(len(self.sequences_list)):
+            newbutton = customtkinter.CTkRadioButton(master=self.editor_create_seq_seq_radiobutton_frame, corner_radius=0, state="disabled", radiobutton_width=5, radiobutton_height=5, variable=self.editor_create_seq_seq_radio_var, value=i, text=self.sequences_list[i], command=self.editor_create_seq_refresh_info_seq)
+            newbutton.grid(row=i, column=0, padx=10, pady=(0, 10), sticky="w")
+            self.scrollable_frame_seq.append(newbutton)
+
+        # add title on the right
+        self.editor_create_seq_title_label = customtkinter.CTkLabel(self.editor_frame, text="CREATE SEQUENCE MODE", font=customtkinter.CTkFont(size=20, weight="bold"), anchor="center")
+        self.editor_create_seq_title_label.place(relx=0.38, rely=0.02, relwidth=0.6, relheight=0.05)
+
+        # add sequence settings frame underneath
+        self.editor_create_seq_settings_frame = customtkinter.CTkFrame(self.editor_frame, fg_color=(LIGHT_COLOR, DARK_COLOR))
+        self.editor_create_seq_settings_frame.place(relx=0.4, rely=0.13, relwidth=0.55, relheight=0.5)
+        # add name label inside
+        self.editor_create_seq_name_label = customtkinter.CTkLabel(self.editor_create_seq_settings_frame, text="Name:", anchor="w")
+        self.editor_create_seq_name_label.place(relx=0.01, rely=0.01, relwidth=0.98, relheight=0.2)
+        # add name entry inside
+        self.editor_create_seq_name_entry = customtkinter.CTkEntry(self.editor_create_seq_settings_frame)
+        self.editor_create_seq_name_entry.place(relx=0.1, rely=0.2, relwidth=0.8, relheight=0.1)
+        # add description label inside
+        self.editor_create_seq_description_label = customtkinter.CTkLabel(self.editor_create_seq_settings_frame, text="Description:", anchor="w")
+        self.editor_create_seq_description_label.place(relx=0.01, rely=0.4, relwidth=0.98, relheight=0.2)
+        # add description textbox inside
+        self.editor_create_seq_description_textbox = customtkinter.CTkTextbox(self.editor_create_seq_settings_frame)
+        self.editor_create_seq_description_textbox.place(relx=0.05, rely=0.6, relwidth=0.9, relheight=0.3)
+
+        # add sequence order frame underneath
+        self.editor_create_seq_order_frame = customtkinter.CTkFrame(self.editor_frame, fg_color=(LIGHT_COLOR, DARK_COLOR))
+        self.editor_create_seq_order_frame.place(relx=0.4, rely=0.65, relwidth=0.55, relheight=0.2)
+        # add sequence order button inside
+        self.editor_create_seq_order_button = customtkinter.CTkButton(self.editor_create_seq_order_frame, text="Create Sequence", command=self.editor_create_seq_order_event)
+        self.editor_create_seq_order_button.place(relx=0.01, rely=0.5, relwidth=0.98, relheight=0.9, anchor="w")
+
+        
+
+    def editor_create_seq_refresh_info_chor(self):
+        pass
+    
+    def editor_create_seq_refresh_info_seq(self):
+        pass
+
+    def editor_create_seq_order_event(self):
+        # create input dialog
+        # get the name
+        name = self.editor_create_seq_name_entry.get()
+        if name == "":
+            tkinter.messagebox.showwarning("Warning", "Please enter a name")
+            return
+        # create input dialog
+        self.editor_create_dialog = customtkinter.CTkInputDialog(text=f"Sequence order for: {name}", title="Create Sequence")
+        sequence_string = self.editor_create_dialog.get_input()
+        print(sequence_string)
+        
+    def editor_create_seq_order_dialog_event(self, button):
+        pass
+        
+
 
 class Gui:
     def __init__(self, modules):
