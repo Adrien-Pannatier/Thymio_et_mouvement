@@ -1,10 +1,13 @@
 import tkinter
 import tkinter.messagebox
 import customtkinter
+from PIL import Image
 
 customtkinter.set_appearance_mode("System")  # Modes: "System" (standard), "Dark", "Light"
 customtkinter.set_default_color_theme("blue")  # Themes: "blue" (standard), "green", "dark-blue"
 
+DARK_COLOR = "#242424"
+LIGHT_COLOR = "#ebebeb"
 
 class App(customtkinter.CTk):
     def __init__(self, modules):
@@ -69,7 +72,7 @@ class App(customtkinter.CTk):
         # add "choreography list" frame
         self.chor_label = customtkinter.CTkLabel(self.tabview.tab("Info"), text="Choreographies ", anchor="w")
         self.chor_label.place(relx=0.01, rely=0.07)
-        self.chor_radiobutton_frame = customtkinter.CTkScrollableFrame(self.tabview.tab("Info"))
+        self.chor_radiobutton_frame = customtkinter.CTkScrollableFrame(self.tabview.tab("Info"), fg_color=(LIGHT_COLOR, DARK_COLOR))
         self.chor_radiobutton_frame.place(relx=0.01, rely=0.13, relwidth=0.33, relheight=0.35)
         self.chor_radio_var = tkinter.IntVar(value=0)
         self.scrollable_frame_chor = []
@@ -92,7 +95,7 @@ class App(customtkinter.CTk):
         # add "sequence list" frame
         self.seq_label = customtkinter.CTkLabel(self.tabview.tab("Info"), text="Sequences ", anchor="w")
         self.seq_label.place(relx=0.01, rely=0.55)
-        self.seq_radiobutton_frame = customtkinter.CTkScrollableFrame(self.tabview.tab("Info"))
+        self.seq_radiobutton_frame = customtkinter.CTkScrollableFrame(self.tabview.tab("Info"), fg_color=(LIGHT_COLOR, DARK_COLOR))
         self.seq_radiobutton_frame.place(relx=0.01, rely=0.61, relwidth=0.33, relheight=0.35)
         self.seq_radio_var = tkinter.IntVar(value=0)
         self.scrollable_frame_seq = []
@@ -118,33 +121,82 @@ class App(customtkinter.CTk):
         # add "list" frame
         self.play_label = customtkinter.CTkLabel(self.tabview.tab("Play"), text="", anchor="w")
         self.play_label.place(relx=0.01, rely=0.07)
-        self.play_radiobutton_frame = customtkinter.CTkScrollableFrame(self.tabview.tab("Play"))
+        self.play_radiobutton_frame = customtkinter.CTkScrollableFrame(self.tabview.tab("Play"), fg_color=(LIGHT_COLOR, DARK_COLOR))
         self.play_radiobutton_frame.place(relx=0.01, rely=0.13, relwidth=0.33, relheight=0.75)
         self.play_radio_var = tkinter.IntVar(value=0)
         self.scrollable_frame_play = []
 
         # add title on the right
         self.play_title_label = customtkinter.CTkLabel(self.tabview.tab("Play"), text="PLAY MODE", font=customtkinter.CTkFont(size=20, weight="bold"))
-        self.play_title_label.place(relx=0.4, rely=0.01, relwidth=0.25, relheight=0.05)
+        # self.play_title_label.place(relx=0.4, rely=0.01, relwidth=0.25, relheight=0.05)
+        self.play_title_label.place(relx=0.38, rely=0.02, relwidth=0.25, relheight=0.05)
 
-        # add settings frame underneath
-        self.play_settings_frame = customtkinter.CTkFrame(self.tabview.tab("Play"), fg_color="#c5deea")
-        self.play_settings_frame.place(relx=0.4, rely=0.07, relwidth=0.55, relheight=0.35)
 
-        # add play frame underneath
-        self.play_play_frame = customtkinter.CTkFrame(self.tabview.tab("Play"), fg_color="#c5deea")
-        self.play_play_frame.place(relx=0.4, rely=0.53, relwidth=0.55, relheight=0.10)
-        # add play pause and stop buttons
-        self.play_play_button = customtkinter.CTkButton(self.play_play_frame, text="▶️", command=self.play)
-        self.play_play_button.place(relx=0.01, rely=0.5, relwidth=0.25, relheight=0.98, anchor="w")
-        self.play_pause_button = customtkinter.CTkButton(self.play_play_frame, text="⏸️", command=self.pause)
-        self.play_pause_button.place(relx=0.5, rely=0.5, relwidth=0.25, relheight=0.98, anchor="center")
-        self.play_stop_button = customtkinter.CTkButton(self.play_play_frame, text="⏹️", command=self.stop)
-        self.play_stop_button.place(relx=0.99, rely=0.5, relwidth=0.25, relheight=0.98, anchor="e")
+        # add thymio connection status frame underneath
+        self.play_thymio_status_frame = customtkinter.CTkFrame(self.tabview.tab("Play"))
+        self.play_thymio_status_frame.place(relx=0.4, rely=0.77, relwidth=0.55, relheight=0.10)
+        # add thymio connection status label
+        self.play_thymio_status_label = customtkinter.CTkLabel(self.play_thymio_status_frame, text="Thymio status: Not connected", anchor="w")
+        self.play_thymio_status_label.place(relx=0.01, rely=0.5, relwidth=0.98, relheight=0.48, anchor="w")
+        # add connect slider
+        self.play_connect_slider = customtkinter.CTkSwitch(self.play_thymio_status_frame, text="", command=self.play_connect_event)
+        self.play_connect_slider.place(relx=0.99, rely=0.5, relwidth=0.25, relheight=0.98, anchor="e")
 
-        # add progress frame underneath
-        self.play_progress_frame = customtkinter.CTkFrame(self.tabview.tab("Play"), fg_color="#c5deea")
-        self.play_progress_frame.place(relx=0.4, rely=0.65, relwidth=0.55, relheight=0.10)
+        # RECORD TAB CREATION ==============================================================================================
+        # add settings frame on the left
+        self.record_settings_frame = customtkinter.CTkFrame(self.tabview.tab("Record"), fg_color=(LIGHT_COLOR, DARK_COLOR))
+        self.record_settings_frame.place(relx=0.02, rely=0.02, relwidth=0.35, relheight=0.98)
+        # add name label inside
+        self.record_name_label = customtkinter.CTkLabel(self.record_settings_frame, text="Name:", anchor="w")
+        self.record_name_label.place(relx=0.01, rely=0.01, relwidth=0.98, relheight=0.05)
+        # add name entry inside
+        self.record_name_entry = customtkinter.CTkEntry(self.record_settings_frame)
+        self.record_name_entry.place(relx=0.1, rely=0.07, relwidth=0.8, relheight=0.05)
+        # add description label inside
+        self.record_description_label = customtkinter.CTkLabel(self.record_settings_frame, text="Description:", anchor="w")
+        self.record_description_label.place(relx=0.01, rely=0.13, relwidth=0.98, relheight=0.05)
+        # add description textbox inside
+        self.record_description_textbox = customtkinter.CTkTextbox(self.record_settings_frame)
+        self.record_description_textbox.place(relx=0.05, rely=0.19, relwidth=0.9, relheight=0.2)
+
+        # add title on the top right
+        self.record_title_label = customtkinter.CTkLabel(self.tabview.tab("Record"), text="RECORD MODE", font=customtkinter.CTkFont(size=20, weight="bold"))
+        self.record_title_label.place(relx=0.4, rely=0.02, relwidth=0.25, relheight=0.05)
+
+        # add server status frame underneath
+        self.record_server_status_frame = customtkinter.CTkFrame(self.tabview.tab("Record"))
+        self.record_server_status_frame.place(relx=0.4, rely=0.93, relwidth=0.55, relheight=0.05)
+        # add server status label
+        self.record_server_status_label = customtkinter.CTkLabel(self.record_server_status_frame, text="Server status: Not running", anchor="w")
+        self.record_server_status_label.place(relx=0.01, rely=0.5, relwidth=0.98, relheight=0.48, anchor="w")
+        # add server slider
+        self.record_server_slider = customtkinter.CTkSwitch(self.record_server_status_frame, text="", command=self.record_server_event)
+        self.record_server_slider.place(relx=0.99, rely=0.5, relwidth=0.25, relheight=0.98, anchor="e")
+        
+        # EDIT TAB CREATION ================================================================================================
+        # add option menu mode between Manager and Create sequence
+        self.editor_optionemenu = customtkinter.CTkOptionMenu(self.tabview.tab("Edit"), values=["Manage", "Create sequence"], command=self.editor_mode_select_event)
+        self.editor_optionemenu.place(relx=0.01, rely=0.01, relwidth=0.25, relheight=0.05)
+        # add frame underneath
+        self.editor_frame = customtkinter.CTkFrame(self.tabview.tab("Edit"))
+        self.editor_frame.place(relx=0, rely=0.08, relwidth=1, relheight=0.90)
+
+        # SET DEFAULT VALUES ===============================================================================================
+        self.appearance_mode_optionemenu.set("Dark")
+        self.scaling_optionemenu.set("100%")
+        self.mode_optionemenu.set("Tool")
+        self.play_optionemenu.set("Choreography")
+        self.editor_optionemenu.set("Manage")
+        # lock window size
+        self.resizable(False, False)
+        # put info buttons to zero
+        self.chor_radio_var.set(-1)
+        self.seq_radio_var.set(-1)
+        # deselect all optionmenu
+        
+
+
+
 
 
     def mode_select_event(self, new_mode: str):
@@ -157,7 +209,15 @@ class App(customtkinter.CTk):
         new_scaling_float = int(new_scaling.replace("%", "")) / 100
         customtkinter.set_widget_scaling(new_scaling_float)
 
-    # INFO METHODS
+
+
+
+
+
+
+
+
+    # INFO METHODS --------------------------------------------------------------------------------------------------------
     def refresh(self):
         # asl choreographer for loading
         self.modules.choreographer.update_database()
@@ -195,10 +255,10 @@ class App(customtkinter.CTk):
             newbutton = customtkinter.CTkRadioButton(master=self.chor_radiobutton_frame, variable=self.chor_radio_var, value=i, text=self.choreographies_list[i], command=self.refresh_info_chor)
             newbutton.grid(row=i, column=0, padx=10, pady=(0, 10),sticky="w")
             self.scrollable_frame_chor.append(newbutton)
+        self.chor_radio_var.set(-1)
+
 
     def remove_choreography(self, index):
-        self.scrollable_frame_chor[index].destroy()
-        self.scrollable_frame_chor.pop(index)
         self.choreographies_list.pop(index)
         self.refresh_choreographies_list()
 
@@ -211,9 +271,9 @@ class App(customtkinter.CTk):
             newbutton = customtkinter.CTkRadioButton(master=self.seq_radiobutton_frame, variable=self.seq_radio_var, value=i, text=self.sequences_list[i], command=self.refresh_info_seq)
             newbutton.grid(row=i, column=0, padx=10, pady=(0, 10),sticky="w")
             self.scrollable_frame_chor.append(newbutton)
+        self.seq_radio_var.set(-1)
 
     def remove_sequence(self, index):
-        self.seq_radio_button.destroy()
         self.sequences_list.pop(index)
         self.refresh_sequences_list()
 
@@ -230,9 +290,10 @@ class App(customtkinter.CTk):
             button.destroy()
         self.scrollable_frame_play = []
         for i in range(len(self.choreographies_list)):
-            newbutton = customtkinter.CTkRadioButton(master=self.play_radiobutton_frame, variable=self.play_radio_var, value=i, text=self.choreographies_list[i], command=self.refresh_info_chor)
+            newbutton = customtkinter.CTkRadioButton(master=self.play_radiobutton_frame, variable=self.play_radio_var, value=i, text=self.choreographies_list[i], command=self.refresh_play_info)
             newbutton.grid(row=i, column=0, padx=10, pady=(0, 10),sticky="w")
             self.scrollable_frame_play.append(newbutton)
+        self.play_radio_var.set(-1)
     
     def play_refresh_seq_list(self):
         # remove all buttons
@@ -240,18 +301,318 @@ class App(customtkinter.CTk):
             button.destroy()
         self.scrollable_frame_play = []
         for i in range(len(self.sequences_list)):
-            newbutton = customtkinter.CTkRadioButton(master=self.play_radiobutton_frame, variable=self.play_radio_var, value=i, text=self.sequences_list[i], command=self.refresh_info_seq)
+            newbutton = customtkinter.CTkRadioButton(master=self.play_radiobutton_frame, variable=self.play_radio_var, value=i, text=self.sequences_list[i], command=self.refresh_play_info)
             newbutton.grid(row=i, column=0, padx=10, pady=(0, 10),sticky="w")
             self.scrollable_frame_play.append(newbutton)
+        self.play_radio_var.set(-1)
+
+    def refresh_play_info(self):
+        # get the new play mode
+        play_mode = self.play_optionemenu.get()
+        # get the selection
+        index = self.play_radio_var.get()
+        # get the connection status
+        connection_status = self.play_connect_slider.get()
+        if connection_status == True:
+            if play_mode == "Choreography":
+                name = self.choreographies_list[index]
+                choreography_name, _, speed_factor, _ = self.modules.choreographer.choreography_dict[name].get_info()
+                self.play_chor_name_label.configure(text=f"Name:\t\t\t\t{choreography_name}")
+                # show the speed factor entry
+                self.play_speed_factor_entry.configure(state="normal")
+                self.play_speed_factor_entry.delete(0, "end")
+                self.play_speed_factor_entry.insert(0, str(speed_factor))
+                self.play_speed_factor_entry.configure(fg_color = ("#f9f9fa","#343638"))
+            elif play_mode == "Sequence":
+                name = self.sequences_list[index]
+                sequence_name, _, _, _ = self.modules.choreographer.sequence_dict[name].get_info()
+                self.play_chor_name_label.configure(text=f"Name:\t\t\t\t{sequence_name}")
+                # lock the speed factor entry
+                self.play_speed_factor_entry.delete(0, "end")
+                self.play_speed_factor_entry.configure(state="disabled")
+                # change the color of the entry
+                self.play_speed_factor_entry.configure(fg_color = (LIGHT_COLOR,DARK_COLOR))
+            
+        
+    def play_loop_event(self):
+        # get the loop status
+        loop_tick_status = self.play_loop_checkbox.get()
+        if loop_tick_status == True:
+            # lock the nbr repetitions entry
+            self.play_nbr_repetition_entry.delete(0, "end")
+            self.play_nbr_repetition_entry.configure(state="disabled")
+            # change the color of the entry
+            self.play_nbr_repetition_entry.configure(fg_color = (LIGHT_COLOR,DARK_COLOR))
+        elif loop_tick_status == False:
+            # unlock the nbr repetitions entry
+            self.play_nbr_repetition_entry.configure(state="normal")
+            self.play_nbr_repetition_entry.delete(0, "end")
+            # change the color of the entry
+            self.play_nbr_repetition_entry.configure(fg_color = ("#f9f9fa","#343638"))
+
+    def play_connect_event(self):
+        # get the connection status
+        connection_status = self.play_connect_slider.get()  
+        if connection_status == True:
+            # try to connect to the thymio
+            self.play_thymio_status_label.configure(text="Thymio status: Connected")
+            self.display_play_layout()
+        elif connection_status == False:
+            # disconnect from the thymio
+            self.play_thymio_status_label.configure(text="Thymio status: Not connected")
+            self.remove_play_layout()
+
+    def display_play_layout(self):
+        # add settings frame underneath
+        self.play_settings_frame = customtkinter.CTkFrame(self.tabview.tab("Play"))
+        self.play_settings_frame.place(relx=0.4, rely=0.07, relwidth=0.55, relheight=0.35)
+        # add settings widgets
+        # add choreography name label
+        self.play_chor_name_label = customtkinter.CTkLabel(self.play_settings_frame, text="Name:", anchor="w")
+        self.play_chor_name_label.place(relx=0.01, rely=0.1, relwidth=0.98, relheight=0.15)
+        # add speed factor entry
+        self.play_speed_factor_label = customtkinter.CTkLabel(self.play_settings_frame, text="Speed factor:", anchor="w")
+        self.play_speed_factor_label.place(relx=0.01, rely=0.3, relwidth=0.98, relheight=0.15)
+        self.play_speed_factor_entry = customtkinter.CTkEntry(self.play_settings_frame)
+        self.play_speed_factor_entry.place(relx=0.65, rely=0.3, relwidth=0.1, relheight=0.15)
+        # add nbr repetition entry
+        self.play_nbr_repetition_label = customtkinter.CTkLabel(self.play_settings_frame, text="Nbr repetition:", anchor="w")
+        self.play_nbr_repetition_label.place(relx=0.01, rely=0.5, relwidth=0.98, relheight=0.15)
+        self.play_nbr_repetition_entry = customtkinter.CTkEntry(self.play_settings_frame)
+        self.play_nbr_repetition_entry.place(relx=0.65, rely=0.5, relwidth=0.1, relheight=0.15)
+        # add loop checkbox
+        self.play_loop_checkbox = customtkinter.CTkCheckBox(self.play_settings_frame, text="Loop", command=self.play_loop_event)
+        self.play_loop_checkbox.place(relx=0.01, rely=0.7, relwidth=0.98, relheight=0.15)
+
+        # add play frame underneath
+        self.play_play_frame = customtkinter.CTkFrame(self.tabview.tab("Play"))
+        self.play_play_frame.place(relx=0.4, rely=0.53, relwidth=0.55, relheight=0.10)
+        # add play pause and stop buttons
+        self.play_play_button = customtkinter.CTkButton(self.play_play_frame, text="▶", command=self.play)
+        self.play_play_button.place(relx=0.01, rely=0.5, relwidth=0.25, relheight=0.98, anchor="w")
+        self.play_pause_button = customtkinter.CTkButton(self.play_play_frame, text="||", command=self.pause)
+        self.play_pause_button.place(relx=0.5, rely=0.5, relwidth=0.25, relheight=0.98, anchor="center")
+        self.play_stop_button = customtkinter.CTkButton(self.play_play_frame, text="■", command=self.stop)
+        self.play_stop_button.place(relx=0.99, rely=0.5, relwidth=0.25, relheight=0.98, anchor="e")
+
+        # add progress frame underneath
+        self.play_progress_frame = customtkinter.CTkFrame(self.tabview.tab("Play"))
+        self.play_progress_frame.place(relx=0.4, rely=0.65, relwidth=0.55, relheight=0.10)
+        # add progress bar inside
+        self.play_progress_bar = customtkinter.CTkProgressBar(self.play_progress_frame, orientation="horizontal") # set value between 1 and 0
+        self.play_progress_bar.place(relx=0.01, rely=0.5, relwidth=0.98, relheight=0.48, anchor="w")
+
+    def remove_play_layout(self):
+        self.play_settings_frame.destroy()
+        self.play_play_frame.destroy()
+        self.play_progress_frame.destroy()
 
     def play(self):
+        self.play_progress_bar.set(0)
         pass
 
     def pause(self):
+        self.play_progress_bar.set(0.5)
         pass
 
     def stop(self):
+        self.play_progress_bar.set(1)
         pass
+
+    def set_progress(self, value):
+        # between 0 and 1
+        self.play_progress_bar.set(value)
+
+    # RECORD METHODS ------------------------------------------------------------------------------------------------------
+    def record_server_event(self):
+        # get the server status
+        server_status = self.record_server_slider.get()
+        if server_status == True:
+            # try to connect to the thymio
+            self.record_server_status_label.configure(text="Server status: Running")
+            self.display_record_layout()
+        elif server_status == False:
+            # disconnect from the thymio
+            self.record_server_status_label.configure(text="Server status: Not running")
+            self.remove_record_layout()
+
+    def display_record_layout(self):
+        # add record frame underneath
+        self.record_record_frame = customtkinter.CTkFrame(self.tabview.tab("Record"))
+        self.record_record_frame.place(relx=0.4, rely=0.1, relwidth=0.55, relheight=0.10)
+        # add record and stop buttons inside
+        self.record_record_button = customtkinter.CTkButton(self.record_record_frame, text="◉", command=self.record)
+        self.record_record_button.place(relx=0.01, rely=0.5, relwidth=0.15, relheight=0.7, anchor="w")
+        self.record_stop_button = customtkinter.CTkButton(self.record_record_frame, text="■", command=self.stop)
+        self.record_stop_button.place(relx=0.2, rely=0.5, relwidth=0.15, relheight=0.7, anchor="w")
+
+        # add info box in the middle
+        self.record_info_frame = customtkinter.CTkFrame(self.tabview.tab("Record"))
+        self.record_info_frame.place(relx=0.4, rely=0.25, relwidth=0.55, relheight=0.65)
+        # add label inside
+        self.record_info_label = customtkinter.CTkLabel(self.record_info_frame, text="Info:", anchor="w")
+        self.record_info_label.place(relx=0.01, rely=0.01, relwidth=0.98, relheight=0.15)
+        # add textbox inside
+        self.record_info_textbox = customtkinter.CTkTextbox(self.record_info_frame, wrap='none', state="disabled")
+        self.record_info_textbox.place(relx=0.01, rely=0.15, relwidth=0.98, relheight=0.78)
+
+    def remove_record_layout(self):
+        self.record_record_frame.destroy()
+        self.record_info_frame.destroy()
+
+    def record(self):
+        # get name entry
+        name = self.record_name_entry.get()
+        if name == "":
+            tkinter.messagebox.showwarning("Warning", "Please enter a name")
+            return
+
+    def stop(self):
+        pass
+
+    # EDIT METHODS --------------------------------------------------------------------------------------------------------
+    
+    def editor_mode_select_event(self, new_editor_mode: str):
+        if new_editor_mode == "Manage":
+            self.editor_display_manage_layout()
+        elif new_editor_mode == "Create Sequence":
+            # self.editor_display_create_seq_layout()
+            pass
+
+    def editor_display_manage_layout(self):
+        # add choregraphy or sequence option underneath
+        self.editor_manage_optionemenu = customtkinter.CTkOptionMenu(self.editor_frame, values=["Choreography", "Sequence"], command=self.editor_manage_select_event)
+        self.editor_manage_optionemenu.set("Chore or Seq")
+        self.editor_manage_optionemenu.place(relx=0.01, rely=0.01, relwidth=0.25, relheight=0.05)
+        # add "list" frame
+        self.editor_manage_label = customtkinter.CTkLabel(self.editor_frame, text="", anchor="w")
+        self.editor_manage_label.place(relx=0.01, rely=0.07)
+        self.editor_manage_radiobutton_frame = customtkinter.CTkScrollableFrame(self.editor_frame)
+        self.editor_manage_radiobutton_frame.place(relx=0.01, rely=0.13, relwidth=0.33, relheight=0.75)
+        self.editor_manage_radio_var = tkinter.IntVar(value=0)
+        self.scrollable_frame_editor_manage = []
+
+        # add title on the right
+        self.editor_manage_title_label = customtkinter.CTkLabel(self.editor_frame, text="MANAGE MODE", font=customtkinter.CTkFont(size=20, weight="bold"))
+        self.editor_manage_title_label.place(relx=0.38, rely=0.02, relwidth=0.25, relheight=0.05)
+
+        # add buttons frame underneath
+        self.editor_manage_buttons_frame = customtkinter.CTkFrame(self.editor_frame)
+        self.editor_manage_buttons_frame.place(relx=0.4, rely=0.13, relwidth=0.55, relheight=0.10)
+        # add delete button and trim button inside
+        self.editor_manage_delete_button = customtkinter.CTkButton(self.editor_manage_buttons_frame, text="🗑", command=self.editor_manage_delete_event)
+        self.editor_manage_delete_button.place(relx=0.01, rely=0.5, relwidth=0.15, relheight=0.7, anchor="w")
+        self.editor_manage_trim_button = customtkinter.CTkButton(self.editor_manage_buttons_frame, text="✂", command=self.editor_manage_trim_event)
+        self.editor_manage_trim_button.place(relx=0.2, rely=0.5, relwidth=0.15, relheight=0.7, anchor="w")
+
+        # add graph display underneath
+        self.editor_manage_graph_frame = customtkinter.CTkFrame(self.editor_frame)
+        self.editor_manage_graph_frame.place(relx=0.4, rely=0.25, relwidth=0.55, relheight=0.5)
+        # add image inside
+        self.editor_manage_graph_image = Image.open("app\\GUI_assets\\thymio-nuitg.jpg")
+        self.editor_manage_graph_image = customtkinter.CTkImage(self.editor_manage_graph_image,  size=(400,200))
+        self.editor_manage_graph_image_label = customtkinter.CTkLabel(self.editor_manage_graph_frame, image=self.editor_manage_graph_image, text="")
+        self.editor_manage_graph_image_label.place(relx=0.5, rely=0.5, relwidth=0.98, relheight=0.98, anchor="center")
+
+        # add trim sliders frame underneath
+        self.editor_manage_trim_frame = customtkinter.CTkFrame(self.editor_frame)
+        self.editor_manage_trim_frame.place(relx=0.4, rely=0.77, relwidth=0.55, relheight=0.20)
+        
+    def editor_manage_select_event(self, new_editor_manage_mode: str):
+        # get the new editor manage mode
+        if new_editor_manage_mode == "Choreography":
+            self.editor_manage_refresh_chor_list()
+        elif new_editor_manage_mode == "Sequence":
+            self.editor_manage_refresh_seq_list()
+            
+    def editor_manage_refresh_chor_list(self):
+        # remove all buttons
+        for button in self.scrollable_frame_editor_manage:
+            button.destroy()
+        self.scrollable_frame_editor_manage = []
+        for i in range(len(self.choreographies_list)):
+            newbutton = customtkinter.CTkRadioButton(master=self.editor_manage_radiobutton_frame, variable=self.editor_manage_radio_var, value=i, text=self.choreographies_list[i], command=self.refresh_editor_info_chor)
+            newbutton.grid(row=i, column=0, padx=10, pady=(0, 10),sticky="w")
+            self.scrollable_frame_editor_manage.append(newbutton)
+        self.editor_manage_radio_var.set(-1)
+        # graph all the choreographies
+        for choreography_name in self.choreographies_list:
+            self.modules.choreographer.choreography_dict[choreography_name].graph_speeds()
+
+    def editor_manage_refresh_seq_list(self):
+        # remove all buttons
+        for button in self.scrollable_frame_editor_manage:
+            button.destroy()
+        self.scrollable_frame_editor_manage = []
+        for i in range(len(self.sequences_list)):
+            newbutton = customtkinter.CTkRadioButton(master=self.editor_manage_radiobutton_frame, variable=self.editor_manage_radio_var, value=i, text=self.sequences_list[i])
+            newbutton.grid(row=i, column=0, padx=10, pady=(0, 10),sticky="w")
+            self.scrollable_frame_editor_manage.append(newbutton)
+        self.editor_manage_radio_var.set(-1)
+
+    def editor_manage_delete_event(self):
+        # get if choreography or sequence
+        index = self.editor_manage_radio_var.get()
+        mode = self.editor_manage_optionemenu.get()
+        print(f"delete {mode} {index}")
+        if index < 0:
+            tkinter.messagebox.showwarning("Warning", f"Please select something to delete")
+        # pop up window to ask if sure
+        elif tkinter.messagebox.askyesno("Warning", f"Are you sure you want to delete the {mode}: {index}?"):
+            if mode == "Choreography":
+                self.remove_choreography(index)
+                self.editor_manage_refresh_chor_list()
+                self.editor_delete_image()
+            elif mode == "Sequence":
+                self.remove_sequence(index)
+                self.editor_manage_refresh_seq_list()
+            self.editor_manage_deselect_button()
+
+    def editor_manage_deselect_button(self):
+        # deselect the radiobutton
+        self.editor_manage_radio_var.set(-1)
+
+    def editor_manage_trim_event(self):
+        pass
+
+    def refresh_editor_info_chor(self):
+        # get the choreography name
+        index = self.editor_manage_radio_var.get()
+        # get the choreography name
+        name = self.choreographies_list[index] 
+        self.editor_manage_graph_image_light = Image.open(f"app/GUI_assets/temp_fig/{name}_light_graph.png") # open the image
+        self.editor_manage_graph_image_light = customtkinter.CTkImage(self.editor_manage_graph_image_light, size=(400,200)) # convert the image to tkinter format
+        self.editor_manage_graph_image_label.configure(image=self.editor_manage_graph_image_light) # display the image
+
+        # add two sliders in the slider box for start and end of trim
+        self.editor_manage_trim_start_label = customtkinter.CTkLabel(self.editor_manage_trim_frame, text="Start:", anchor="w")
+        self.editor_manage_trim_start_label.place(relx=0.01, rely=0.01, relwidth=0.98, relheight=0.2)
+        self.editor_manage_trim_start_slider_var = tkinter.IntVar(value=0)
+        self.editor_manage_trim_start_slider = customtkinter.CTkSlider(self.editor_manage_trim_frame, orientation="horizontal", variable=self.editor_manage_trim_start_slider_var, command=self.editor_manage_trim_start_event)
+        self.editor_manage_trim_start_slider.configure()
+        self.editor_manage_trim_start_slider.place(relx=0.01, rely=0.3, relwidth=0.98, relheight=0.2)
+        self.editor_manage_trim_end_label = customtkinter.CTkLabel(self.editor_manage_trim_frame, text="End:", anchor="w")
+        self.editor_manage_trim_end_label.place(relx=0.01, rely=0.5, relwidth=0.98, relheight=0.2)
+        self.editor_manage_trim_end_slider_var = tkinter.IntVar(value=1)
+        self.editor_manage_trim_end_slider = customtkinter.CTkSlider(self.editor_manage_trim_frame, orientation="horizontal", variable=self.editor_manage_trim_end_slider_var, command=self.editor_manage_trim_end_event)
+        self.editor_manage_trim_end_slider.place(relx=0.01, rely=0.7, relwidth=0.98, relheight=0.2)
+
+    def editor_manage_trim_start_event(self, value):
+        # round value to 2 decimals
+        value = round(float(value), 2)
+        # create value label
+        self.editor_manage_trim_start_label.configure(text=f"Start:\t\t\t\t\t         {value}")
+
+    def editor_manage_trim_end_event(self, value):
+        # round value to 2 decimals
+        value = round(float(value), 2)
+        # create value label
+        self.editor_manage_trim_end_label.configure(text=f"End:\t\t\t\t\t         {value}")
+
+    def editor_delete_image(self):
+        self.editor_manage_graph_image = Image.open("app\\GUI_assets\\thymio-nuitg.jpg")
+        self.editor_manage_graph_image = customtkinter.CTkImage(self.editor_manage_graph_image, size=(400,200))
+        self.editor_manage_graph_image_label.configure(image=self.editor_manage_graph_image)
 
 class Gui:
     def __init__(self, modules):
@@ -260,4 +621,4 @@ class Gui:
 
 if __name__ == "__main__":
     app = App()
-    app.mainloop()
+    app.mainloop()  

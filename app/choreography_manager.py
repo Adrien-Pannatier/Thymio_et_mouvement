@@ -3,6 +3,8 @@
 import os
 import json
 import numpy as np
+import matplotlib.pyplot as plt
+
 
 from app.utils.console import *
 from app.config import DEFAULT_SPEED_FACT, SLEEP_DURATION, DEFAULT_PATH_CHOREO, DEFAULT_PATH_SEQUENCE
@@ -204,6 +206,24 @@ class Choreography:
         Returns the info of the choreography
         """
         return self.name, self.description, self.speed_fact, self.path
+    
+    def graph_speeds(self):
+        """
+        Graphs the speeds of the choreography
+        """
+        plt.plot(self.step_list[:,0], self.step_list[:,2], label="left wheel speed")
+        plt.plot(self.step_list[:,0], self.step_list[:,3], label="right wheel speed")
+        plt.xlabel("time (s)")
+        plt.ylabel("speed (m/s)")
+        plt.legend()
+        # set de dimensions of the figure
+        plt.gcf().set_size_inches(10, 5)
+        # plt.show()
+        # save the figure in the assets folder
+        plt.savefig(f"app/GUI_assets/temp_fig/{self.name}_light_graph.png")
+        # plt.savefig(f"app/GUI_assets/temp_fig/{self.name}_dark_graph.png")
+        plt.clf()
+        plt.close()
     
 class Sequence:
     def __init__(self, name, description="", sequence_l=[], path=DEFAULT_PATH_SEQUENCE):
