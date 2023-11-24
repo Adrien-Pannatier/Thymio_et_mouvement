@@ -1,4 +1,5 @@
 from app.utils.console import *
+import tdmclient
 from tdmclient import ClientAsync,aw
 import time
 
@@ -9,6 +10,8 @@ class MotionControl():
 
     def __init__(self):
         self.node = None
+        self.choreography_status = "stop" # start, pause, stop
+        self.completion_percentage = 0
 
     def init_thymio_connection(self):
         status = console.status("Connecting to Thymio driver", spinner_style="cyan")
@@ -28,9 +31,6 @@ class MotionControl():
             info("Thymio node connected")
             debug(f"Node lock on {self.node}")
 
-                # Signal the Thymio to broadcast variable changes
-                # await node.watch(variables=True)
-
             status = None
             return True
 
@@ -40,6 +40,10 @@ class MotionControl():
 
         except ConnectionResetError:
             warning("Thymio driver connection closed")
+            return False
+        
+        except Exception as e:
+            error(f"Unexpected error: {e}")
             return False
 
         finally:
@@ -53,8 +57,9 @@ class MotionControl():
             return
 
         info("Disconnecting Thymio node")
+        aw(self.node.stop())
         aw(self.node.unlock())
-        # aw(self.node.stop())
+
         
         self.node = None
         info("Thymio node disconnected")        
@@ -73,11 +78,20 @@ class MotionControl():
             for i in range(nbr_repetition):
                 last_dt = self.play_once(choreography, speed_factor)
             time.sleep(last_dt)
-            aw(self.node.set_variables(  # apply the control on the wheels
-                {"motor.left.target": [int(0)], "motor.right.target": [int(0)]}))
+
         else:
             error("Invalid play mode")
             return
+
+    def stop_motors(self):
+        """Stop the motors"""
+        if self.node is None:
+            error("No Thymio node connected")
+            return
+
+        info("Stopping motors")
+        aw(self.node.set_variables(  # apply the control on the wheels
+            {"motor.left.target": [int(0)], "motor.right.target": [int(0)]}))
 
     def play_loop(self, choreography, speed_factor):
         """Play a choreography in loop"""
@@ -90,17 +104,45 @@ class MotionControl():
     def play_once(self, choreography, speed_factor):
         """Play a choreography once"""
         step_list = choreography.step_list
+        end_time = step_list[-1][T]
         last_dt = step_list[-1][DT]
-        for step in step_list:
-            # info(step)
-            # info(f"sleeping for {step[DT/speed_factor]} seconds")
-            time.sleep(step[DT]/speed_factor)
+        if self.choreography_status == "play":
+            for step in step_list:
+                # info(step)    
+                # info(f"sleeping for {step[DT]/speed_factor} seconds")
+                time.sleep(step[DT]/speed_factor)
 
-            left_motor_speed = step[LS]*speed_factor/THYMIO_TO_CM # convert the speed from cm/s to thymio speed
-            right_motor_speed = step[RS]*speed_factor/THYMIO_TO_CM
+                left_motor_speed = step[LS]*speed_factor/THYMIO_TO_CM # convert the speed from cm/s to thymio speed
+                right_motor_speed = step[RS]*speed_factor/THYMIO_TO_CM
 
-            aw(self.node.set_variables(  # apply the control on the wheels
-                {"motor.left.target": [int(left_motor_speed)], "motor.right.target": [int(right_motor_speed)]}))
+                aw(self.node.set_variables(  # apply the control on the wheels
+                    {"motor.left.target": [int(left_motor_speed)], "motor.right.target": [int(right_motor_speed)]}))
+                
+                # info(f"step {step[T]} / {end_time}")
+                self.completion_percentage = step[T]/end_time
+
+                if self.choreography_status == "pause":
+                    info("Choreography paused")
+                    aw(self.node.set_variables(  # apply the control on the wheels
+                        {"motor.left.target": [int(0)], "motor.right.target": [int(0)]}))
+                    while self.choreography_status == "pause":
+                        time.sleep(0.1)
+                        if self.choreography_status == "stop":
+                            self.completion_percentage = 0
+                            info("Choreography stopped")
+                            return last_dt
+                        elif self.choreography_status == "play":
+                            info("Choreography resumed")
+                            break
+
+                elif self.choreography_status == "stop":
+                    info("Choreography stopped")
+                    self.completion_percentage = 0
+                    aw(self.node.set_variables(  # apply the control on the wheels
+                        {"motor.left.target": [int(0)], "motor.right.target": [int(0)]}))
+                    return last_dt
+            # self.choreography_status = "stop"
+            self.completion_percentage = 0
         
         return last_dt
         

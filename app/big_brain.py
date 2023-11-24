@@ -2,14 +2,15 @@ from dataclasses import dataclass
 import time
 from rich.padding import Padding
 from rich.panel import Panel
+from threading import Thread
 
 from app.config import *
-from app.GUI import Gui
 from app.process_controler_data import ProcessControlerData
 from app.choreography_manager import ChoreographyManager
 from app.motion_control import MotionControl
 from app.editor import Editor
 from app.utils.console import *
+from app.GUI import App
 
 @dataclass
 class Modules:
@@ -19,6 +20,10 @@ class Modules:
     motion_control: MotionControl
     editor: Editor
 
+class Gui:
+    def __init__(self, modules):
+        self.app = App(modules=modules)
+        self.app.mainloop()    
 
 class BigBrain:
     def __init__(self):

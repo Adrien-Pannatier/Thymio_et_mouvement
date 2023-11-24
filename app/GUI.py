@@ -2,6 +2,8 @@ import tkinter
 import tkinter.messagebox
 import customtkinter
 from PIL import Image
+from threading import Thread
+import time
 
 customtkinter.set_appearance_mode("System")  # Modes: "System" (standard), "Dark", "Light"
 customtkinter.set_default_color_theme("blue")  # Themes: "blue" (standard), "green", "dark-blue"
@@ -19,11 +21,12 @@ class App(customtkinter.CTk):
 
         self.mode = "Info"
 
+
         # info mode variables
         self.choreographies_list = list(modules.choreographer.choreography_dict.keys())
         self.sequences_list = list(modules.choreographer.sequence_dict.keys())
 
-            # configure window
+        # configure window
         self.title("Thymio mouvement organique")
         self.geometry(f"{900}x{600}")
 
@@ -126,7 +129,7 @@ class App(customtkinter.CTk):
         self.play_label.place(relx=0.01, rely=0.07)
         self.play_radiobutton_frame = customtkinter.CTkScrollableFrame(self.tabview.tab("Play"), fg_color=(LIGHT_COLOR, DARK_COLOR))
         self.play_radiobutton_frame.place(relx=0.01, rely=0.13, relwidth=0.33, relheight=0.75)
-        self.play_radio_var = tkinter.IntVar(value=0)
+        self.play_radio_var = tkinter.IntVar(value=-1)
         self.scrollable_frame_play = []
 
         # add title on the right
@@ -142,8 +145,12 @@ class App(customtkinter.CTk):
         self.play_thymio_status_label = customtkinter.CTkLabel(self.play_thymio_status_frame, text="Thymio status: Not connected", anchor="w")
         self.play_thymio_status_label.place(relx=0.01, rely=0.5, relwidth=0.98, relheight=0.48, anchor="w")
         # add connect slider
-        self.play_connect_slider = customtkinter.CTkSwitch(self.play_thymio_status_frame, text="", command=self.play_connect_event)
+        self.play_connect_variable = tkinter.BooleanVar(value=False)
+        self.play_connect_slider = customtkinter.CTkSwitch(self.play_thymio_status_frame, text="", variable=self.play_connect_variable, command=self.play_connect_event)
         self.play_connect_slider.place(relx=0.99, rely=0.5, relwidth=0.25, relheight=0.98, anchor="e")
+
+        # update bar variable
+        self.update_bar_update = False
 
         # RECORD TAB CREATION ==============================================================================================
         # add settings frame on the left
@@ -323,6 +330,10 @@ class App(customtkinter.CTk):
                 self.play_speed_factor_entry.delete(0, "end")
                 self.play_speed_factor_entry.insert(0, str(speed_factor))
                 self.play_speed_factor_entry.configure(fg_color = ("#f9f9fa","#343638"))
+                self.play_nbr_repetition_entry.configure(state="normal")
+                self.play_nbr_repetition_entry.delete(0, "end")
+                if self.play_loop_checkbox.get() == False:
+                    self.play_nbr_repetition_entry.insert(0, "1")
             elif play_mode == "Sequence":
                 name = self.sequences_list[index]
                 sequence_name, _, _, _ = self.modules.choreographer.sequence_dict[name].get_info()
@@ -332,7 +343,6 @@ class App(customtkinter.CTk):
                 self.play_speed_factor_entry.configure(state="disabled")
                 # change the color of the entry
                 self.play_speed_factor_entry.configure(fg_color = (LIGHT_COLOR,DARK_COLOR))
-            
         
     def play_loop_event(self):
         # get the loop status
@@ -352,13 +362,23 @@ class App(customtkinter.CTk):
 
     def play_connect_event(self):
         # get the connection status
-        connection_status = self.play_connect_slider.get()  
+        connection_status = self.play_connect_slider.get()
         if connection_status == True:
-            # try to connect to the thymio
-            self.play_thymio_status_label.configure(text="Thymio status: Connected")
-            self.display_play_layout()
-        elif connection_status == False:
+            # try to connect the thymio
+            if not self.modules.motion_control.init_thymio_connection():
+                # if the connection failed, set the slider back to false
+                self.play_connect_variable.set(False)
+                print("no connection")
+                connection_status = False
+                pass
+            else:            
+                # try to connect to the thymio
+                self.play_thymio_status_label.configure(text="Thymio status: Connected")
+                self.display_play_layout()
+                self.refresh_play_info()
+        if connection_status == False:
             # disconnect from the thymio
+            self.modules.motion_control.disconnect_thymio()
             self.play_thymio_status_label.configure(text="Thymio status: Not connected")
             self.remove_play_layout()
 
@@ -388,11 +408,11 @@ class App(customtkinter.CTk):
         self.play_play_frame = customtkinter.CTkFrame(self.tabview.tab("Play"))
         self.play_play_frame.place(relx=0.4, rely=0.53, relwidth=0.55, relheight=0.10)
         # add play pause and stop buttons
-        self.play_play_button = customtkinter.CTkButton(self.play_play_frame, text="▶", command=self.play)
+        self.play_play_button = customtkinter.CTkButton(self.play_play_frame, text="▶", command=self.play_event)
         self.play_play_button.place(relx=0.01, rely=0.5, relwidth=0.25, relheight=0.98, anchor="w")
-        self.play_pause_button = customtkinter.CTkButton(self.play_play_frame, text="||", command=self.pause)
+        self.play_pause_button = customtkinter.CTkButton(self.play_play_frame, text="||", command=self.pause_event)
         self.play_pause_button.place(relx=0.5, rely=0.5, relwidth=0.25, relheight=0.98, anchor="center")
-        self.play_stop_button = customtkinter.CTkButton(self.play_play_frame, text="■", command=self.stop)
+        self.play_stop_button = customtkinter.CTkButton(self.play_play_frame, text="■", command=self.stop_event)
         self.play_stop_button.place(relx=0.99, rely=0.5, relwidth=0.25, relheight=0.98, anchor="e")
 
         # add progress frame underneath
@@ -403,21 +423,153 @@ class App(customtkinter.CTk):
         self.play_progress_bar.place(relx=0.01, rely=0.5, relwidth=0.98, relheight=0.48, anchor="w")
 
     def remove_play_layout(self):
-        self.play_settings_frame.destroy()
-        self.play_play_frame.destroy()
-        self.play_progress_frame.destroy()
+        self.play_settings_frame.destroy() if hasattr(self, "play_settings_frame") else None
+        self.play_play_frame.destroy() if hasattr(self, "play_play_frame") else None
+        self.play_progress_frame.destroy() if hasattr(self, "play_progress_frame") else None
+
+    def play_event(self):
+        # check if a choreography/sequence is selected
+        if self.play_radio_var.get() == -1:
+            tkinter.messagebox.showwarning("Warning", "Please select a choreography or sequence")
+            return
+        # check if a number of repetition is entered
+        elif self.play_nbr_repetition_entry.get() == "" and self.play_loop_checkbox.get() == False:
+            tkinter.messagebox.showwarning("Warning", "Please enter a number of repetition")
+            return
+        # check if a speed factor is entered
+        elif self.play_speed_factor_entry.get() == "" and self.play_optionemenu.get() == "Choreography":
+            tkinter.messagebox.showwarning("Warning", "Please enter a speed factor")
+            return
+        # check if number of repetition is an int
+        try:
+            if self.play_loop_checkbox.get() == False:
+                int(self.play_nbr_repetition_entry.get())
+        except:
+            tkinter.messagebox.showwarning("Warning", "Please enter a number of repetition")
+            return
+        # check if speed factor is an int
+        try:
+            # if in choreography mode
+            if self.play_optionemenu.get() == "Choreography":
+                int(self.play_speed_factor_entry.get())
+        except:
+            tkinter.messagebox.showwarning("Warning", "Please enter a valid speed factor")
+            return
+        
+        if self.modules.motion_control.choreography_status != "play":
+            self.play_progress_bar.set(0)
+            self.play_threading_action()
+
+    def play_threading_action(self):
+        # thread for playing
+        self.playthread = Thread(target=self.play, daemon=True)
+        self.playthread.start()
+
+    def play_threading_progress(self):
+        print("creating thread")
+        print(self.modules.motion_control.choreography_status)
+        # thread for progress bar
+        self.progress_thread = Thread(target=self.update_progress, daemon=True)
+        self.progress_thread.start()
 
     def play(self):
-        self.play_progress_bar.set(0)
-        pass
+        # get the play mode
+        play_mode = self.play_optionemenu.get()
+        # get the selection
+        index = self.play_radio_var.get()
+        # get speed factor
+        speed_factor = self.play_speed_factor_entry.get()
+        # get the play status
+        play_status = self.modules.motion_control.choreography_status
+        # update bar update
+        self.update_bar_update = True
+        if play_status == "stop":
+            # lock every entry and slider
+            self.play_speed_factor_entry.configure(state="disabled")
+            self.play_nbr_repetition_entry.configure(state="disabled")
+            self.play_loop_checkbox.configure(state="disabled")
+            self.play_connect_slider.configure(state="disabled")
+            # set the play_status to play
+            self.modules.motion_control.choreography_status = "play"
+            self.play_threading_progress()
+            if play_mode == "Choreography":
+                name = self.choreographies_list[index]
+                choreography = self.modules.choreographer.choreography_dict[name]
+                # get loop status
+                loop_status = self.play_loop_checkbox.get()
+                if loop_status == True:
+                    self.modules.motion_control.play_choreography(choreography, int(speed_factor), "loop")
+                    self.modules.motion_control.choreography_status = "stop"
+                    self.modules.motion_control.stop_motors()
+                    print("choreography played")
+                elif loop_status == False:
+                    # get nbr repetition
+                    nbr_repetition = self.play_nbr_repetition_entry.get()
+                    self.modules.motion_control.play_choreography(choreography, int(speed_factor), "mult", int(nbr_repetition))
+                    print("choreography played")
+                    self.modules.motion_control.choreography_status = "stop"
+                    self.modules.motion_control.stop_motors()
+            elif play_mode == "Sequence":
+                name = self.sequences_list[index]
+                sequence = self.modules.choreographer.sequence_dict[name]
+                speed_factor = "1" # CHANGE THIS LATER °°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+                # get loop status
+                # loop_status = self.play_loop_checkbox.get() # IMPLEMENT THAT °°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+                # for every choreography in the sequence
+                # get nbr repetition
+                nbr_repetition = self.play_nbr_repetition_entry.get()
+                for i in range(int(nbr_repetition)):
+                    for choreography_index in sequence.sequence_l:
+                        # transform the index into a name
+                        choreography_name = self.choreographies_list[choreography_index-1]
+                        # get the choreography
+                        choreography = self.modules.choreographer.choreography_dict[choreography_name]
+                        print(f"now playing {choreography_name}")
+                        self.modules.motion_control.choreography_status = "play"
+                        self.modules.motion_control.play_choreography(choreography, int(speed_factor), "mult", int(nbr_repetition))
+                        if self.modules.motion_control.choreography_status == "stop":
+                            self.modules.motion_control.stop_motors()
+                            # unlock every entry and slider
+                            self.play_speed_factor_entry.configure(state="normal")
+                            self.play_nbr_repetition_entry.configure(state="normal")
+                            self.play_loop_checkbox.configure(state="normal")
+                            self.play_connect_slider.configure(state="normal")
+                            self.update_bar_update = False
+                            return
+                self.modules.motion_control.choreography_status = "stop"
+                self.modules.motion_control.stop_motors()
 
-    def pause(self):
-        self.play_progress_bar.set(0.5)
-        pass
+        elif play_status == "pause":
+            print("pause to play")
+            # set the play_status to play
+            self.modules.motion_control.choreography_status = "play"
+            self.play_threading_progress()
+            return
 
-    def stop(self):
-        self.play_progress_bar.set(1)
-        pass
+        # unlock every entry and slider
+        self.play_speed_factor_entry.configure(state="normal")
+        self.play_nbr_repetition_entry.configure(state="normal")
+        self.play_loop_checkbox.configure(state="normal")
+        self.play_connect_slider.configure(state="normal")
+        self.update_bar_update = False
+        return
+
+
+    def pause_event(self):
+        if self.modules.motion_control.choreography_status == "play":
+            self.modules.motion_control.choreography_status = "pause"
+
+    def stop_event(self):
+        self.modules.motion_control.choreography_status = "stop"
+
+    def update_progress(self):
+        # while thymio is connected
+        while self.play_connect_slider.get() == True:
+            if self.update_bar_update == True:
+                self.set_progress(self.modules.motion_control.completion_percentage)
+                time.sleep(0.1)
+            else:
+                return
 
     def set_progress(self, value):
         # between 0 and 1
@@ -466,6 +618,15 @@ class App(customtkinter.CTk):
         if name == "":
             tkinter.messagebox.showwarning("Warning", "Please enter a name")
             return
+        if name.isdigit():
+            tkinter.messagebox.showwarning("Warning", "Please enter a valid name")
+            return
+        # check if name already exists
+        if name in self.choreographies_list:
+            # ask if the user wants to overwrite
+            answer = tkinter.messagebox.askquestion("Warning", "This name already exists, do you want to overwrite it?")
+            if answer == "no":
+                return
 
     def stop(self):
         pass
@@ -697,13 +858,6 @@ class App(customtkinter.CTk):
         
     def editor_create_seq_order_dialog_event(self, button):
         pass
-        
-
-
-class Gui:
-    def __init__(self, modules):
-        self.app = App(modules=modules)
-        self.app.mainloop()
 
 if __name__ == "__main__":
     app = App()
