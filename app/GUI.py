@@ -21,7 +21,6 @@ class App(customtkinter.CTk):
 
         self.mode = "Info"
 
-
         # info mode variables
         self.choreographies_list = list(modules.choreographer.choreography_dict.keys())
         self.sequences_list = list(modules.choreographer.sequence_dict.keys())
@@ -582,6 +581,7 @@ class App(customtkinter.CTk):
         if server_status == True:
             # try to connect to the thymio
             self.record_server_status_label.configure(text="Server status: Running")
+            self.modules.process_controler_data.init_record()
             self.display_record_layout()
         elif server_status == False:
             # disconnect from the thymio
@@ -597,6 +597,9 @@ class App(customtkinter.CTk):
         self.record_record_button.place(relx=0.01, rely=0.5, relwidth=0.15, relheight=0.7, anchor="w")
         self.record_stop_button = customtkinter.CTkButton(self.record_record_frame, text="■", command=self.stop)
         self.record_stop_button.place(relx=0.2, rely=0.5, relwidth=0.15, relheight=0.7, anchor="w")
+        # add debug button inside
+        self.record_debug_button = customtkinter.CTkButton(self.record_record_frame, text="Debug", command=self.debug)
+        self.record_debug_button.place(relx=0.4, rely=0.5, relwidth=0.15, relheight=0.7, anchor="w")
 
         # add info box in the middle
         self.record_info_frame = customtkinter.CTkFrame(self.tabview.tab("Record"))
@@ -629,6 +632,9 @@ class App(customtkinter.CTk):
                 return
 
     def stop(self):
+        pass
+
+    def debug(self):
         pass
 
     # EDIT METHODS --------------------------------------------------------------------------------------------------------

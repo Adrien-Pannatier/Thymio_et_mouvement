@@ -1,8 +1,5 @@
 from dataclasses import dataclass
 import time
-from rich.padding import Padding
-from rich.panel import Panel
-from threading import Thread
 
 from app.config import *
 from app.process_controler_data import ProcessControlerData
@@ -24,6 +21,7 @@ class Gui:
     def __init__(self, modules):
         self.app = App(modules=modules)
         self.app.mainloop()    
+        ui("Goodbye!")
 
 class BigBrain:
     def __init__(self):

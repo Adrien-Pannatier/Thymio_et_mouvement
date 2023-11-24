@@ -55,12 +55,9 @@ class MotionControl():
         if self.node is None:
             error("No Thymio node connected")
             return
-
         info("Disconnecting Thymio node")
         aw(self.node.stop())
         aw(self.node.unlock())
-
-        
         self.node = None
         info("Thymio node disconnected")        
     
