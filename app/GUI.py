@@ -632,6 +632,8 @@ class App(customtkinter.CTk):
                 return
 
     def stop(self):
+        # stop the recording
+        
         pass
 
     def debug(self):

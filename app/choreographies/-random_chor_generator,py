@@ -4,9 +4,10 @@ import os
 
 # Define constraints
 min_speed = 0
-max_speed = 10
-max_time = 15
+max_speed = 100 # in ms
+max_time = 150 # in ms
 path = "app/choreographies/"
+timestep = 0.1
 
 
 # check which is the highest choreography number
@@ -21,7 +22,7 @@ time_steps = []
 for time in range(max_time):
     time_step = {
         "time": time,
-        "timestep": 1,
+        "timestep": timestep,
         "left_wheel_speed": random.randint(min_speed, max_speed),
         "right_wheel_speed": random.randint(min_speed, max_speed)
     }
@@ -32,8 +33,6 @@ choreography = {
     "description": description,
     "choreography": time_steps
 }
-
-
 
 # Write to JSON file
 with open(path + f"random_chor{n}.json", 'w') as f:
