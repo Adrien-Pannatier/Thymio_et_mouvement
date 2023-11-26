@@ -3,6 +3,7 @@ import tkinter.messagebox
 import customtkinter
 from PIL import Image
 from threading import Thread
+from CTkToolTip import *
 import time
 
 customtkinter.set_appearance_mode("System")  # Modes: "System" (standard), "Dark", "Light"
@@ -14,9 +15,20 @@ LIGHT_COLOR = "#ebebeb"
 DEFAULT_LIGHT = "#dbdbdb"
 DEFAULT_DARK = "#2b2b2b"
 
+class ToplevelWindow(customtkinter.CTkToplevel):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.geometry("400x300")
+
+        self.label = customtkinter.CTkLabel(self, text="ToplevelWindow")
+        self.label.pack(padx=20, pady=20)
+
 class App(customtkinter.CTk):
     def __init__(self, modules):
         super().__init__()
+
+        # init setting window
+        self.settings_window = None
 
         # bind key events
         self.bind("<Key>", self.key_pressed_event)
@@ -44,11 +56,8 @@ class App(customtkinter.CTk):
         self.sidebar_frame.grid_rowconfigure(4, weight=1)
         self.logo_label = customtkinter.CTkLabel(self.sidebar_frame, text="Thymio\nMouvement\nOrganique", font=customtkinter.CTkFont(size=20, weight="bold"))
         self.logo_label.grid(row=0, column=0, padx=20, pady=(20, 10))
-        self.appearance_mode_label = customtkinter.CTkLabel(self.sidebar_frame, text="GUI Mode:", anchor="w")
-        self.appearance_mode_label.grid(row=1, column=0, padx=20, pady=(10, 0))
-        self.mode_optionemenu = customtkinter.CTkOptionMenu(self.sidebar_frame, values=["Tool", "Discovery"],
-                                                                       command=self.mode_select_event)
-        self.mode_optionemenu.grid(row=2, column=0, padx=20, pady=(10, 10))
+        self.settings_button = customtkinter.CTkButton(self.sidebar_frame, text="⚙", width=10, command=self.settings_event)
+        self.settings_button.grid(row=1, column=0, padx=20, pady=(10, 0))
 
         self.appearance_mode_label = customtkinter.CTkLabel(self.sidebar_frame, text="Appearance Mode:", anchor="w")
         self.appearance_mode_label.grid(row=5, column=0, padx=20, pady=(10, 0))
@@ -65,12 +74,12 @@ class App(customtkinter.CTk):
         self.tabview = customtkinter.CTkTabview(self, width=250)
         self.tabview.grid(row=0, column=1, padx=(20, 20), pady=(20, 20), sticky="nsew")
         self.tabview.add("Info")
-        self.tabview.add("Edit")
-        self.tabview.add("Record")
         self.tabview.add("Play")
+        self.tabview.add("Record")
+        self.tabview.add("Edit")
         self.tabview.tab("Info").grid_columnconfigure(0, weight=1)  # configure grid of individual tabs
-        self.tabview.tab("Edit").grid_columnconfigure(0, weight=1)
         self.tabview.tab("Play").grid_columnconfigure(0, weight=1)
+        self.tabview.tab("Record").grid_columnconfigure(0, weight=1)
         self.tabview.tab("Edit").grid_columnconfigure(0, weight=1)
 
         # INFO TAB CREATION =================================================================================================
@@ -124,6 +133,18 @@ class App(customtkinter.CTk):
         # make the text read only
         self.seq_info_text.configure(state="disabled")
 
+        # add tooltip frame on the top right corner
+        self.info_tooltip_frame = customtkinter.CTkFrame(self.tabview.tab("Info"))
+        self.info_tooltip_frame.place(relx=0.4, rely=0.01, relwidth=0.55, relheight=0.05)
+        # add tooltip label
+        self.info_tooltip_label = customtkinter.CTkLabel(self.info_tooltip_frame, text="❓", anchor="center")
+        self.info_tooltip_label.place(relx=0.5, rely=0.5, relwidth=0.98, relheight=0.48, anchor="w")
+        # add tooltip
+        self.info_tooltip = CTkToolTip(self.info_tooltip_label, justify="left", message="🤖 This is the info mode, here you can see what\n"
+                                       + " are the avaliable choreographies and sequences.\n"
+                                       + " You can also refresh the list by using the refresh\n"
+                                       + " button at the top left corner.")
+
         # PLAY TAB CREATION =================================================================================================
         self.play_optionemenu = customtkinter.CTkOptionMenu(self.tabview.tab("Play"), values=["Choreography", "Sequence"], command=self.play_select_event)
         self.play_optionemenu.place(relx=0.01, rely=0.01, relwidth=0.25, relheight=0.05)
@@ -151,6 +172,20 @@ class App(customtkinter.CTk):
         self.play_connect_variable = tkinter.BooleanVar(value=False)
         self.play_connect_switch = customtkinter.CTkSwitch(self.play_thymio_status_frame, text="", variable=self.play_connect_variable, command=self.play_connect_event)
         self.play_connect_switch.place(relx=0.99, rely=0.5, relwidth=0.25, relheight=0.98, anchor="e")
+
+        # add playtab tooltip
+        # add tooltip frame
+        self.play_tooltip_frame = customtkinter.CTkFrame(self.tabview.tab("Play"))
+        self.play_tooltip_frame.place(relx=0.4, rely=0.01, relwidth=0.55, relheight=0.05)
+        # add tooltip label
+        self.play_tooltip_label = customtkinter.CTkLabel(self.play_tooltip_frame, text="❓", anchor="center")
+        self.play_tooltip_label.place(relx=0.5, rely=0.5, relwidth=0.98, relheight=0.48, anchor="w")
+        # add tooltip
+        self.play_tooltip = CTkToolTip(self.play_tooltip_label, justify="left", message="🤖 This is the play mode, here you can play\n"
+                                        + " choreographies and sequences on the thymio.\n"
+                                        + " You can select what to play on the left.\n"
+                                        + " Be sure to connect the thymio before playing.")
+        
 
         # update bar variable
         self.update_bar_update = False
@@ -181,10 +216,23 @@ class App(customtkinter.CTk):
         self.record_server_status_frame.place(relx=0.4, rely=0.93, relwidth=0.55, relheight=0.05)
         # add server status label
         self.record_server_status_label = customtkinter.CTkLabel(self.record_server_status_frame, text="Server status: Not running", anchor="w")
-        self.record_server_status_label.place(relx=0.01, rely=0.5, relwidth=0.98, relheight=0.48, anchor="w")
+        self.record_server_status_label.place(relx=0.01, rely=0.5, relwidth=0.98, relheight=0.98, anchor="w")
         # add server slider
         self.record_server_switch = customtkinter.CTkSwitch(self.record_server_status_frame, text="", command=self.record_server_event)
         self.record_server_switch.place(relx=0.99, rely=0.5, relwidth=0.25, relheight=0.98, anchor="e")
+
+        # record tooltip
+        # add tooltip frame
+        self.record_tooltip_frame = customtkinter.CTkFrame(self.tabview.tab("Record"))
+        self.record_tooltip_frame.place(relx=0.4, rely=0.01, relwidth=0.55, relheight=0.05)
+        # add tooltip label
+        self.record_tooltip_label = customtkinter.CTkLabel(self.record_tooltip_frame, text="❓", anchor="center")
+        self.record_tooltip_label.place(relx=0.5, rely=0.5, relwidth=0.98, relheight=0.48, anchor="w")
+        # add tooltip
+        self.record_tooltip = CTkToolTip(self.record_tooltip_label, justify="left", message="🤖 This is the record mode, here you can record\n"
+                                        + " choreographies with the Mimyo robot. Please\n"
+                                        + " be sure to connect to it first.\n")
+
 
         self.debug_on = False # boolean for debug status
         
@@ -193,10 +241,21 @@ class App(customtkinter.CTk):
         self.editor_optionemenu = customtkinter.CTkOptionMenu(self.tabview.tab("Edit"), values=["Manage", "Create Sequence"], command=self.editor_mode_select_event)
         self.editor_optionemenu.place(relx=0.01, rely=0.01, relwidth=0.25, relheight=0.05)
 
+        # add tooltip frame
+        self.editor_tooltip_frame = customtkinter.CTkFrame(self.tabview.tab("Edit"))
+        self.editor_tooltip_frame.place(relx=0.4, rely=0.01, relwidth=0.55, relheight=0.05)
+        # add tooltip label
+        self.editor_tooltip_label = customtkinter.CTkLabel(self.editor_tooltip_frame, text="❓", anchor="center")
+        self.editor_tooltip_label.place(relx=0.5, rely=0.5, relwidth=0.98, relheight=0.48, anchor="w")
+        # add tooltip
+        self.editor_tooltip = CTkToolTip(self.editor_tooltip_label, justify="left", message="🤖 This is the edit mode, here you can manage\n"
+                                        + " choreographies and sequences. You can also\n"
+                                        + " create new sequences. Please select what you\n"
+                                        + " want to do on the left.")
+
         # SET DEFAULT VALUES ===============================================================================================
         self.appearance_mode_optionemenu.set("Dark")
         self.scaling_optionemenu.set("100%")
-        self.mode_optionemenu.set("Tool")
         self.play_optionemenu.set("Choreography")
         self.editor_optionemenu.set("Manage")
         # lock window size
@@ -208,11 +267,19 @@ class App(customtkinter.CTk):
         
 
 
+    def settings_event(self):
+        self.settings_window = ToplevelWindow(self)  # create window if its None or destroyed
+        self.settings_window.after(100,self.settings_window.lift) # Workaround for bug where main window takes focus
+        # give focus
+        
 
+        # add path frame in settings window
+        self.settings_path_frame = customtkinter.CTkFrame(self.settings_window, fg_color=(LIGHT_COLOR, DARK_COLOR))
+        self.settings_path_frame.place(relx=0.01, rely=0.01, relwidth=0.98, relheight=0.98)
+        # add path label
+        self.settings_path_label = customtkinter.CTkLabel(self.settings_path_frame, text="Path:", anchor="w")
+        self.settings_path_label.place(relx=0.01, rely=0.01, relwidth=0.98, relheight=0.05)
 
-
-    def mode_select_event(self, new_mode: str):
-        pass
 
     def change_appearance_mode_event(self, new_appearance_mode: str):
         customtkinter.set_appearance_mode(new_appearance_mode)
@@ -400,6 +467,7 @@ class App(customtkinter.CTk):
             else:            
                 # try to connect to the thymio
                 self.play_thymio_status_label.configure(text="Thymio status: Connected")
+                self.update_play_tooltip()
                 self.display_play_layout()
                 self.refresh_play_info()
         if connection_status == False:
@@ -600,6 +668,15 @@ class App(customtkinter.CTk):
     def set_progress(self, value):
         # between 0 and 1
         self.play_progress_bar.set(value)
+
+    def update_play_tooltip(self):
+        # update tooltip
+        self.play_tooltip.hide()
+        self.play_tooltip_2 = CTkToolTip(self.play_tooltip_label, justify="left", message="🤖 This is the play mode, here you can play\n"
+                                        + " choreographies and sequences on the thymio.\n"
+                                        + " You can select what to play on the left. You\n"
+                                        + " can also change the speed factor, the number\n"
+                                        + " of repetitions and wether you want a loop or not\n")
 
     # RECORD METHODS ------------------------------------------------------------------------------------------------------
     def record_server_event(self):
@@ -1033,6 +1110,21 @@ class App(customtkinter.CTk):
         
     def editor_create_seq_order_dialog_event(self, button):
         pass
+
+    def editor_manage_mode_tooltip_update(self):
+        # update tooltip
+        self.editor_manage_mode_tooltip.hide()
+        self.editor_manage_mode_tooltip_manage_mode = CTkToolTip(self.editor_manage_mode_label, justify="left", message="🤖 This is the manage mode, here you can manage\n"
+                                        + " choreographies and sequences. You can select\n"
+                                        + " what to manage on the left. You can also delete\n"
+                                        + " and trim choreographies and sequences.\n")
+        
+    def editor_create_seq_mode_tooltip_update(self):
+        # update tooltip
+        self.editor_create_seq_mode_tooltip.hide()
+        self.editor_create_seq_mode_tooltip_create_seq_mode = CTkToolTip(self.editor_create_seq_mode_label, justify="left", message="🤖 This is the create sequence mode, here you can\n"
+                                        + " create sequences. You can see the choreographies you\n"
+                                        + " can add to the sequence on the left.\n")
 
 if __name__ == "__main__":
     app = App()
