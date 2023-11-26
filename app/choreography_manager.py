@@ -4,6 +4,7 @@ import os
 import json
 import numpy as np
 import matplotlib.pyplot as plt
+from datetime import datetime
 
 
 from app.utils.console import *
@@ -16,6 +17,8 @@ class ChoreographyManager:
         self.check_repo()
         self.load_choreography_dict()
         self.load_sequence_dict()
+        self.sort_choreography_dict()
+        self.sort_sequence_dict()
 
     def check_repo(self):
         # checks if the choreography and sequence folders exist
@@ -32,6 +35,8 @@ class ChoreographyManager:
         """
         self.load_choreography_dict()
         self.load_sequence_dict()
+        self.sort_choreography_dict()
+        self.sort_sequence_dict()
         info("Database updated")
 
     # CHOREOGRAPHY FUNCTIONS
@@ -55,36 +60,58 @@ class ChoreographyManager:
                 try: 
                     with open(path + file, "r") as file:
                         data = json.load(file)
+                    creation_date = data['creation_date']
+                    last_modified = data['last_modified']
                     description = data['description']
                     step_list = np.array([[item['time'], item['timestep'], item['left_wheel_speed'], item['right_wheel_speed']] for item in data['choreography']])
                 except KeyError:
                     error(f"choreography [bold white]{name}[/] is corrupted")
-                    pass
+                    return
 
                 # print(step_list)
                 if name not in self.choreography_dict:
-                    self.choreography_dict[name] = Choreography(name, step_list, description, path=path)
+                    self.choreography_dict[name] = Choreography(name, creation_date, last_modified, step_list, description, path=path)
     
     def save_choreography_dict(self, path=DEFAULT_PATH_CHOREO):
         """
         Saves the choreography dictionary
         """
         for choreography in self.choreography_dict.values():
+            data_to_save = {}
+            data_to_save['name'] = choreography.name
+            data_to_save['creation_date'] = choreography.creation_date
+            data_to_save['last_modified'] = choreography.last_modified
+            data_to_save['description'] = choreography.description
+            data_to_save['choreography'] = [{'time': item[0], 'timestep': item[1], 'left_wheel_speed': item[2], 'right_wheel_speed': item[3]} for item in choreography.step_list]
+
             with open(path + choreography.name + ".json", "w") as file:
-                if not os.path.isfile(path + choreography.name + ".json"):
-                    json.dump(choreography.data, file, indent=4)
+                # if not os.path.isfile(path + choreography.name + ".json"):
+                print("saving")
+                json.dump(data_to_save, file, indent=4)
+
+    def save_choreography(self, name, path=DEFAULT_PATH_CHOREO):
+        """
+        Saves the choreography
+        """
+        choreography = self.choreography_dict[name]
+        data_to_save = {}
+        data_to_save['name'] = choreography.name
+        data_to_save['creation_date'] = choreography.creation_date
+        data_to_save['last_modified'] = (str(datetime.now()))[:-7]
+        data_to_save['description'] = choreography.description
+        data_to_save['choreography'] = [{'time': item[0], 'timestep': item[1], 'left_wheel_speed': item[2], 'right_wheel_speed': item[3]} for item in choreography.step_list]
+
+        with open(path + choreography.name + ".json", "w") as file:
+            # if not os.path.isfile(path + choreography.name + ".json"):
+            print("saving")
+            json.dump(data_to_save, file, indent=4)
 
     def delete_choreography(self, name):
         """
         Deletes a choreography
         """
-        ui(f"[bold red]Are you sure you want to delete the choreography [/][white]{name}[/][bold red]? [Y/n][/]")
-        answer = input(">")
-        if answer == "y":
-            ui(f"[bold orange]Deleting choreography [/][white]{name}[/][bold orange]...[/]")
-            os.remove(self.choreography_dict[name].path)
-            del self.choreography_dict[name]
-            ui(f"[bold green]Choreography [/][white]{name}[/][bold green] deleted![/]")
+        os.remove(self.choreography_dict[name].path)
+        del self.choreography_dict[name]
 
     def displays_choreography_dict(self):
         """
@@ -101,13 +128,17 @@ class ChoreographyManager:
             console.print(f"           [bold white]No choreography saved[/]")
 
         # print(self.choreography_dict)
+
+    def sort_choreography_dict(self):
+        # sorts the choreography dictionary by creation date
+        self.choreography_dict = {k: v for k, v in sorted(self.choreography_dict.items(), key=lambda item: item[1].creation_date)}
     
     # SEQUENCE FUNCTIONS
-    def create_sequence(self, name, description, sequence_l=[], path=DEFAULT_PATH_SEQUENCE):
+    def create_sequence(self, name, creation_date, description, sequence_l=[], path=DEFAULT_PATH_SEQUENCE):
         """
         Creates a sequence
         """
-        sequence = Sequence(name, description, sequence_l, path)
+        sequence = Sequence(name, creation_date, description, sequence_l, path)
         self.sequence_dict[name] = sequence
         self.save_sequence_dict()
 
@@ -121,11 +152,12 @@ class ChoreographyManager:
             try:
                 with open(path + file, "r") as file:
                     data = json.load(file)
+                creation_date = data['creation_date']
                 description = data['description']
                 sequence_l = data['sequence_order']
 
                 if name not in self.sequence_dict:
-                    self.sequence_dict[name] = Sequence(name, description=description, sequence_l=sequence_l, path=path)
+                    self.sequence_dict[name] = Sequence(name, creation_date=creation_date, description=description, sequence_l=sequence_l, path=path)
             except KeyError:
                 error(f"sequence [bold white]{name}[/] is corrupted")
                 pass
@@ -136,6 +168,8 @@ class ChoreographyManager:
         """
         for sequence in self.sequence_dict.values():
             data_to_save = {}
+            data_to_save['name'] = sequence.name
+            data_to_save['creation_date'] = sequence.creation_date
             data_to_save['description'] = sequence.description
             data_to_save['sequence_order'] = sequence.sequence_l
             if not os.path.isfile(path + sequence.name + ".json"):
@@ -147,14 +181,8 @@ class ChoreographyManager:
         """
         Deletes a sequence
         """
-        ui(f"[bold red]Are you sure you want to delete the sequence [/][white]{name}[/][bold red]? [Y/n][/]")
-        answer = input(">")
-        if answer == "n":
-            return
-        ui(f"[bold orange]Deleting sequence [/][white]{name}[/][bold orange]...[/]")
         os.remove(self.sequence_dict[name].path)
         del self.sequence_dict[name]
-        ui(f"[bold green]Sequence [/][white]{name}[/][bold green] deleted![/]")
 
     def displays_sequence_dict(self):
         """
@@ -171,6 +199,10 @@ class ChoreographyManager:
 
         # print(self.sequence_dict)
 
+    def sort_sequence_dict(self):
+        # sorts the sequence dictionary by creation date
+        self.sequence_dict = {k: v for k, v in sorted(self.sequence_dict.items(), key=lambda item: item[1].creation_date)}
+
 # CLASSES
 
 class Choreography:
@@ -179,20 +211,23 @@ class Choreography:
 
     @variables:
     Var name: name of the choreography
+    Var creation_date: date of creation of the choreography
+    Var last_modified: date of last modification of the choreography
     Var description: description of the choreography
     Var step_list: array of the choreography data
     Var path: path of the choreography file
     Var speed_fact: speed factor of the choreography
-    Var data: data of the choreography
-    Var complete: boolean indicating if the choreography is complete
 
     @functions:
     Func __init__: initiates the class
     Func __str__: returns the name of the choreography
     Func get_info: returns the info of the choreography
+    Func graph_speeds: graphs the speeds of the choreography
     """
-    def __init__(self, name, step_list, description="", path=DEFAULT_PATH_CHOREO, speed_fact=DEFAULT_SPEED_FACT):
+    def __init__(self, name, creation_date, last_modified, step_list, description="", path=DEFAULT_PATH_CHOREO, speed_fact=DEFAULT_SPEED_FACT):
         self.name = name
+        self.creation_date = creation_date
+        self.last_modified = last_modified
         self.step_list = step_list
         self.description = description
         self.path = path + name + ".json"
@@ -205,7 +240,13 @@ class Choreography:
         """
         Returns the info of the choreography
         """
-        return self.name, self.description, self.speed_fact, self.path
+        return self.name, self.creation_date, self.last_modified, self.description, self.speed_fact, self.path
+    
+    def get_last_time(self):
+        """
+        Returns the last time of the choreography
+        """
+        return self.step_list[-1,0]
     
     def graph_speeds(self):
         """
@@ -241,10 +282,37 @@ class Choreography:
         plt.savefig(f"app/GUI_assets/temp_fig/{self.name}_dark_graph.png", transparent=True)   
         plt.clf()
         plt.close()
+
+    def trim(self, start_time, end_time):
+        """
+        Trims the choreography
+        """
+        start_index = np.where(self.step_list[:,0] == start_time)[0][0]
+        end_index = np.where(self.step_list[:,0] == end_time)[0][0]
+        self.step_list = self.step_list[start_index:end_index+1,:]
+        # shift the axis
+        self.step_list[:,0] = self.step_list[:,0] - start_time
     
 class Sequence:
-    def __init__(self, name, description="", sequence_l=[], path=DEFAULT_PATH_SEQUENCE):
+    """
+    Class containing the sequence
+
+    @variables:
+    Var name: name of the sequence
+    Var creation_date: date of creation of the sequence
+    Var description: description of the sequence
+    Var sequence_l: list of the choreography names
+    Var path: path of the sequence file
+
+    @functions:
+    Func __init__: initiates the class
+    Func __str__: returns the name of the sequence
+    Func get_info: returns the info of the sequence
+    Func empty: empties the sequence
+    """
+    def __init__(self, name, creation_date, description="", sequence_l=[], path=DEFAULT_PATH_SEQUENCE):
         self.name = name
+        self.creation_date = creation_date
         self.sequence_l = sequence_l
         self.description = description
         self.path = path + name + ".json"
@@ -256,7 +324,7 @@ class Sequence:
         """
         Returns the info of the sequence
         """
-        return self.name, self.description, self.path, self.sequence_l
+        return self.name, self.creation_date, self.description, self.path, self.sequence_l
     
     def empty(self):
         """

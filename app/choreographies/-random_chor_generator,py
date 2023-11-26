@@ -1,6 +1,7 @@
 import json
 import random
 import os
+from datetime import datetime 
 
 # Define constraints
 min_speed = 0
@@ -14,6 +15,13 @@ timestep = 0.1
 n = 1
 while os.path.exists(path + f"random_chor{n}.json"):
     n += 1
+
+creation_date = str(datetime.now())
+
+#get rid of ms
+creation_date = creation_date[:-7]
+
+last_modified = creation_date
 
 description = f"random choreography {n}"
 
@@ -30,6 +38,9 @@ for time in range(max_time):
 
 # Create choreography dictionary
 choreography = {
+    "name": f"random_chor{n}",
+    "creation_date": creation_date,
+    "last_modified": last_modified,
     "description": description,
     "choreography": time_steps
 }

@@ -4,6 +4,7 @@ import customtkinter
 from PIL import Image
 from threading import Thread
 from CTkToolTip import *
+from datetime import datetime
 import time
 
 customtkinter.set_appearance_mode("System")  # Modes: "System" (standard), "Dark", "Light"
@@ -267,11 +268,23 @@ class App(customtkinter.CTk):
         
 
 
+
+
+
+
+
+
+
+
+
+
+
+
     def settings_event(self):
         self.settings_window = ToplevelWindow(self)  # create window if its None or destroyed
         self.settings_window.after(100,self.settings_window.lift) # Workaround for bug where main window takes focus
-        # give focus
-        
+        # give focus to the window
+        self.settings_window.focus()
 
         # add path frame in settings window
         self.settings_path_frame = customtkinter.CTkFrame(self.settings_window, fg_color=(LIGHT_COLOR, DARK_COLOR))
@@ -310,6 +323,13 @@ class App(customtkinter.CTk):
                     # stop debug
                     self.debug_on = False
 
+    def save_choreographies(self):
+        self.modules.choreographer.save_choreography_dict()
+
+    def save_choreography(self, choreography_name: str):
+        self.modules.choreographer.save_choreography(choreography_name)
+
+
 
 
 
@@ -331,19 +351,20 @@ class App(customtkinter.CTk):
     def refresh_info_chor(self):
         index = self.chor_radio_var.get()
         name = self.choreographies_list[index]
-        choreography_name, description, speed_factor, path = self.modules.choreographer.choreography_dict[name].get_info()
+        choreography_name, creation_date, last_modified, description, speed_factor, path = self.modules.choreographer.choreography_dict[name].get_info()
         self.chor_info_text.configure(state="normal")
         self.chor_info_text.delete("1.0", "end")
-        self.chor_info_text.insert("1.0", f"Name:\t\t{choreography_name}\nDescription:\t\t{description}\nSpeed factor:\t\t{str(speed_factor)}")
+        # print every info
+        self.chor_info_text.insert("1.0", f"Name:\t\t{choreography_name}\nCreation date:\t\t{creation_date}\nLast modified:\t\t{last_modified}\nDescription:\t\t{description}\nSpeed factor:\t\t{str(speed_factor)}")
         self.chor_info_text.configure(state="disabled")
 
     def refresh_info_seq(self):
         index = self.seq_radio_var.get()
         name = self.sequences_list[index]
-        sequence_name, description, path, sequence_order = self.modules.choreographer.sequence_dict[name].get_info()
+        sequence_name, creation_date, description, path, sequence_order = self.modules.choreographer.sequence_dict[name].get_info()
         self.seq_info_text.configure(state="normal")
         self.seq_info_text.delete("1.0", "end")
-        self.seq_info_text.insert("1.0", f"Name:\t\t{sequence_name}\nDescription:\t\t{description}\nSequence order:\t\t{sequence_order}")
+        self.seq_info_text.insert("1.0", f"Name:\t\t{sequence_name}\nCreation date:\t\t{creation_date}\nDescription:\t\t{description}\nSequence order:\t\t{sequence_order}")
         self.seq_info_text.configure(state="disabled")
     
     def refresh_choreographies_list(self):
@@ -416,7 +437,7 @@ class App(customtkinter.CTk):
         if connection_status == True:
             if play_mode == "Choreography":
                 name = self.choreographies_list[index]
-                choreography_name, _, speed_factor, _ = self.modules.choreographer.choreography_dict[name].get_info()
+                choreography_name, _, _, _, speed_factor, _ = self.modules.choreographer.choreography_dict[name].get_info()
                 self.play_chor_name_label.configure(text=f"Name:\t\t\t\t{choreography_name}")
                 # show the speed factor entry
                 self.play_speed_factor_entry.configure(state="normal")
@@ -429,7 +450,7 @@ class App(customtkinter.CTk):
                     self.play_nbr_repetition_entry.insert(0, "1")
             elif play_mode == "Sequence":
                 name = self.sequences_list[index]
-                sequence_name, _, _, _ = self.modules.choreographer.sequence_dict[name].get_info()
+                sequence_name, _, _, _, _ = self.modules.choreographer.sequence_dict[name].get_info()
                 self.play_chor_name_label.configure(text=f"Name:\t\t\t\t{sequence_name}")
                 # lock the speed factor entry
                 self.play_speed_factor_entry.delete(0, "end")
@@ -967,16 +988,18 @@ class App(customtkinter.CTk):
         # get if choreography or sequence
         index = self.editor_manage_radio_var.get()
         mode = self.editor_manage_optionemenu.get()
-        print(f"delete {mode} {index}")
+        # print(f"delete {mode} {index}")
         if index < 0:
             tkinter.messagebox.showwarning("Warning", f"Please select something to delete")
         # pop up window to ask if sure
         elif tkinter.messagebox.askyesno("Warning", f"Are you sure you want to delete the {mode}: {index}?"):
             if mode == "Choreography":
+                self.modules.choreographer.delete_choreography(self.choreographies_list[index])
                 self.remove_choreography(index)
                 self.editor_manage_refresh_chor_list()
                 self.editor_delete_image()
             elif mode == "Sequence":
+                self.modules.choreographer.delete_sequence(self.sequences_list[index])
                 self.remove_sequence(index)
                 self.editor_manage_refresh_seq_list()
             self.editor_manage_deselect_button()
@@ -986,7 +1009,26 @@ class App(customtkinter.CTk):
         self.editor_manage_radio_var.set(-1)
 
     def editor_manage_trim_event(self):
-        pass
+        # get trim start
+        trim_start = self.editor_manage_trim_start_slider_var.get()
+        # get trim end
+        trim_end = self.editor_manage_trim_end_slider_var.get()
+        # get the choreography name
+        index = self.editor_manage_radio_var.get()
+        name = self.choreographies_list[index]
+        # check trim validity
+        if trim_start >= trim_end:
+            tkinter.messagebox.showwarning("Warning", "Trim start must be smaller than trim end")
+            return
+        # pop up window to ask if sure
+        elif tkinter.messagebox.askyesno("Warning", f"Are you sure you want to trim the choreography: {name}?"):
+            # trim the choreography
+            self.modules.choreographer.choreography_dict[name].trim(trim_start, trim_end)
+            # refresh the info
+            self.save_choreography(name)
+            self.editor_manage_refresh_chor_list()
+            self.editor_manage_refresh_seq_list()
+
 
     def refresh_editor_info_chor(self):
         # get the choreography name
@@ -998,17 +1040,20 @@ class App(customtkinter.CTk):
         self.editor_manage_graph_image = customtkinter.CTkImage(light_image=self.editor_manage_graph_image_light, dark_image=self.editor_manage_graph_image_dark, size=(400,200)) # convert the image to tkinter format
         self.editor_manage_graph_image_label.configure(image=self.editor_manage_graph_image) # display the image
 
+        # get last time of the choreography
+        last_time = self.modules.choreographer.choreography_dict[name].get_last_time()
+
         # add two sliders in the slider box for start and end of trim
         self.editor_manage_trim_start_label = customtkinter.CTkLabel(self.editor_manage_trim_frame, text="Start:", anchor="w")
         self.editor_manage_trim_start_label.place(relx=0.01, rely=0.1, relwidth=0.98, relheight=0.2)
         self.editor_manage_trim_start_slider_var = tkinter.IntVar(value=0)
-        self.editor_manage_trim_start_slider = customtkinter.CTkSlider(self.editor_manage_trim_frame, orientation="horizontal", variable=self.editor_manage_trim_start_slider_var, command=self.editor_manage_trim_start_event)
+        self.editor_manage_trim_start_slider = customtkinter.CTkSlider(self.editor_manage_trim_frame, orientation="horizontal", to=last_time, variable=self.editor_manage_trim_start_slider_var, command=self.editor_manage_trim_start_event)
         self.editor_manage_trim_start_slider.configure()
         self.editor_manage_trim_start_slider.place(relx=0.01, rely=0.3, relwidth=0.98, relheight=0.2)
         self.editor_manage_trim_end_label = customtkinter.CTkLabel(self.editor_manage_trim_frame, text="End:", anchor="w")
         self.editor_manage_trim_end_label.place(relx=0.01, rely=0.5, relwidth=0.98, relheight=0.2)
-        self.editor_manage_trim_end_slider_var = tkinter.IntVar(value=1)
-        self.editor_manage_trim_end_slider = customtkinter.CTkSlider(self.editor_manage_trim_frame, orientation="horizontal", variable=self.editor_manage_trim_end_slider_var, command=self.editor_manage_trim_end_event)
+        self.editor_manage_trim_end_slider_var = tkinter.IntVar(value=last_time)
+        self.editor_manage_trim_end_slider = customtkinter.CTkSlider(self.editor_manage_trim_frame, orientation="horizontal", to=last_time, variable=self.editor_manage_trim_end_slider_var, command=self.editor_manage_trim_end_event)
         self.editor_manage_trim_end_slider.place(relx=0.01, rely=0.7, relwidth=0.98, relheight=0.2)
 
     def editor_manage_trim_start_event(self, value):
@@ -1088,13 +1133,31 @@ class App(customtkinter.CTk):
         self.editor_create_seq_order_button = customtkinter.CTkButton(self.editor_create_seq_order_frame, text="Create Sequence", command=self.editor_create_seq_order_event)
         self.editor_create_seq_order_button.place(relx=0.01, rely=0.5, relwidth=0.98, relheight=0.9, anchor="w")
 
-        
-
     def editor_create_seq_refresh_info_chor(self):
-        pass
+        # delete buttons
+        for button in self.editor_create_seq_scrollable_frame_chor:
+            button.destroy()
+        self.editor_create_seq_scrollable_frame_chor = []
+        # refresh list
+        for i in range(len(self.choreographies_list)):
+            newbutton = customtkinter.CTkRadioButton(master=self.editor_create_seq_chor_radiobutton_frame, corner_radius=0, state="disabled", radiobutton_width=5, radiobutton_height=5, variable=self.editor_create_seq_chor_radio_var, value=i, text=self.choreographies_list[i], command=self.editor_create_seq_refresh_info_chor)
+            newbutton.grid(row=i, column=0, padx=10, pady=(0, 10), sticky="w")
+            self.editor_create_seq_scrollable_frame_chor.append(newbutton)
     
     def editor_create_seq_refresh_info_seq(self):
-        pass
+        # delete buttons
+        for button in self.editor_create_seq_scrollable_frame_seq:
+            button.destroy()
+        self.editor_create_seq_scrollable_frame_seq = []
+        # refresh list
+        for i in range(len(self.sequences_list)):
+            newbutton = customtkinter.CTkRadioButton(master=self.editor_create_seq_seq_radiobutton_frame, corner_radius=0, state="disabled", radiobutton_width=5, radiobutton_height=5, variable=self.editor_create_seq_seq_radio_var, value=i, text=self.sequences_list[i], command=self.editor_create_seq_refresh_info_seq)
+            newbutton.grid(row=i, column=0, padx=10, pady=(0, 10), sticky="w")
+            self.editor_create_seq_scrollable_frame_seq.append(newbutton)
+
+    def editor_create_seq_refresh_lists(self):
+        self.editor_create_seq_refresh_info_chor()
+        self.editor_create_seq_refresh_info_seq()
 
     def editor_create_seq_order_event(self):
         # create input dialog
@@ -1106,10 +1169,28 @@ class App(customtkinter.CTk):
         # create input dialog
         self.editor_create_dialog = customtkinter.CTkInputDialog(text=f"Sequence order for: {name}", title="Create Sequence")
         sequence_string = self.editor_create_dialog.get_input()
-        print(sequence_string)
-        
-    def editor_create_seq_order_dialog_event(self, button):
-        pass
+        # get description
+        description = self.editor_create_seq_description_textbox.get("1.0", "end")
+        # get creation date
+        creation_date = (str(datetime.now()))[:-7]
+        # creates the sequence
+        try:
+            sequence_order = sequence_string.split(">")
+            sequence_order = [int(i) for i in sequence_order]
+            for element in sequence_order:
+                if element < 1 or element > len(self.choreographies_list):
+                    raise ValueError
+                if element > len(self.choreographies_list):
+                    raise ValueError
+        except:
+            tkinter.messagebox.showwarning("Warning", "Please enter a valid sequence order")
+            return
+        print(name)
+        self.modules.choreographer.create_sequence(name, creation_date, description, sequence_order)
+
+        # refresh propositions
+        self.refresh()
+        self.editor_create_seq_refresh_lists()
 
     def editor_manage_mode_tooltip_update(self):
         # update tooltip

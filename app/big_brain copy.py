@@ -10,6 +10,7 @@ from app.choreography_manager import ChoreographyManager
 from app.motion_control import MotionControl
 from app.editor import Editor
 from app.utils.console import *
+from datetime import datetime
 
 @dataclass
 class Modules:
@@ -524,7 +525,10 @@ class BigBrain:
                     except ValueError:
                         warning("This sequence order is not valid\n")
                         pass
-                modules.choreographer.create_sequence(name, description, sequence_order)
+                creation_date = str(datetime.now())
+                # get rid of ms
+                creation_date = creation_date[:-7]
+                modules.choreographer.create_sequence(name, description, creation_date, sequence_order)
                 info("Sequence created!")
                 print("\n")
                 ui("Press enter to get back to the editor")
