@@ -89,7 +89,7 @@ void loop() {
 
     if (mode == 1) {
       // get optical mouse data
-      if (millis() - last_time > 200) {
+      if (millis() - last_time > 20) {
         Serial.println("getting mouse data");
         mouse.get_data();
         status_mouse = mouse.status(); // Status Byte
@@ -155,7 +155,7 @@ void loop() {
     }
   }
 
-  delay(500);  // Send data every 0.5 second
+  // delay(500);  // Send data every 0.5 second
 }
 
 

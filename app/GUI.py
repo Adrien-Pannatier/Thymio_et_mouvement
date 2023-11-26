@@ -17,6 +17,10 @@ DEFAULT_DARK = "#2b2b2b"
 class App(customtkinter.CTk):
     def __init__(self, modules):
         super().__init__()
+
+        # bind key events
+        self.bind("<Key>", self.key_pressed_event)
+
         self.modules = modules
 
         self.mode = "Info"
@@ -143,10 +147,10 @@ class App(customtkinter.CTk):
         # add thymio connection status label
         self.play_thymio_status_label = customtkinter.CTkLabel(self.play_thymio_status_frame, text="Thymio status: Not connected", anchor="w")
         self.play_thymio_status_label.place(relx=0.01, rely=0.5, relwidth=0.98, relheight=0.48, anchor="w")
-        # add connect slider
+        # add connect switch
         self.play_connect_variable = tkinter.BooleanVar(value=False)
-        self.play_connect_slider = customtkinter.CTkSwitch(self.play_thymio_status_frame, text="", variable=self.play_connect_variable, command=self.play_connect_event)
-        self.play_connect_slider.place(relx=0.99, rely=0.5, relwidth=0.25, relheight=0.98, anchor="e")
+        self.play_connect_switch = customtkinter.CTkSwitch(self.play_thymio_status_frame, text="", variable=self.play_connect_variable, command=self.play_connect_event)
+        self.play_connect_switch.place(relx=0.99, rely=0.5, relwidth=0.25, relheight=0.98, anchor="e")
 
         # update bar variable
         self.update_bar_update = False
@@ -179,8 +183,10 @@ class App(customtkinter.CTk):
         self.record_server_status_label = customtkinter.CTkLabel(self.record_server_status_frame, text="Server status: Not running", anchor="w")
         self.record_server_status_label.place(relx=0.01, rely=0.5, relwidth=0.98, relheight=0.48, anchor="w")
         # add server slider
-        self.record_server_slider = customtkinter.CTkSwitch(self.record_server_status_frame, text="", command=self.record_server_event)
-        self.record_server_slider.place(relx=0.99, rely=0.5, relwidth=0.25, relheight=0.98, anchor="e")
+        self.record_server_switch = customtkinter.CTkSwitch(self.record_server_status_frame, text="", command=self.record_server_event)
+        self.record_server_switch.place(relx=0.99, rely=0.5, relwidth=0.25, relheight=0.98, anchor="e")
+
+        self.debug_on = False # boolean for debug status
         
         # EDIT TAB CREATION ================================================================================================
         # add option menu mode between Manager and Create sequence
@@ -215,6 +221,27 @@ class App(customtkinter.CTk):
         new_scaling_float = int(new_scaling.replace("%", "")) / 100
         customtkinter.set_widget_scaling(new_scaling_float)
 
+    def key_pressed_event(self, event):
+        # if the key pressed is Enter
+        if event.keysym == "Return":
+            # check the tab
+            if self.tabview.tab("Record").winfo_ismapped():
+                # if calibration is running
+                if self.modules.process_controler_data.calibration_on:
+                    # stop calibration
+                    self.modules.process_controler_data.calibration_on = False
+                    # wait 1 seconds
+                    time.sleep(1)
+                    # show the calibration parameter
+                    self.record_info_textbox.insert("end", f"\nOffset : {self.calibration_offset}")
+                    # start the calibration thread
+                    self.record_info_textbox.configure(state="disabled")
+                    # unblock connection slider
+                    self.record_server_switch.configure(state="normal")
+                    # save the calibration
+                elif self.debug_on:
+                    # stop debug
+                    self.debug_on = False
 
 
 
@@ -318,7 +345,7 @@ class App(customtkinter.CTk):
         # get the selection
         index = self.play_radio_var.get()
         # get the connection status
-        connection_status = self.play_connect_slider.get()
+        connection_status = self.play_connect_switch.get()
         if connection_status == True:
             if play_mode == "Choreography":
                 name = self.choreographies_list[index]
@@ -361,7 +388,7 @@ class App(customtkinter.CTk):
 
     def play_connect_event(self):
         # get the connection status
-        connection_status = self.play_connect_slider.get()
+        connection_status = self.play_connect_switch.get()
         if connection_status == True:
             # try to connect the thymio
             if not self.modules.motion_control.init_thymio_connection():
@@ -487,7 +514,7 @@ class App(customtkinter.CTk):
             self.play_speed_factor_entry.configure(state="disabled")
             self.play_nbr_repetition_entry.configure(state="disabled")
             self.play_loop_checkbox.configure(state="disabled")
-            self.play_connect_slider.configure(state="disabled")
+            self.play_connect_switch.configure(state="disabled")
             # set the play_status to play
             self.modules.motion_control.choreography_status = "play"
             self.play_threading_progress()
@@ -532,7 +559,7 @@ class App(customtkinter.CTk):
                             self.play_speed_factor_entry.configure(state="normal")
                             self.play_nbr_repetition_entry.configure(state="normal")
                             self.play_loop_checkbox.configure(state="normal")
-                            self.play_connect_slider.configure(state="normal")
+                            self.play_connect_switch.configure(state="normal")
                             self.update_bar_update = False
                             return
                 self.modules.motion_control.choreography_status = "stop"
@@ -549,7 +576,7 @@ class App(customtkinter.CTk):
         self.play_speed_factor_entry.configure(state="normal")
         self.play_nbr_repetition_entry.configure(state="normal")
         self.play_loop_checkbox.configure(state="normal")
-        self.play_connect_slider.configure(state="normal")
+        self.play_connect_switch.configure(state="normal")
         self.update_bar_update = False
         return
 
@@ -563,7 +590,7 @@ class App(customtkinter.CTk):
 
     def update_progress(self):
         # while thymio is connected
-        while self.play_connect_slider.get() == True:
+        while self.play_connect_switch.get() == True:
             if self.update_bar_update == True:
                 self.set_progress(self.modules.motion_control.completion_percentage)
                 time.sleep(0.1)
@@ -577,15 +604,39 @@ class App(customtkinter.CTk):
     # RECORD METHODS ------------------------------------------------------------------------------------------------------
     def record_server_event(self):
         # get the server status
-        server_status = self.record_server_slider.get()
+        server_status = self.record_server_switch.get()
         if server_status == True:
+            self.display_record_connecting_message()
             # try to connect to the thymio
-            self.record_server_status_label.configure(text="Server status: Running")
+            self.record_server_status_label.configure(text="Server status: Connecting")
             self.modules.process_controler_data.init_record()
-            self.display_record_layout()
+            self.connect_threading()
         elif server_status == False:
             # disconnect from the thymio
+            self.modules.process_controler_data.close_connection()
             self.record_server_status_label.configure(text="Server status: Not running")
+            self.remove_record_layout()
+
+    def display_record_connecting_message(self):
+        # add text box in the middle
+        self.record_connecting_frame = customtkinter.CTkFrame(self.tabview.tab("Record"))
+        self.record_connecting_frame.place(relx=0.7, rely=0.25, relwidth=0.55, relheight=0.65)
+        # add label inside in the middle
+        self.record_connecting_label = customtkinter.CTkLabel(self.record_connecting_frame, text="Connecting to mimyo...", anchor="w")
+        self.record_connecting_label.place(relx=0.01, rely=0.01, relwidth=0.98, relheight=0.98)
+
+    def connect_threading(self):
+        # thread for connecting
+        self.connectthread = Thread(target=self.connect, daemon=True)
+        self.connectthread.start()
+
+    def connect(self):
+        # try to connect to the thymio
+        if self.modules.process_controler_data.accept_connection():
+            self.record_server_status_label.configure(text="Server status: Running")
+            self.display_record_layout()
+        else:
+            self.record_server_status_label.configure(text="Server status: Not connected")
             self.remove_record_layout()
 
     def display_record_layout(self):
@@ -598,7 +649,7 @@ class App(customtkinter.CTk):
         self.record_stop_button = customtkinter.CTkButton(self.record_record_frame, text="■", command=self.stop)
         self.record_stop_button.place(relx=0.2, rely=0.5, relwidth=0.15, relheight=0.7, anchor="w")
         # add debug button inside
-        self.record_debug_button = customtkinter.CTkButton(self.record_record_frame, text="Debug", command=self.debug)
+        self.record_debug_button = customtkinter.CTkButton(self.record_record_frame, text="Debug", command=self.debug_event)
         self.record_debug_button.place(relx=0.4, rely=0.5, relwidth=0.15, relheight=0.7, anchor="w")
 
         # add info box in the middle
@@ -611,10 +662,61 @@ class App(customtkinter.CTk):
         self.record_info_textbox = customtkinter.CTkTextbox(self.record_info_frame, wrap='none', state="disabled")
         self.record_info_textbox.place(relx=0.01, rely=0.15, relwidth=0.98, relheight=0.78)
 
-    def remove_record_layout(self):
-        self.record_record_frame.destroy()
-        self.record_info_frame.destroy()
+        # add calbration button next to title, on the right
+        self.record_calibration_button = customtkinter.CTkButton(self.tabview.tab("Record"), text="Calibrate", command=self.calibrate_event)
+        self.record_calibration_button.place(relx=0.65, rely=0.02, relwidth=0.1, relheight=0.05)
 
+    def remove_record_layout(self):
+        # remove all widgets
+        self.record_calibration_button.destroy() if hasattr(self, "record_calibration_button") else None
+        self.record_connecting_frame.destroy() if hasattr(self, "record_connecting_frame") else None
+        self.record_record_frame.destroy() if hasattr(self, "record_record_frame") else None
+        self.record_info_frame.destroy() if hasattr(self, "record_info_frame") else None
+
+    def calibrate_event(self):
+        self.calibration_offset = 0
+
+        # block connection slider
+        self.record_server_switch.configure(state="disabled")
+
+        # check if the calibration is already done
+        loaded_calibration = self.modules.process_controler_data.load_calibration()
+
+        if loaded_calibration != None:
+            # ask the use if he wants to recalibrate
+            answer = tkinter.messagebox.askquestion("Warning", f"A calibration already exists, do you want to recalibrate?\n The previous calibration is {loaded_calibration}")
+            if answer == "no":
+                # show the calibration parameter
+                self.record_info_textbox.insert("end", f"\nOffset : {loaded_calibration}")
+                self.calibration_offset = loaded_calibration
+                # unblock connection slider
+                self.record_server_switch.configure(state="normal")
+                return
+            
+        # update the message in the info box
+        self.record_info_textbox.configure(state="normal")
+        self.record_info_textbox.delete("1.0", "end")
+        self.record_info_textbox.insert("1.0", "Calibrating...")
+
+        # ask to move the robot 20cm forward
+        self.record_info_textbox.insert("end", "\nPlease move the robot 20cm forward")
+        self.record_info_textbox.insert("end", "\nPress enter when done")
+        # change the calibration status to on
+        self.modules.process_controler_data.calibration_on = True
+        # activate the thread
+        self.calibration_threading()
+
+    def calibration_threading(self):
+        # thread for calibration
+        self.calibrationthread = Thread(target=self.calibrate, daemon=True)
+        self.calibrationthread.start()
+
+    def calibrate(self):
+        # get the latest raw x position
+        self.calibration_offset = self.modules.process_controler_data.calibration()
+        # save the calibration offset
+        self.modules.process_controler_data.save_calibration(self.calibration_offset)
+        
     def record(self):
         # get name entry
         name = self.record_name_entry.get()
@@ -633,11 +735,76 @@ class App(customtkinter.CTk):
 
     def stop(self):
         # stop the recording
-        
         pass
 
+    def debug_event(self):
+        if self.debug_on == False:
+            self.debug_on = True
+            # load the calibration
+            self.calibration_offset = self.modules.process_controler_data.load_calibration()
+            if self.calibration_offset == None:
+                tkinter.messagebox.showwarning("Warning", "Please calibrate the robot first")
+                return
+            else:
+                print(f"calibration offset: {self.calibration_offset}")
+                # block connection slider
+                self.record_server_switch.configure(state="disabled")
+            # start the debug thread
+            self.debug_threading()
+
+    def debug_threading(self):
+        # thread for debug
+        self.debugthread = Thread(target=self.debug, daemon=True)
+        self.debugthread.start()
+
     def debug(self):
-        pass
+        counter = 0
+        x_position = 0
+        y_position = 0
+        # start the debug
+        self.modules.process_controler_data.debug_start()
+
+        # while counter <= 100:
+        while self.debug_on:
+            x_offset, y_offset = self.modules.process_controler_data.debug_step()
+            if x_offset and y_offset is not None:
+                self.record_info_textbox.configure(state="normal")
+                self.record_info_textbox.delete("1.0", "end")
+                self.record_info_textbox.insert("1.0", "Debugging...\nPress enter to stop")
+
+                # display the counter
+                self.record_info_textbox.insert("end", f"\nCounter : {counter}")
+                # transform into cm
+                x_offset = x_offset / self.calibration_offset
+                y_offset = y_offset / self.calibration_offset
+                # print(f"x offset in cm: {x_offset}")
+                # display in the info box
+                # self.record_info_textbox.insert("end", f"\nOffset : {x_offset}")
+
+                # add to x position
+                x_position = x_position + x_offset
+                y_position = y_position + y_offset
+                # print(f"x position: {x_position}")  
+                # display in the info box
+                self.record_info_textbox.insert("end", f"\nX Position : {x_position}")
+                self.record_info_textbox.insert("end", f"\nY Position : {y_position}")
+                counter += 1
+                # wait 0.1 second
+                time.sleep(0.1)
+                self.record_info_textbox.configure(state="disabled")
+
+        # display end of communication
+        self.record_info_textbox.configure(state="normal")
+        self.record_info_textbox.delete("1.0", "end")
+        self.record_info_textbox.insert("1.0", "\nDebugging ended")
+        self.record_info_textbox.configure(state="disabled")
+        
+
+        # stop the debug
+        self.modules.process_controler_data.debug_stop()
+
+
+        
 
     # EDIT METHODS --------------------------------------------------------------------------------------------------------
     
