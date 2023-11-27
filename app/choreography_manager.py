@@ -120,7 +120,7 @@ class ChoreographyManager:
             data_to_save['creation_date'] = choreography.creation_date
             data_to_save['last_modified'] = choreography.last_modified
             data_to_save['description'] = choreography.description
-            data_to_save['choreography'] = [{'time': item[0], 'timestep': item[1], 'left_wheel_speed': item[2], 'right_wheel_speed': item[3]} for item in choreography.step_list]
+            data_to_save['choreography'] = [{'time': float(item[0]), 'timestep': float(item[1]), 'left_wheel_speed': float(item[2]), 'right_wheel_speed': float(item[3])} for item in choreography.step_list]
 
             with open(path + choreography.name + ".json", "w") as file:
                 # if not os.path.isfile(path + choreography.name + ".json"):
@@ -179,11 +179,20 @@ class ChoreographyManager:
         Copies a choreography
         """
         choreography = self.choreography_dict[name]
-        data_array = choreography.step_list.copy()
+        data_array = []
+        for step in choreography.step_list:
+            data_array.append(list(step))
         creation_date = (str(datetime.now()))[:-7]
         last_modified = creation_date
         description = choreography.description + " (copied)"
-        self.create_choreography(new_name, creation_date, last_modified, data_array, description, speed_fact=choreography.speed_fact)
+        # transforms the ellements in float
+        for i in range(len(data_array)):
+            data_array[i] = [float(j) for j in data_array[i]]
+        # try:
+        self.create_choreography(new_name, creation_date, last_modified, data_array, description, speed_fact=float(choreography.speed_fact))
+        # except Exception as e:
+        #     error(f"Exception: {e}")
+        #     return
         self.save_choreography(new_name)
 
     def random_choreography_generator(self, min_speed, max_speed, max_time, timestep, samestart):
@@ -413,6 +422,7 @@ class Choreography:
         """
         start_time = int(start_time)
         end_time = int(end_time)
+        print(self.step_list[:])
         start_index = self.find_nearest(self.step_list[:,0], start_time)
         end_index = self.find_nearest(self.step_list[:,0], end_time)
         self.step_list = self.step_list[start_index:end_index+1,:]

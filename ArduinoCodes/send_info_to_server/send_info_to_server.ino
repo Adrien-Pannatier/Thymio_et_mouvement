@@ -116,11 +116,11 @@ void loop() {
       String timeDiffStr = String(dt);
 
       //create the message to send
-      String dataStr = timeStr + "," + timeDiffStr + "," + gxStr + "," + gyStr + "," + gzStr + "," + xMvtRawStr + "," + yMvtRawStr;
+      String dataStr = "s," + timeStr + "," + timeDiffStr + "," + gxStr + "," + gyStr + "," + gzStr + "," + xMvtRawStr + "," + yMvtRawStr + ",n";
 
       // Send your string to the Python script
       if (last_time != 0) { // Do not send the first value
-        client.println(dataStr); 
+        client.print(dataStr); 
         }
       Serial.print("message sent: ");
       Serial.println(dataStr);
@@ -142,6 +142,7 @@ void loop() {
       else if (msg == "stop"){
         mode = 0;
         Serial.println("Mode changed to idle");
+        client.print("c");
       }
 
     }

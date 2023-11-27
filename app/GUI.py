@@ -7,6 +7,8 @@ from CTkToolTip import *
 from datetime import datetime
 import time
 
+import numpy as np
+
 from app.config import *
 from app.utils.console import * 
 
@@ -197,6 +199,9 @@ class App(customtkinter.CTk):
         # update bar variable
         self.update_bar_update = False
 
+        # select optionemenu
+        self.play_select_event("Choreography")
+
         # RECORD TAB CREATION ==============================================================================================
         # add settings frame on the left
         self.record_settings_frame = customtkinter.CTkFrame(self.tabview.tab("Record"), fg_color=(LIGHT_COLOR, DARK_COLOR))
@@ -259,12 +264,13 @@ class App(customtkinter.CTk):
                                         + " choreographies and sequences. You can also\n"
                                         + " create new sequences. Please select what you\n"
                                         + " want to do on the left.")
+        
+        # select optionemenu
+        self.editor_mode_select_event("Manage")
 
         # SET DEFAULT VALUES ===============================================================================================
         self.appearance_mode_optionemenu.set("Dark")
         self.scaling_optionemenu.set("100%")
-        self.play_optionemenu.set("Choreography")
-        self.editor_optionemenu.set("Manage")
         # lock window size
         self.resizable(False, False)
         # put info buttons to zero
@@ -386,8 +392,8 @@ class App(customtkinter.CTk):
                 if self.modules.process_controler_data.calibration_on:
                     # stop calibration
                     self.modules.process_controler_data.calibration_on = False
-                    # wait 1 seconds
-                    time.sleep(1)
+                    # wait 2 seconds
+                    time.sleep(2)
                     # show the calibration parameter
                     self.record_info_textbox.insert("end", f"\nOffset : {self.calibration_offset}")
                     # start the calibration thread
@@ -661,7 +667,7 @@ class App(customtkinter.CTk):
 
     def play_threading_progress(self):
         print("creating thread")
-        print(self.modules.motion_control.choreography_status)
+        # print(self.modules.motion_control.choreography_status)
         # thread for progress bar
         self.progress_thread = Thread(target=self.update_progress, daemon=True)
         self.progress_thread.start()
@@ -821,9 +827,9 @@ class App(customtkinter.CTk):
         self.record_record_frame = customtkinter.CTkFrame(self.tabview.tab("Record"))
         self.record_record_frame.place(relx=0.4, rely=0.1, relwidth=0.55, relheight=0.10)
         # add record and stop buttons inside
-        self.record_record_button = customtkinter.CTkButton(self.record_record_frame, text="◉", command=self.record)
+        self.record_record_button = customtkinter.CTkButton(self.record_record_frame, text="◉", command=self.record_event)
         self.record_record_button.place(relx=0.01, rely=0.5, relwidth=0.15, relheight=0.7, anchor="w")
-        self.record_stop_button = customtkinter.CTkButton(self.record_record_frame, text="■", command=self.stop)
+        self.record_stop_button = customtkinter.CTkButton(self.record_record_frame, text="■", command=self.stop_event)
         self.record_stop_button.place(relx=0.2, rely=0.5, relwidth=0.15, relheight=0.7, anchor="w")
         # add debug button inside
         self.record_debug_button = customtkinter.CTkButton(self.record_record_frame, text="Debug", command=self.debug_event)
@@ -894,7 +900,7 @@ class App(customtkinter.CTk):
         # save the calibration offset
         self.modules.process_controler_data.save_calibration(self.calibration_offset)
         
-    def record(self):
+    def record_event(self):
         # get name entry
         name = self.record_name_entry.get()
         if name == "":
@@ -909,6 +915,33 @@ class App(customtkinter.CTk):
             answer = tkinter.messagebox.askquestion("Warning", "This name already exists, do you want to overwrite it?")
             if answer == "no":
                 return
+            
+    def record_threading(self):
+        # thread for recording
+        self.recordthread = Thread(target=self.record, daemon=True)
+        self.recordthread.start()
+
+    def record(self):
+        # start the recording
+        self.modules.process_controler_data.record_start()
+        # wait 2 seconds
+        time.sleep(2)
+        # display the counter
+        self.record_info_textbox.insert("end", f"\nCounter : {self.modules.process_controler_data.counter}")
+        # while the counter is less than 100
+        while self.modules.process_controler_data.counter <= 100:
+            # get the new counter
+            new_counter = self.modules.process_controler_data.record_step()
+            # if the counter changed
+            if new_counter != None:
+                # display the counter
+                self.record_info_textbox.insert("end", f"\nCounter : {new_counter}")
+                # wait 0.1 second
+                time.sleep(0.1)
+        # display end of communication
+        self.record_info_textbox.insert("end", "\nEnd of communication")
+        # stop the recording
+        self.modules.process_controler_data.record_stop()
 
     def stop(self):
         # stop the recording
@@ -923,7 +956,7 @@ class App(customtkinter.CTk):
                 tkinter.messagebox.showwarning("Warning", "Please calibrate the robot first")
                 return
             else:
-                print(f"calibration offset: {self.calibration_offset}")
+                # print(f"calibration offset: {self.calibration_offset}")
                 # block connection slider
                 self.record_server_switch.configure(state="disabled")
             # start the debug thread
@@ -940,6 +973,8 @@ class App(customtkinter.CTk):
         y_position = 0
         # start the debug
         self.modules.process_controler_data.debug_start()
+        # display the counter
+        self.record_info_textbox.insert("end", f"\n Debuging started")
 
         # while counter <= 100:
         while self.debug_on:
@@ -952,15 +987,15 @@ class App(customtkinter.CTk):
                 # display the counter
                 self.record_info_textbox.insert("end", f"\nCounter : {counter}")
                 # transform into cm
-                x_offset = x_offset / self.calibration_offset
-                y_offset = y_offset / self.calibration_offset
+                x_offset = x_offset / self.calibration_offset * 10
+                y_offset = y_offset / self.calibration_offset * 10
                 # print(f"x offset in cm: {x_offset}")
                 # display in the info box
                 # self.record_info_textbox.insert("end", f"\nOffset : {x_offset}")
 
                 # add to x position
-                x_position = x_position + x_offset
-                y_position = y_position + y_offset
+                x_position = np.round(x_position + x_offset,2)
+                y_position = np.round(y_position + y_offset,2)
                 # print(f"x position: {x_position}")  
                 # display in the info box
                 self.record_info_textbox.insert("end", f"\nX Position : {x_position}")
@@ -1037,6 +1072,21 @@ class App(customtkinter.CTk):
         # add create button
         self.editor_create_rand_chor_settings_create_button = customtkinter.CTkButton(self.editor_create_rand_chor_frame, text="Create", command=self.editor_create_rand_chor_create_event)
         self.editor_create_rand_chor_settings_create_button.place(relx=0.55, rely=0.9, relwidth=0.3, relheight=0.05)
+        # create choreography list on top
+        self.editor_create_rand_chor_chor_list_frame = customtkinter.CTkFrame(self.editor_create_rand_chor_frame, fg_color=(DEFAULT_LIGHT, DEFAULT_DARK))
+        self.editor_create_rand_chor_chor_list_frame.place(relx=0.5, rely=0.01, relwidth=0.4, relheight=0.5)
+        # add title
+        self.editor_create_rand_chor_chor_list_title_label = customtkinter.CTkLabel(self.editor_create_rand_chor_chor_list_frame, text="CHOREOGRAPHIES", font=customtkinter.CTkFont(size=20, weight="bold"))
+        self.editor_create_rand_chor_chor_list_title_label.place(relx=0.01, rely=0.01, relwidth=0.98, relheight=0.1)
+        # add choreography list
+        self.editor_create_rand_chor_chor_list_scrollable_frame = customtkinter.CTkScrollableFrame(self.editor_create_rand_chor_chor_list_frame, fg_color=(LIGHT_COLOR, DARK_COLOR))
+        self.editor_create_rand_chor_chor_list_scrollable_frame.place(relx=0.01, rely=0.2, relwidth=0.98, relheight=0.7)
+        # add radio buttons inside
+        self.editor_create_rand_chor_chor_list_radio_var = tkinter.IntVar(value=-1)
+        self.scrollable_frame_editor_create_rand_chor_chor_list = []
+        for i, name in enumerate(self.choreographies_list):
+            self.scrollable_frame_editor_create_rand_chor_chor_list.append(customtkinter.CTkRadioButton(self.editor_create_rand_chor_chor_list_scrollable_frame,corner_radius=0, state="disabled", radiobutton_width=5, radiobutton_height=5, text=name, variable=self.editor_create_rand_chor_chor_list_radio_var, value=i))
+            self.scrollable_frame_editor_create_rand_chor_chor_list[i].pack(fill="both", expand=True)
 
     def editor_create_rand_chor_create_event(self):
         # get the settings
@@ -1065,7 +1115,16 @@ class App(customtkinter.CTk):
         info("Choreography created")
         # refresh the choreography list
         self.refresh()
+        self.refresh_editor_rand_chor_list()
 
+    def refresh_editor_rand_chor_list(self):
+        # remove all buttons
+        for button in self.scrollable_frame_editor_create_rand_chor_chor_list:
+            button.destroy()
+        self.scrollable_frame_editor_create_rand_chor_chor_list = []
+        for i, name in enumerate(self.choreographies_list):
+            self.scrollable_frame_editor_create_rand_chor_chor_list.append(customtkinter.CTkRadioButton(self.editor_create_rand_chor_chor_list_scrollable_frame,corner_radius=0, state="disabled", radiobutton_width=5, radiobutton_height=5, text=name, variable=self.editor_create_rand_chor_chor_list_radio_var, value=i))
+            self.scrollable_frame_editor_create_rand_chor_chor_list[i].pack(fill="both", expand=True)
 
     def editor_display_create_rand_chor_delete_layout(self):
         self.editor_create_rand_chor_frame.destroy() if hasattr(self, "editor_create_rand_chor_frame") else None
@@ -1077,7 +1136,7 @@ class App(customtkinter.CTk):
         self.editor_frame.place(relx=0, rely=0.08, relwidth=1, relheight=0.90)
         # add choregraphy or sequence option underneath
         self.editor_manage_optionemenu = customtkinter.CTkOptionMenu(self.editor_frame, values=["Choreography", "Sequence"], command=self.editor_manage_select_event)
-        self.editor_manage_optionemenu.set("Chore or Seq")
+        # self.editor_manage_optionemenu.set("Choreography")
         self.editor_manage_optionemenu.place(relx=0.01, rely=0.01, relwidth=0.25, relheight=0.05)
         self.editor_manage_radiobutton_frame = customtkinter.CTkScrollableFrame(self.editor_frame)
         self.editor_manage_radiobutton_frame.place(relx=0.01, rely=0.13, relwidth=0.33, relheight=0.75)
@@ -1112,6 +1171,10 @@ class App(customtkinter.CTk):
         # add trim sliders frame underneath
         self.editor_manage_trim_frame = customtkinter.CTkFrame(self.editor_frame, fg_color=(DEFAULT_LIGHT, DEFAULT_DARK))
         self.editor_manage_trim_frame.place(relx=0.4, rely=0.77, relwidth=0.55, relheight=0.20)
+
+        # select optionemenu
+        self.editor_manage_select_event("Choreography")
+
         
     def editor_manage_select_event(self, new_editor_manage_mode: str):
         # get the new editor manage mode
@@ -1204,7 +1267,7 @@ class App(customtkinter.CTk):
                 self.modules.choreographer.copy_choreography(name, new_name)
                 # self.save_choreography(new_name)
                 name = new_name
-                self.choreographies_list.append(name)
+                self.refresh()
             # trim the choreography
             self.modules.choreographer.choreography_dict[name].trim(trim_start, trim_end)
             self.save_choreography(name) 

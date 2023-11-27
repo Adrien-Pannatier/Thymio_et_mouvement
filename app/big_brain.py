@@ -24,12 +24,6 @@ class Gui:
         self.app = App(modules=modules)
         self.app.mainloop()    
         ui("Goodbye!")
-        # delete all temp assets in folder GUI_assets/temp_fig
-        folder_path = "app\\GUI_assets\\temp_fig"
-        for file_name in os.listdir(folder_path):
-            if file_name.endswith(".png"):
-                file_path = os.path.join(folder_path, file_name)
-                os.remove(file_path)
         
 
 class BigBrain:
@@ -77,3 +71,13 @@ class BigBrain:
 
         # start the GUI
         Gui(modules)
+
+        # delete all temp assets in folder GUI_assets/temp_fig
+        folder_path = "app\\GUI_assets\\temp_fig"
+        try:
+            for file_name in os.listdir(folder_path):
+                if file_name.endswith(".png"):
+                    file_path = os.path.join(folder_path, file_name)
+                    os.remove(file_path)
+        except:
+            pass

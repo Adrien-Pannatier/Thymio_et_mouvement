@@ -34,6 +34,19 @@ class ProcessControlerData:
 
         except OSError: # A vérifier ----------------------------------------------------------------------------
             warning(f"[bold red]Error:[/] The mock Thymio is not running. Please run it and try again.")
+
+    def empty_buffer(self):
+        # Empty the buffer
+        while True:
+            try:
+                buffer = (self.client_socket.recv(1))
+                # print(buffer)
+                if buffer == b'c':
+                    # print("Buffer emptied")
+                    break
+            except:
+                # error("Could not empty buffer")
+                break
             
     def accept_connection(self):
         try:
@@ -125,22 +138,37 @@ class ProcessControlerData:
         info("Calibration started")
 
         raw_x_position = 0 
+        raw_y_position = 0
 
         while self.calibration_on:
-            data_str = self.client_socket.recv(37).decode('utf-8')
-            if len(data_str) > 35:
-                # print(f"Received data: {data_str}")    
-                # separate data
-                data = [str(x) for x in data_str.split(',')]
-                # print(f"recieved x offset: {data[5]}, recieved y offset: {data[6]}")
-                try:
-                    raw_x_position = raw_x_position + float(data[5])
-                except:
-                    pass
+            # Wait for message starting with "s"
+            char = ""
+            message = ""
+            message_status = ""
+            while message_status != "got":
+                char = self.client_socket.recv(1).decode('utf-8')
+                if char.startswith("n"):
+                    message_status = "got"
+                    # print(f"Received message: {message}")
+                elif message_status == "start":
+                    message = message + char
+                elif char.startswith("s"):
+                    message_status = "start"
+            data_str = message[1:-1] # remove the first and last character
+            try:
+                data = [float(x) for x in data_str.split(',')]
+            except Exception as e:
+                warning(f"Exception: {e}")
+                continue
+            raw_y_position = raw_y_position + data[6]
+            info(f"raw_y_position: {raw_y_position}")
+            # time.sleep(0.1)
+        
         self.client_socket.send("stop".encode('utf-8'))
+        self.empty_buffer()
         # compute offset rounded to 2 decimals
-        offset = round(raw_x_position / 20.00, 2)
-
+        offset = round(raw_y_position / 20.00, 2)
+        info(f"offset: {offset}")
         return offset
     
     def save_calibration(self, offset):
@@ -175,29 +203,39 @@ class ProcessControlerData:
 
     def debug_start(self):
         self.client_socket.send("start".encode('utf-8'))
+        self.y_position = 0
+        self.x_position = 0
+
 
     def debug_step(self):
-        data_str = self.client_socket.recv(37).decode('utf-8')
-        if len(data_str) > 35:
-            data = [str(x) for x in data_str.split(',')]
-            # get x and y offsets
-            try: 
-                x_offset = float(data[5])
-            except:
-                x_offset = 0.00
-            try:
-                y_offset = float(data[6])
-            except:
-                y_offset = 0.00
-            # print(f"x offset: {x_offset}")
-            # print(f"y offset: {y_offset}")
-            return x_offset, y_offset
-        return None, None
+        # Wait for message starting with "s"
+        char = ""
+        message = ""
+        message_status = ""
+        while message_status != "got":
+            char = self.client_socket.recv(1).decode('utf-8')
+            # info(f"Received char: {char}")
+            if char.startswith("n"):
+                message_status = "got"
+                # print(f"Received message: {message}")
+            elif message_status == "start":
+                message = message + char
+            elif char.startswith("s"):
+                message_status = "start"
+        data_str = message[1:-1] # remove the first and last character
+        try:
+            data = [float(x) for x in data_str.split(',')]
+        except Exception as e:
+            warning(f"Exception: {e}")
+        x_offset = data[5]
+        y_offset = data[6]
+        return x_offset, y_offset
 
 
     def debug_stop(self):
         # print("message over")
         self.client_socket.send("stop".encode('utf-8'))
+        self.empty_buffer()
         time.sleep(1)
 
     def compute_speeds(self, current_pos, current_gyro_z, timestep, last_pos):
