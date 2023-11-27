@@ -4,6 +4,7 @@ import os
 import json
 import numpy as np
 import matplotlib.pyplot as plt
+import random
 from datetime import datetime
 
 
@@ -184,7 +185,65 @@ class ChoreographyManager:
         description = choreography.description + " (copied)"
         self.create_choreography(new_name, creation_date, last_modified, data_array, description, speed_fact=choreography.speed_fact)
         self.save_choreography(new_name)
-    
+
+    def random_choreography_generator(self, min_speed, max_speed, max_time, timestep, samestart):
+        # Define constraints
+        path = self.choreography_path
+
+        # check which is the highest choreography number
+        n = 1
+        while os.path.exists(path + f"random_chor_smoother_{n}.json"):
+            n += 1
+
+        creation_date = str(datetime.now())
+
+        #get rid of ms
+        creation_date = creation_date[:-7]
+
+        last_modified = creation_date
+
+        description = f"random choreography smoother {n}"
+
+        # Create list of time steps
+        time_steps = []
+        previous_speed_left = random.randint(min_speed, max_speed)
+        if samestart:
+            previous_speed_right = previous_speed_left
+        else:
+            previous_speed_right = random.randint(min_speed, max_speed) 
+        for time in range(0, max_time, 100):
+            if random.random() < 0.25:  # 25% chance of speed changes
+                speed_change_left = random.randint(-1, 1)
+                new_speed_left = max(min(previous_speed_left + speed_change_left, max_speed), min_speed)
+                speed_change_right = random.randint(-1, 1)
+                new_speed_right = max(min(previous_speed_right + speed_change_right, max_speed), min_speed)
+            else:
+                new_speed_left = previous_speed_left
+                new_speed_right = previous_speed_right
+
+            time_step = {
+                "time": time,
+                "timestep": timestep,
+                "left_wheel_speed": new_speed_left,
+                "right_wheel_speed": new_speed_right
+            }
+            time_steps.append(time_step)
+            previous_speed_left = new_speed_left
+            previous_speed_right = new_speed_right
+
+        # Create choreography dictionary
+        choreography = {
+            "name": f"random_chor{n}",
+            "creation_date": creation_date,
+            "last_modified": last_modified,
+            "description": description,
+            "choreography": time_steps
+        }
+
+        # Write to JSON file
+        with open(path + f"random_chor_smoother_{n}.json", 'w') as f:
+            json.dump(choreography, f)
+
     # SEQUENCE FUNCTIONS
     def create_sequence(self, name, creation_date, description, sequence_l=[], path=None):
         """
@@ -354,11 +413,15 @@ class Choreography:
         """
         start_time = int(start_time)
         end_time = int(end_time)
-        start_index = np.where(self.step_list[:,0] == start_time)[0][0]
-        end_index = np.where(self.step_list[:,0] == end_time)[0][0]
+        start_index = self.find_nearest(self.step_list[:,0], start_time)
+        end_index = self.find_nearest(self.step_list[:,0], end_time)
         self.step_list = self.step_list[start_index:end_index+1,:]
         # shift the axis
         self.step_list[:,0] = self.step_list[:,0] - start_time
+
+    def find_nearest(self, array, value):
+        array = np.asarray(array)
+        return (np.abs(array - value)).argmin()
     
 class Sequence:
     """

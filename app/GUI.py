@@ -8,6 +8,7 @@ from datetime import datetime
 import time
 
 from app.config import *
+from app.utils.console import * 
 
 customtkinter.set_appearance_mode("System")  # Modes: "System" (standard), "Dark", "Light"
 customtkinter.set_default_color_theme("blue")  # Themes: "blue" (standard), "green", "dark-blue"
@@ -1011,30 +1012,60 @@ class App(customtkinter.CTk):
         self.editor_create_rand_chor_settings_min_speed_label.place(relx=0.01, rely=0.1, relwidth=0.98, relheight=0.05)
         self.editor_create_rand_chor_settings_min_speed_entry = customtkinter.CTkEntry(self.editor_create_rand_chor_settings_frame)
         self.editor_create_rand_chor_settings_min_speed_entry.place(relx=0.01, rely=0.2, relwidth=0.98, relheight=0.05)
+        self.editor_create_rand_chor_settings_min_speed_entry.insert(0, "0")
         # add max speed entry
         self.editor_create_rand_chor_settings_max_speed_label = customtkinter.CTkLabel(self.editor_create_rand_chor_settings_frame, text="Max speed:", anchor="w")
         self.editor_create_rand_chor_settings_max_speed_label.place(relx=0.01, rely=0.3, relwidth=0.98, relheight=0.05)
         self.editor_create_rand_chor_settings_max_speed_entry = customtkinter.CTkEntry(self.editor_create_rand_chor_settings_frame)
         self.editor_create_rand_chor_settings_max_speed_entry.place(relx=0.01, rely=0.4, relwidth=0.98, relheight=0.05)
+        self.editor_create_rand_chor_settings_max_speed_entry.insert(0, "15")
         # add max time entry
-        self.editor_create_rand_chor_settings_max_time_label = customtkinter.CTkLabel(self.editor_create_rand_chor_settings_frame, text="Max time:", anchor="w")
+        self.editor_create_rand_chor_settings_max_time_label = customtkinter.CTkLabel(self.editor_create_rand_chor_settings_frame, text="Max time [ms]:", anchor="w")
         self.editor_create_rand_chor_settings_max_time_label.place(relx=0.01, rely=0.5, relwidth=0.98, relheight=0.05)
         self.editor_create_rand_chor_settings_max_time_entry = customtkinter.CTkEntry(self.editor_create_rand_chor_settings_frame)
         self.editor_create_rand_chor_settings_max_time_entry.place(relx=0.01, rely=0.6, relwidth=0.98, relheight=0.05)
+        self.editor_create_rand_chor_settings_max_time_entry.insert(0, "10000")
         # add timestep entry
-        self.editor_create_rand_chor_settings_timestep_label = customtkinter.CTkLabel(self.editor_create_rand_chor_settings_frame, text="Timestep:", anchor="w")
+        self.editor_create_rand_chor_settings_timestep_label = customtkinter.CTkLabel(self.editor_create_rand_chor_settings_frame, text="Timestep [ms]:", anchor="w")
         self.editor_create_rand_chor_settings_timestep_label.place(relx=0.01, rely=0.7, relwidth=0.98, relheight=0.05)
         self.editor_create_rand_chor_settings_timestep_entry = customtkinter.CTkEntry(self.editor_create_rand_chor_settings_frame)
         self.editor_create_rand_chor_settings_timestep_entry.place(relx=0.01, rely=0.8, relwidth=0.98, relheight=0.05)
+        self.editor_create_rand_chor_settings_timestep_entry.insert(0, "100")
         # add same start checkbox
         self.editor_create_rand_chor_settings_samestart_checkbox = customtkinter.CTkCheckBox(self.editor_create_rand_chor_settings_frame, text="Same start")
-        self.editor_create_rand_chor_settings_samestart_checkbox.place(relx=0.01, rely=0.9, relwidth=0.98, relheight=0.05)
+        self.editor_create_rand_chor_settings_samestart_checkbox.place(relx=0.01, rely=0.9, relwidth=0.98, relheight=0.1)
         # add create button
         self.editor_create_rand_chor_settings_create_button = customtkinter.CTkButton(self.editor_create_rand_chor_frame, text="Create", command=self.editor_create_rand_chor_create_event)
-        self.editor_create_rand_chor_settings_create_button.place(relx=0.5, rely=0.1, relwidth=0.3, relheight=0.05)
+        self.editor_create_rand_chor_settings_create_button.place(relx=0.55, rely=0.9, relwidth=0.3, relheight=0.05)
 
     def editor_create_rand_chor_create_event(self):
-        pass
+        # get the settings
+        min_speed = self.editor_create_rand_chor_settings_min_speed_entry.get()
+        max_speed = self.editor_create_rand_chor_settings_max_speed_entry.get()
+        max_time = self.editor_create_rand_chor_settings_max_time_entry.get()
+        timestep = self.editor_create_rand_chor_settings_timestep_entry.get()
+        samestart = self.editor_create_rand_chor_settings_samestart_checkbox.get()
+        # check if the settings are valid
+        try:
+            min_speed = int(min_speed)
+            max_speed = int(max_speed)
+            max_time = int(max_time)
+            timestep = int(timestep)
+        except:
+            tkinter.messagebox.showwarning("Warning", "Please enter valid settings")
+            return
+        if min_speed > max_speed:
+            tkinter.messagebox.showwarning("Warning", "Please enter valid settings")
+            return
+        if max_time < timestep:
+            tkinter.messagebox.showwarning("Warning", "Please enter valid settings")
+            return
+        # create the choreography
+        self.modules.choreographer.random_choreography_generator(min_speed, max_speed, max_time, timestep, samestart)
+        info("Choreography created")
+        # refresh the choreography list
+        self.refresh()
+
 
     def editor_display_create_rand_chor_delete_layout(self):
         self.editor_create_rand_chor_frame.destroy() if hasattr(self, "editor_create_rand_chor_frame") else None
@@ -1182,6 +1213,10 @@ class App(customtkinter.CTk):
             self.editor_manage_refresh_chor_list()
             self.refresh_editor_info_chor()
             self.refresh()
+            # select the new choreography
+            self.editor_manage_radio_var.set(self.choreographies_list.index(name))
+            # show the right picture
+            self.editor_refresh_image(name)
 
 
     def refresh_editor_info_chor(self):
@@ -1374,7 +1409,3 @@ class App(customtkinter.CTk):
         self.editor_create_seq_mode_tooltip_create_seq_mode = CTkToolTip(self.editor_create_seq_mode_label, justify="left", message="🤖 This is the create sequence mode, here you can\n"
                                         + " create sequences. You can see the choreographies you\n"
                                         + " can add to the sequence on the left.\n")
-
-if __name__ == "__main__":
-    app = App()
-    app.mainloop()  
