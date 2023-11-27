@@ -7,6 +7,8 @@ from CTkToolTip import *
 from datetime import datetime
 import time
 
+from app.config import *
+
 customtkinter.set_appearance_mode("System")  # Modes: "System" (standard), "Dark", "Light"
 customtkinter.set_default_color_theme("blue")  # Themes: "blue" (standard), "green", "dark-blue"
 
@@ -30,6 +32,9 @@ class App(customtkinter.CTk):
 
         # init setting window
         self.settings_window = None
+        # settings status
+        self.settings_changed = False
+
 
         # bind key events
         self.bind("<Key>", self.key_pressed_event)
@@ -239,7 +244,7 @@ class App(customtkinter.CTk):
         
         # EDIT TAB CREATION ================================================================================================
         # add option menu mode between Manager and Create sequence
-        self.editor_optionemenu = customtkinter.CTkOptionMenu(self.tabview.tab("Edit"), values=["Manage", "Create Sequence"], command=self.editor_mode_select_event)
+        self.editor_optionemenu = customtkinter.CTkOptionMenu(self.tabview.tab("Edit"), values=["Manage", "Create Sequence", "Create rand chor"], command=self.editor_mode_select_event)
         self.editor_optionemenu.place(relx=0.01, rely=0.01, relwidth=0.25, relheight=0.05)
 
         # add tooltip frame
@@ -290,9 +295,79 @@ class App(customtkinter.CTk):
         self.settings_path_frame = customtkinter.CTkFrame(self.settings_window, fg_color=(LIGHT_COLOR, DARK_COLOR))
         self.settings_path_frame.place(relx=0.01, rely=0.01, relwidth=0.98, relheight=0.98)
         # add path label
-        self.settings_path_label = customtkinter.CTkLabel(self.settings_path_frame, text="Path:", anchor="w")
-        self.settings_path_label.place(relx=0.01, rely=0.01, relwidth=0.98, relheight=0.05)
+        self.settings_path_chor_label = customtkinter.CTkLabel(self.settings_path_frame, text="Choreography path:", anchor="w")
+        self.settings_path_chor_label.place(relx=0.01, rely=0.1, relwidth=0.98, relheight=0.05)
+        # add path entry
+        self.settings_path_chor_entry = customtkinter.CTkEntry(self.settings_path_frame)
+        self.settings_path_chor_entry.place(relx=0.1, rely=0.2, relwidth=0.6, relheight=0.1)
+        # put the actual path inside
+        self.settings_path_chor_entry.insert(0, self.modules.choreographer.choreography_path)
+        # add path button
+        self.settings_path_chor_button = customtkinter.CTkButton(self.settings_path_frame, text="...", command=self.settings_path_chor_event)
+        self.settings_path_chor_button.place(relx=0.75, rely=0.2, relwidth=0.1, relheight=0.1)
+        # add path label
+        self.settings_path_seq_label = customtkinter.CTkLabel(self.settings_path_frame, text="Sequence path:", anchor="w")
+        self.settings_path_seq_label.place(relx=0.01, rely=0.4, relwidth=0.98, relheight=0.05)
+        # add path entry
+        self.settings_path_seq_entry = customtkinter.CTkEntry(self.settings_path_frame)
+        self.settings_path_seq_entry.place(relx=0.1, rely=0.5, relwidth=0.6, relheight=0.1)
+        # put the actual path inside
+        self.settings_path_seq_entry.insert(0, self.modules.choreographer.sequence_path)
+        # add path button
+        self.settings_path_seq_button = customtkinter.CTkButton(self.settings_path_frame, text="...", command=self.settings_path_seq_event)
+        self.settings_path_seq_button.place(relx=0.75, rely=0.5, relwidth=0.1, relheight=0.1)
+        # add default button
+        self.settings_default_button = customtkinter.CTkButton(self.settings_path_frame, text="Default", command=self.settings_default_event)
+        self.settings_default_button.place(relx=0.01, rely=0.7, relwidth=0.98, relheight=0.1)
+        # add save button
+        self.settings_save_button = customtkinter.CTkButton(self.settings_path_frame, text="Save", command=self.settings_save_event)
+        self.settings_save_button.place(relx=0.01, rely=0.9, relwidth=0.98, relheight=0.1)
 
+    def settings_path_chor_event(self):
+        path = tkinter.filedialog.askdirectory()
+        if path != "":
+            self.settings_path_chor_entry.delete(0, "end")
+            self.settings_path_chor_entry.insert(0, path)
+            self.settings_changed = True
+            # refocus on settings window
+            self.settings_window.focus()
+
+    def settings_path_seq_event(self):
+        path = tkinter.filedialog.askdirectory()
+        if path != "":
+            self.settings_path_seq_entry.delete(0, "end")
+            self.settings_path_seq_entry.insert(0, path)
+            self.settings_changed = True
+        # refocus on settings window
+        self.settings_window.focus()
+    
+    def settings_default_event(self):
+        self.settings_path_chor_entry.delete(0, "end")
+        self.settings_path_chor_entry.insert(0, DEFAULT_PATH_CHOREO)
+        self.settings_path_seq_entry.delete(0, "end")
+        self.settings_path_seq_entry.insert(0, DEFAULT_PATH_SEQUENCE)
+        self.settings_changed = True
+        # refocus on settings window
+        self.settings_window.focus()
+
+    def settings_save_event(self):
+        # check if the path changed
+        if self.settings_changed:
+            # ask if the user wants to save
+            answer = tkinter.messagebox.askyesno("Save settings", "Do you want to save the settings?")
+            if answer == False:
+                # close the settings window
+                self.settings_window.destroy()
+                self.settings_changed = False
+                return
+        # get the path
+        path_chor = self.settings_path_chor_entry.get()
+        path_seq = self.settings_path_seq_entry.get()
+        self.modules.choreographer.choreography_path = path_chor
+        self.modules.choreographer.sequence_path = path_seq
+        self.modules.choreographer.save_settings()
+        # close the settings window
+        self.settings_window.destroy()
 
     def change_appearance_mode_event(self, new_appearance_mode: str):
         customtkinter.set_appearance_mode(new_appearance_mode)
@@ -339,6 +414,9 @@ class App(customtkinter.CTk):
 
     # INFO METHODS --------------------------------------------------------------------------------------------------------
     def refresh(self):
+        # empty both lists
+        self.choreographies_list = []
+        self.sequences_list = []
         # asl choreographer for loading
         self.modules.choreographer.update_database()
         # refresh choreography list
@@ -907,11 +985,60 @@ class App(customtkinter.CTk):
     # EDIT METHODS --------------------------------------------------------------------------------------------------------
     
     def editor_mode_select_event(self, new_editor_mode: str):
+        self.editor_manage_delete_layout()
+        self.editor_create_seq_delete_layout()
+        self.editor_display_create_rand_chor_delete_layout()
         if new_editor_mode == "Manage":
             self.editor_display_manage_layout()
         elif new_editor_mode == "Create Sequence":
-            self.editor_manage_delete_layout()
             self.editor_display_create_seq_layout()
+        elif new_editor_mode == "Create rand chor":
+            self.editor_display_create_rand_chor_layout()
+
+    def editor_display_create_rand_chor_layout(self):
+        # create rand chor frame
+        self.editor_create_rand_chor_frame = customtkinter.CTkFrame(self.tabview.tab("Edit"))
+        self.editor_create_rand_chor_frame.place(relx=0, rely=0.08, relwidth=1, relheight=0.90)
+        # add settings frame on the left
+        self.editor_create_rand_chor_settings_frame = customtkinter.CTkFrame(self.editor_create_rand_chor_frame, fg_color=(DEFAULT_LIGHT, DEFAULT_DARK))
+        self.editor_create_rand_chor_settings_frame.place(relx=0.01, rely=0.01, relwidth=0.33, relheight=0.98)
+        # add settings widgets min_speed, max_speed, max_time, timestep, samestart
+        # add title
+        self.editor_create_rand_chor_settings_title_label = customtkinter.CTkLabel(self.editor_create_rand_chor_settings_frame, text="SETTINGS", font=customtkinter.CTkFont(size=20, weight="bold"))
+        self.editor_create_rand_chor_settings_title_label.place(relx=0.01, rely=0.01, relwidth=0.98, relheight=0.05)
+        # add min speed entry
+        self.editor_create_rand_chor_settings_min_speed_label = customtkinter.CTkLabel(self.editor_create_rand_chor_settings_frame, text="Min speed:", anchor="w")
+        self.editor_create_rand_chor_settings_min_speed_label.place(relx=0.01, rely=0.1, relwidth=0.98, relheight=0.05)
+        self.editor_create_rand_chor_settings_min_speed_entry = customtkinter.CTkEntry(self.editor_create_rand_chor_settings_frame)
+        self.editor_create_rand_chor_settings_min_speed_entry.place(relx=0.01, rely=0.2, relwidth=0.98, relheight=0.05)
+        # add max speed entry
+        self.editor_create_rand_chor_settings_max_speed_label = customtkinter.CTkLabel(self.editor_create_rand_chor_settings_frame, text="Max speed:", anchor="w")
+        self.editor_create_rand_chor_settings_max_speed_label.place(relx=0.01, rely=0.3, relwidth=0.98, relheight=0.05)
+        self.editor_create_rand_chor_settings_max_speed_entry = customtkinter.CTkEntry(self.editor_create_rand_chor_settings_frame)
+        self.editor_create_rand_chor_settings_max_speed_entry.place(relx=0.01, rely=0.4, relwidth=0.98, relheight=0.05)
+        # add max time entry
+        self.editor_create_rand_chor_settings_max_time_label = customtkinter.CTkLabel(self.editor_create_rand_chor_settings_frame, text="Max time:", anchor="w")
+        self.editor_create_rand_chor_settings_max_time_label.place(relx=0.01, rely=0.5, relwidth=0.98, relheight=0.05)
+        self.editor_create_rand_chor_settings_max_time_entry = customtkinter.CTkEntry(self.editor_create_rand_chor_settings_frame)
+        self.editor_create_rand_chor_settings_max_time_entry.place(relx=0.01, rely=0.6, relwidth=0.98, relheight=0.05)
+        # add timestep entry
+        self.editor_create_rand_chor_settings_timestep_label = customtkinter.CTkLabel(self.editor_create_rand_chor_settings_frame, text="Timestep:", anchor="w")
+        self.editor_create_rand_chor_settings_timestep_label.place(relx=0.01, rely=0.7, relwidth=0.98, relheight=0.05)
+        self.editor_create_rand_chor_settings_timestep_entry = customtkinter.CTkEntry(self.editor_create_rand_chor_settings_frame)
+        self.editor_create_rand_chor_settings_timestep_entry.place(relx=0.01, rely=0.8, relwidth=0.98, relheight=0.05)
+        # add same start checkbox
+        self.editor_create_rand_chor_settings_samestart_checkbox = customtkinter.CTkCheckBox(self.editor_create_rand_chor_settings_frame, text="Same start")
+        self.editor_create_rand_chor_settings_samestart_checkbox.place(relx=0.01, rely=0.9, relwidth=0.98, relheight=0.05)
+        # add create button
+        self.editor_create_rand_chor_settings_create_button = customtkinter.CTkButton(self.editor_create_rand_chor_frame, text="Create", command=self.editor_create_rand_chor_create_event)
+        self.editor_create_rand_chor_settings_create_button.place(relx=0.5, rely=0.1, relwidth=0.3, relheight=0.05)
+
+    def editor_create_rand_chor_create_event(self):
+        pass
+
+    def editor_display_create_rand_chor_delete_layout(self):
+        self.editor_create_rand_chor_frame.destroy() if hasattr(self, "editor_create_rand_chor_frame") else None
+
 
     def editor_display_manage_layout(self):
         # add frame underneath
@@ -938,12 +1065,15 @@ class App(customtkinter.CTk):
         self.editor_manage_delete_button.place(relx=0.01, rely=0.5, relwidth=0.15, relheight=0.7, anchor="w")
         self.editor_manage_trim_button = customtkinter.CTkButton(self.editor_manage_buttons_frame, text="✂", command=self.editor_manage_trim_event)
         self.editor_manage_trim_button.place(relx=0.2, rely=0.5, relwidth=0.15, relheight=0.7, anchor="w")
+        # add save as new choreography checkbox
+        self.editor_manage_save_checkbox = customtkinter.CTkCheckBox(self.editor_manage_buttons_frame, text="Save as new choreography")
+        self.editor_manage_save_checkbox.place(relx=0.4, rely=0.5, relwidth=0.5, relheight=0.7, anchor="w")
 
         # add graph display underneath
         self.editor_manage_graph_frame = customtkinter.CTkFrame(self.editor_frame, fg_color=(DEFAULT_LIGHT, DEFAULT_DARK))
         self.editor_manage_graph_frame.place(relx=0.4, rely=0.25, relwidth=0.55, relheight=0.5)
         # add image inside
-        self.editor_manage_graph_image = Image.open("app\\GUI_assets\\thymio-nuitg.jpg")
+        self.editor_manage_graph_image = Image.open("C:\\Users\\adrie\\Desktop\\PDS_Thymio\\001_code\\Python\\Thymio_et_mouvement\\app\\GUI_assets\\j_dark_graph.png")
         self.editor_manage_graph_image = customtkinter.CTkImage(self.editor_manage_graph_image,  size=(300,200))
         self.editor_manage_graph_image_label = customtkinter.CTkLabel(self.editor_manage_graph_frame, image=self.editor_manage_graph_image, text="")
         self.editor_manage_graph_image_label.place(relx=0.5, rely=0.5, relwidth=0.98, relheight=0.98, anchor="center")
@@ -1009,6 +1139,8 @@ class App(customtkinter.CTk):
         self.editor_manage_radio_var.set(-1)
 
     def editor_manage_trim_event(self):
+        # check if save as new choreography is ticked
+        save_as_new_choreography = self.editor_manage_save_checkbox.get()
         # get trim start
         trim_start = self.editor_manage_trim_start_slider_var.get()
         # get trim end
@@ -1021,13 +1153,35 @@ class App(customtkinter.CTk):
             tkinter.messagebox.showwarning("Warning", "Trim start must be smaller than trim end")
             return
         # pop up window to ask if sure
-        elif tkinter.messagebox.askyesno("Warning", f"Are you sure you want to trim the choreography: {name}?"):
+        elif tkinter.messagebox.askyesno("Warning", f"Are you sure you want to trim the choreography: {name}?"):    
+            if save_as_new_choreography == True:
+                while True:
+                    # ask for a name
+                    new_name = tkinter.simpledialog.askstring("Save as new choreography", "Please enter a name for the new choreography")
+                    # check if name is valid
+                    if new_name == None:
+                        return
+                    elif new_name == "":
+                        tkinter.messagebox.showwarning("Warning", "Please enter a name")
+                    elif new_name.isdigit():
+                        tkinter.messagebox.showwarning("Warning", "Please enter a valid name")
+                    elif new_name in self.choreographies_list:
+                        tkinter.messagebox.showwarning("Warning", "This name already exists")
+                    else:
+                        break
+                # create choreography
+                self.modules.choreographer.copy_choreography(name, new_name)
+                # self.save_choreography(new_name)
+                name = new_name
+                self.choreographies_list.append(name)
             # trim the choreography
             self.modules.choreographer.choreography_dict[name].trim(trim_start, trim_end)
+            self.save_choreography(name) 
             # refresh the info
-            self.save_choreography(name)
+            # self.editor_refresh_image(name)
             self.editor_manage_refresh_chor_list()
-            self.editor_manage_refresh_seq_list()
+            self.refresh_editor_info_chor()
+            self.refresh()
 
 
     def refresh_editor_info_chor(self):
@@ -1058,20 +1212,30 @@ class App(customtkinter.CTk):
 
     def editor_manage_trim_start_event(self, value):
         # round value to 2 decimals
-        value = round(float(value), 2)
+        # value = round(float(value), 2)
+        value = int(value)
         # create value label
         self.editor_manage_trim_start_label.configure(text=f"Start:\t\t\t\t\t         {value}")
 
     def editor_manage_trim_end_event(self, value):
         # round value to 2 decimals
-        value = round(float(value), 2)
+        # value = round(float(value), 2)
+        value = int(value)
         # create value label
         self.editor_manage_trim_end_label.configure(text=f"End:\t\t\t\t\t         {value}")
 
     def editor_delete_image(self):
-        self.editor_manage_graph_image = Image.open("app\\GUI_assets\\thymio-nuitg.jpg")
+        self.editor_manage_graph_image = Image.open("C:\\Users\\adrie\\Desktop\\PDS_Thymio\\001_code\\Python\\Thymio_et_mouvement\\app\\GUI_assets\\j_dark_graph.png")
         self.editor_manage_graph_image = customtkinter.CTkImage(self.editor_manage_graph_image, size=(400,200))
         self.editor_manage_graph_image_label.configure(image=self.editor_manage_graph_image)
+
+    def editor_refresh_image(self, name):
+        self.modules.choreographer.choreography_dict[name].graph_speeds()
+        self.editor_manage_graph_image_light = Image.open(f"app/GUI_assets/temp_fig/{name}_light_graph.png")
+        self.editor_manage_graph_image_dark = Image.open(f"app/GUI_assets/temp_fig/{name}_dark_graph.png")
+        self.editor_manage_graph_image = customtkinter.CTkImage(light_image=self.editor_manage_graph_image_light, dark_image=self.editor_manage_graph_image_dark, size=(400,200))
+        self.editor_manage_graph_image_label.configure(image=self.editor_manage_graph_image)
+
 
     def editor_manage_delete_layout(self):
         # removes all the manage frames if any
@@ -1185,12 +1349,16 @@ class App(customtkinter.CTk):
         except:
             tkinter.messagebox.showwarning("Warning", "Please enter a valid sequence order")
             return
-        print(name)
         self.modules.choreographer.create_sequence(name, creation_date, description, sequence_order)
 
         # refresh propositions
         self.refresh()
         self.editor_create_seq_refresh_lists()
+
+    def editor_create_seq_delete_layout(self):
+        # removes all the create seq frames if any
+        if hasattr(self, "editor_frame"):
+            self.editor_frame.destroy()
 
     def editor_manage_mode_tooltip_update(self):
         # update tooltip

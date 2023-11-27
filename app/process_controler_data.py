@@ -1,9 +1,10 @@
 from typing import Any
 from app.utils.console import *
-from app.config import PIXELS_TO_METERS, GYRO_SCALING, AS_THRESH, DIAMETER
+from app.config import PIXELS_TO_METERS, GYRO_SCALING, AS_THRESH, DIAMETER, SETTINGS_PATH
 import numpy as np
 import time
 import socket
+import json
 
 class ProcessControlerData:
      
@@ -146,21 +147,31 @@ class ProcessControlerData:
         """
         saves the calibration
         """
-        with open("app/settings/calibration.txt", "w") as f:
-            f.write(str(offset))
+        # save in json file
+        with open(SETTINGS_PATH, "r") as f:
+            settings = json.load(f)
+        settings["calibration"] = offset
+        with open(SETTINGS_PATH, "w") as f:
+            json.dump(settings, f, indent=4)
 
     def load_calibration(self):
         """
         loads the calibration
         """
         # check if the file exists
-        try:
-            with open("app/settings/calibration.txt", "r") as f:
-                offset = f.read()
-            return float(offset)
-        except:
-            info("No calibration file found")
-            return None
+        with open(SETTINGS_PATH, "r") as f:
+            settings = json.load(f)
+        if "calibration" in settings:
+            return settings["calibration"]
+        else:
+            return None  
+        # try:
+        #     with open("app/settings/calibration.txt", "r") as f:
+        #         offset = f.read()
+        #     return float(offset)
+        # except:
+        #     info("No calibration file found")
+        #     return None
 
     def debug_start(self):
         self.client_socket.send("start".encode('utf-8'))

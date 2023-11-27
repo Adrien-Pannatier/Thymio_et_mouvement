@@ -94,20 +94,21 @@ class MotionControl():
         """Play a choreography in loop"""
         for i in range(10): # MODIFY TO INFINITE LOOP -----------------------------------------------------------------------------
             last_dt = self.play_once(choreography, speed_factor)
-        time.sleep(last_dt)
+        time.sleep(last_dt/1000)
         aw(self.node.set_variables(  # apply the control on the wheels
             {"motor.left.target": [int(0)], "motor.right.target": [int(0)]}))
 
     def play_once(self, choreography, speed_factor):
         """Play a choreography once"""
         step_list = choreography.step_list
-        end_time = step_list[-1][T]
-        last_dt = step_list[-1][DT]
+        end_time = step_list[-1][T]/1000
+        # print(f"end time : {end_time} s")
+        last_dt = step_list[-1][DT]/1000
         if self.choreography_status == "play":
             for step in step_list:
                 # info(step)    
-                # info(f"sleeping for {step[DT]/speed_factor} seconds")
-                time.sleep(step[DT]/speed_factor)
+                # info(f"sleeping for {step[DT]/speed_factor/1000} seconds")
+                time.sleep(step[DT]/1000/speed_factor) #step in ms
 
                 left_motor_speed = step[LS]*speed_factor/THYMIO_TO_CM # convert the speed from cm/s to thymio speed
                 right_motor_speed = step[RS]*speed_factor/THYMIO_TO_CM
@@ -116,7 +117,7 @@ class MotionControl():
                     {"motor.left.target": [int(left_motor_speed)], "motor.right.target": [int(right_motor_speed)]}))
                 
                 # info(f"step {step[T]} / {end_time}")
-                self.completion_percentage = step[T]/end_time
+                self.completion_percentage = step[T]/1000/end_time
 
                 if self.choreography_status == "pause":
                     info("Choreography paused")

@@ -33,3 +33,6 @@ AS_THRESH = 0.05  # replace with actual value
 
 # == ui config == #
 SPC = "           "
+
+# == settings == #
+SETTINGS_PATH = "C:/Users/adrie/Desktop/PDS_Thymio/001_code/Python/Thymio_et_mouvement/app/settings/settings.json"

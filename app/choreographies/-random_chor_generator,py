@@ -5,10 +5,10 @@ from datetime import datetime
 
 # Define constraints
 min_speed = 0
-max_speed = 100 # in ms
-max_time = 150 # in ms
+max_speed = 10 
+max_time = 1500 # in ms
 path = "app/choreographies/"
-timestep = 0.1
+timestep = 100 # in ms
 
 
 # check which is the highest choreography number

@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 import time
+import json
 
 from app.config import *
 from app.process_controler_data import ProcessControlerData
@@ -8,6 +9,7 @@ from app.motion_control import MotionControl
 from app.editor import Editor
 from app.utils.console import *
 from app.GUI import App
+import os
 
 @dataclass
 class Modules:
@@ -22,6 +24,13 @@ class Gui:
         self.app = App(modules=modules)
         self.app.mainloop()    
         ui("Goodbye!")
+        # delete all temp assets in folder GUI_assets/temp_fig
+        folder_path = "app\\GUI_assets\\temp_fig"
+        for file_name in os.listdir(folder_path):
+            if file_name.endswith(".png"):
+                file_path = os.path.join(folder_path, file_name)
+                os.remove(file_path)
+        
 
 class BigBrain:
     def __init__(self):
@@ -44,6 +53,14 @@ class BigBrain:
 
     def init(self):
         """Initialise the big brain"""
+
+        # create settings file if it doesn't exist
+        try:
+            with open(SETTINGS_PATH, "r") as file:
+                pass
+        except FileNotFoundError:
+            with open(SETTINGS_PATH, "w") as file:
+                json.dump({}, file)
 
         self.stop_requested = False
 
