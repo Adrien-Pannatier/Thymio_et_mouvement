@@ -254,7 +254,7 @@ class ChoreographyManager:
             json.dump(choreography, f)
 
     # SEQUENCE FUNCTIONS
-    def create_sequence(self, name, creation_date, path, description, sequence_l=[]):
+    def create_sequence(self, name, creation_date, description, sequence_l=[], path=None):
         """
         Creates a sequence
         """

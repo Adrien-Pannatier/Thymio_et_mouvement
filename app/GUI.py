@@ -387,6 +387,7 @@ class App(customtkinter.CTk):
     #         error(f"Unexpected error: {e}")
 
     def key_pressed_event(self, event):
+        # debug(f"Key pressed: {event.keysym}")
         # if the key pressed is Enter
         if event.keysym == "Return":
             # check the tab
@@ -407,17 +408,21 @@ class App(customtkinter.CTk):
                 elif self.debug_on:
                     # stop debug
                     self.debug_on = False
-
+        # delete mode
+        if event.keysym == "Delete":
+            # check the tab
+            if self.tabview.tab("Edit").winfo_ismapped():
+                # check the mode
+                if self.editor_optionemenu.get() == "Manage":
+                    info("Delete mode")
+                    # call the delete function
+                    self.editor_manage_delete_event()
+         
     def save_choreographies(self):
         self.modules.choreographer.save_choreography_dict()
 
     def save_choreography(self, choreography_name: str):
         self.modules.choreographer.save_choreography(choreography_name)
-
-
-
-
-
 
 
 
@@ -443,8 +448,21 @@ class App(customtkinter.CTk):
         self.chor_info_text.configure(state="normal")
         self.chor_info_text.delete("1.0", "end")
         # print every info
-        self.chor_info_text.insert("1.0", f"Name:\t\t{choreography_name}\nCreation date:\t\t{creation_date}\nLast modified:\t\t{last_modified}\nDescription:\t\t{description}\nSpeed factor:\t\t{str(speed_factor)}")
+        self.chor_info_text.insert("insert", f"Name:\t\t{choreography_name}\nCreation date:\t\t{creation_date}\nLast modified:\t\t{last_modified}\nDescription:\t\t{description}\nSpeed factor:\t\t{str(speed_factor)}")
         self.chor_info_text.configure(state="disabled")
+        self.chor_info_text.tag_config("bluename", foreground="#9cdcfe")
+        self.chor_info_text.tag_add("bluename", "1.0", "1.5")
+        self.chor_info_text.tag_config("bluecreadate", foreground="#9cdcfe")
+        self.chor_info_text.tag_add("bluecreadate", "2.0", "2.13")
+        self.chor_info_text.tag_config("bluelastmod", foreground="#9cdcfe")
+        self.chor_info_text.tag_add("bluelastmod", "3.0", "3.14")
+        self.chor_info_text.tag_config("bluedesc", foreground="#9cdcfe")
+        self.chor_info_text.tag_add("bluedesc", "4.0", "4.13")
+        self.chor_info_text.tag_config("bluespeed", foreground="#9cdcfe")
+        self.chor_info_text.tag_add("bluespeed", "5.0", "5.13")
+        self.chor_info_text.configure(state="disabled")
+
+
 
     def refresh_info_seq(self):
         index = self.seq_radio_var.get()
@@ -452,9 +470,26 @@ class App(customtkinter.CTk):
         sequence_name, creation_date, description, path, sequence_order = self.modules.choreographer.sequence_dict[name].get_info()
         self.seq_info_text.configure(state="normal")
         self.seq_info_text.delete("1.0", "end")
-        self.seq_info_text.insert("1.0", f"Name:\t\t{sequence_name}\nCreation date:\t\t{creation_date}\nDescription:\t\t{description}\nSequence order:\t\t{sequence_order}")
+        seq_names = self.info_seq_number_to_name(sequence_order)
+        self.seq_info_text.insert("1.0", f"Name:\t\t{sequence_name}\nCreation date:\t\t{creation_date}\nDescription:\t\t{description}\nSequence order:\t\t{sequence_order}\nSequences:\t\t{seq_names}")
+        self.seq_info_text.tag_config("bluename", foreground="#9cdcfe")
+        self.seq_info_text.tag_add("bluename", "1.0", "1.5")
+        self.seq_info_text.tag_config("bluecreadate", foreground="#9cdcfe")
+        self.seq_info_text.tag_add("bluecreadate", "2.0", "2.13")
+        self.seq_info_text.tag_config("bluedesc", foreground="#9cdcfe")
+        self.seq_info_text.tag_add("bluedesc", "3.0", "3.13")
+        self.seq_info_text.tag_config("blueseqorder", foreground="#9cdcfe")
+        self.seq_info_text.tag_add("blueseqorder", "4.0", "4.15")
+        self.seq_info_text.tag_config("blueseq", foreground="#9cdcfe")
+        self.seq_info_text.tag_add("blueseq", "5.0", "5.11")
         self.seq_info_text.configure(state="disabled")
     
+    def info_seq_number_to_name(self, sequence_order):
+        sequence_names = ""
+        for chor_index in sequence_order:
+            sequence_names += str(self.choreographies_list[chor_index-1]) + " -> "
+        return sequence_names
+
     def refresh_choreographies_list(self):
         # remove all buttons
         for button in self.scrollable_frame_chor:
@@ -1469,6 +1504,8 @@ class App(customtkinter.CTk):
         sequence_string = self.editor_create_dialog.get_input()
         # get description
         description = self.editor_create_seq_description_textbox.get("1.0", "end")
+        # delete every \n in description
+        description = description.replace("\n", "")
         # get creation date
         creation_date = (str(datetime.now()))[:-7]
         # creates the sequence
