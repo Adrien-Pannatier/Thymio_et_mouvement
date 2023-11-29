@@ -6,3 +6,11 @@ venv
 **/*-checkpoint.py
 **/*-checkpoint.jpg
 **/*-checkpoint.png
+
+/app/build
+/app/dist
+/app/tests
+/app/settings
+/app/sequences
+/app/GUI_assets/temp_fig
+/app/GUI_assets/choreographies

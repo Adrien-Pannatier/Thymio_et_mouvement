@@ -6,7 +6,6 @@ from app.config import *
 from app.process_controler_data import ProcessControlerData
 from app.choreography_manager import ChoreographyManager
 from app.motion_control import MotionControl
-from app.editor import Editor
 from app.utils.console import *
 from app.GUI import App
 import os
@@ -17,7 +16,6 @@ class Modules:
     process_controler_data: ProcessControlerData
     choreographer: ChoreographyManager
     motion_control: MotionControl
-    editor: Editor
 
 class Gui:
     def __init__(self, modules):
@@ -63,9 +61,8 @@ class BigBrain:
         choreographer = ChoreographyManager()
         process_controler_data = ProcessControlerData()
         motion_control = MotionControl()
-        editor = Editor()
 
-        return Modules(process_controler_data, choreographer, motion_control, editor)
+        return Modules(process_controler_data, choreographer, motion_control)
 
     def loop(self, modules: Modules):
 
