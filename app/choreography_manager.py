@@ -394,6 +394,7 @@ class Choreography:
         ax.set(ylabel=None)
         ax.set(yticklabels=[])
         ax.set(yticks=[])
+        # change the x labels to cm
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
         ax.spines['left'].set_visible(False)

@@ -69,10 +69,10 @@ class App(customtkinter.CTk):
         self.settings_button.grid(row=1, column=0, padx=20, pady=(10, 0))
 
         self.appearance_mode_label = customtkinter.CTkLabel(self.sidebar_frame, text="Appearance Mode:", anchor="w")
-        self.appearance_mode_label.grid(row=7, column=0, padx=20, pady=(10, 0))
+        self.appearance_mode_label.grid(row=5, column=0, padx=20, pady=(10, 60))
         self.appearance_mode_optionemenu = customtkinter.CTkOptionMenu(self.sidebar_frame, values=["Light", "Dark", "System"],
                                                                        command=self.change_appearance_mode_event)
-        self.appearance_mode_optionemenu.grid(row=8, column=0, padx=20, pady=(10, 10))
+        self.appearance_mode_optionemenu.grid(row=5, column=0, padx=20, pady=(10, 0))
         # self.scaling_label = customtkinter.CTkLabel(self.sidebar_frame, text="UI Scaling:", anchor="w")
         # self.scaling_label.grid(row=8, column=0, padx=20, pady=(10, 0))
         # self.scaling_optionemenu = customtkinter.CTkOptionMenu(self.sidebar_frame, values=["80%", "90%", "100%", "110%", "120%"],
@@ -82,13 +82,13 @@ class App(customtkinter.CTk):
         # create main tabview
         self.tabview = customtkinter.CTkTabview(self, width=250)
         self.tabview.grid(row=0, column=1, padx=(20, 20), pady=(20, 20), sticky="nsew")
-        self.tabview.add("Info")
         self.tabview.add("Play")
         self.tabview.add("Record")
+        self.tabview.add("Info")
         self.tabview.add("Edit")
-        self.tabview.tab("Info").grid_columnconfigure(0, weight=1)  # configure grid of individual tabs
         self.tabview.tab("Play").grid_columnconfigure(0, weight=1)
         self.tabview.tab("Record").grid_columnconfigure(0, weight=1)
+        self.tabview.tab("Info").grid_columnconfigure(0, weight=1)  
         self.tabview.tab("Edit").grid_columnconfigure(0, weight=1)
 
         # INFO TAB CREATION =================================================================================================
@@ -111,7 +111,7 @@ class App(customtkinter.CTk):
 
         # add "choreography info" frame
         self.chor_info_frame = customtkinter.CTkFrame(self.tabview.tab("Info"))
-        self.chor_info_frame.place(relx=0.4, rely=0.13, relwidth=0.50, relheight=0.35)
+        self.chor_info_frame.place(relx=0.4, rely=0.13, relwidth=0.56, relheight=0.35)
         # add text widget
         self.chor_info_text = customtkinter.CTkTextbox(self.chor_info_frame, wrap='none')
         self.chor_info_text.place(relx=0.01, rely=0, relwidth=0.98, relheight=1)
@@ -134,7 +134,7 @@ class App(customtkinter.CTk):
 
         # add "sequence info" frame
         self.seq_info_frame = customtkinter.CTkFrame(self.tabview.tab("Info"))
-        self.seq_info_frame.place(relx=0.4, rely=0.61, relwidth=0.50, relheight=0.35)
+        self.seq_info_frame.place(relx=0.4, rely=0.61, relwidth=0.56, relheight=0.35)
         # add text widget
         self.seq_info_text = customtkinter.CTkTextbox(self.seq_info_frame, wrap='none')
         self.seq_info_text.place(relx=0.01, rely=0, relwidth=0.98, relheight=1)
@@ -269,7 +269,7 @@ class App(customtkinter.CTk):
         self.editor_mode_select_event("Manage")
 
         # SET DEFAULT VALUES ===============================================================================================
-        self.appearance_mode_optionemenu.set("Dark")
+        self.appearance_mode_optionemenu.set("System")
         # self.scaling_optionemenu.set("100%")
         # lock window size
         self.resizable(False, False)
@@ -294,6 +294,8 @@ class App(customtkinter.CTk):
 
     def settings_event(self):
         self.settings_window = ToplevelWindow(self)  # create window if its None or destroyed
+        # set title
+        self.settings_window.title("Settings")
         self.settings_window.after(100,self.settings_window.lift) # Workaround for bug where main window takes focus
         # give focus to the window
         self.settings_window.focus()
@@ -450,19 +452,17 @@ class App(customtkinter.CTk):
         # print every info
         self.chor_info_text.insert("insert", f"Name:\t\t{choreography_name}\nCreation date:\t\t{creation_date}\nLast modified:\t\t{last_modified}\nDescription:\t\t{description}\nSpeed factor:\t\t{str(speed_factor)}")
         self.chor_info_text.configure(state="disabled")
-        self.chor_info_text.tag_config("bluename", foreground="#9cdcfe")
+        self.chor_info_text.tag_config("bluename", foreground="#1e5eac")
         self.chor_info_text.tag_add("bluename", "1.0", "1.5")
-        self.chor_info_text.tag_config("bluecreadate", foreground="#9cdcfe")
-        self.chor_info_text.tag_add("bluecreadate", "2.0", "2.13")
-        self.chor_info_text.tag_config("bluelastmod", foreground="#9cdcfe")
+        self.chor_info_text.tag_config("bluecreadate", foreground="#1e5eac")
+        self.chor_info_text.tag_add("bluecreadate", "2.0", "2.14")
+        self.chor_info_text.tag_config("bluelastmod", foreground="#1e5eac")
         self.chor_info_text.tag_add("bluelastmod", "3.0", "3.14")
-        self.chor_info_text.tag_config("bluedesc", foreground="#9cdcfe")
+        self.chor_info_text.tag_config("bluedesc", foreground="#1e5eac")
         self.chor_info_text.tag_add("bluedesc", "4.0", "4.13")
-        self.chor_info_text.tag_config("bluespeed", foreground="#9cdcfe")
+        self.chor_info_text.tag_config("bluespeed", foreground="#1e5eac")
         self.chor_info_text.tag_add("bluespeed", "5.0", "5.13")
         self.chor_info_text.configure(state="disabled")
-
-
 
     def refresh_info_seq(self):
         index = self.seq_radio_var.get()
@@ -472,22 +472,22 @@ class App(customtkinter.CTk):
         self.seq_info_text.delete("1.0", "end")
         seq_names = self.info_seq_number_to_name(sequence_order)
         self.seq_info_text.insert("1.0", f"Name:\t\t{sequence_name}\nCreation date:\t\t{creation_date}\nDescription:\t\t{description}\nSequence order:\t\t{sequence_order}\nSequences:\t\t{seq_names}")
-        self.seq_info_text.tag_config("bluename", foreground="#9cdcfe")
+        self.seq_info_text.tag_config("bluename", foreground="#1e5eac")
         self.seq_info_text.tag_add("bluename", "1.0", "1.5")
-        self.seq_info_text.tag_config("bluecreadate", foreground="#9cdcfe")
-        self.seq_info_text.tag_add("bluecreadate", "2.0", "2.13")
-        self.seq_info_text.tag_config("bluedesc", foreground="#9cdcfe")
+        self.seq_info_text.tag_config("bluecreadate", foreground="#1e5eac")
+        self.seq_info_text.tag_add("bluecreadate", "2.0", "2.14")
+        self.seq_info_text.tag_config("bluedesc", foreground="#1e5eac")
         self.seq_info_text.tag_add("bluedesc", "3.0", "3.13")
-        self.seq_info_text.tag_config("blueseqorder", foreground="#9cdcfe")
+        self.seq_info_text.tag_config("blueseqorder", foreground="#1e5eac")
         self.seq_info_text.tag_add("blueseqorder", "4.0", "4.15")
-        self.seq_info_text.tag_config("blueseq", foreground="#9cdcfe")
+        self.seq_info_text.tag_config("blueseq", foreground="#1e5eac")
         self.seq_info_text.tag_add("blueseq", "5.0", "5.11")
         self.seq_info_text.configure(state="disabled")
     
     def info_seq_number_to_name(self, sequence_order):
         sequence_names = ""
         for chor_index in sequence_order:
-            sequence_names += str(self.choreographies_list[chor_index-1]) + " -> "
+            sequence_names +=  " -> " + str(self.choreographies_list[chor_index-1])
         return sequence_names
 
     def refresh_choreographies_list(self):
@@ -1214,9 +1214,24 @@ class App(customtkinter.CTk):
         self.editor_manage_title_label = customtkinter.CTkLabel(self.editor_frame, text="MANAGE MODE", font=customtkinter.CTkFont(size=20, weight="bold"))
         self.editor_manage_title_label.place(relx=0.38, rely=0.02, relwidth=0.25, relheight=0.05)
 
+        # add labels on the right of title
+        # add frame
+        self.editor_manage_info_frame = customtkinter.CTkFrame(self.editor_frame, fg_color=(LIGHT_COLOR, DARK_COLOR))
+        self.editor_manage_info_frame.place(relx=0.66, rely=0, relwidth=0.25, relheight=0.09)
+        # add label inside
+        self.editor_manage_info_label_rs = customtkinter.CTkLabel(self.editor_manage_info_frame, text="right motor speed", anchor="w", font=customtkinter.CTkFont(size=12))
+        self.editor_manage_info_label_rs.place(relx=0.05, rely=0.05, relwidth=0.98, relheight=0.35)
+        self.editor_manage_info_label_ls = customtkinter.CTkLabel(self.editor_manage_info_frame, text="left motor speed", anchor="w", font=customtkinter.CTkFont(size=12))
+        self.editor_manage_info_label_ls.place(relx=0.05, rely=0.55, relwidth=0.98, relheight=0.35)
+        self.editor_manage_info_label_rscol = customtkinter.CTkLabel(self.editor_manage_info_frame, text="■", anchor="w", font=customtkinter.CTkFont(size=12), text_color="#d26c13")
+        self.editor_manage_info_label_rscol.place(relx=0.8, rely=0.05, relwidth=0.1, relheight=0.35)
+        self.editor_manage_info_label_lscol = customtkinter.CTkLabel(self.editor_manage_info_frame, text="■", anchor="w", font=customtkinter.CTkFont(size=12), text_color="#22628f")
+        self.editor_manage_info_label_lscol.place(relx=0.8, rely=0.55, relwidth=0.1, relheight=0.35)
+
+
         # add buttons frame underneath
         self.editor_manage_buttons_frame = customtkinter.CTkFrame(self.editor_frame, fg_color=(DEFAULT_LIGHT, DEFAULT_DARK))
-        self.editor_manage_buttons_frame.place(relx=0.4, rely=0.13, relwidth=0.55, relheight=0.10)
+        self.editor_manage_buttons_frame.place(relx=0.4, rely=0.13, relwidth=0.55, relheight=0.1)
         # add delete button and trim button inside
         self.editor_manage_delete_button = customtkinter.CTkButton(self.editor_manage_buttons_frame, text="🗑", command=self.editor_manage_delete_event)
         self.editor_manage_delete_button.place(relx=0.01, rely=0.5, relwidth=0.15, relheight=0.7, anchor="w")
@@ -1300,6 +1315,16 @@ class App(customtkinter.CTk):
         self.editor_manage_radio_var.set(-1)
 
     def editor_manage_trim_event(self):
+        # check the optionemenu
+        mode = self.editor_manage_optionemenu.get()
+        if mode == "Sequence":
+            tkinter.messagebox.showwarning("Warning", "You can't trim a sequence")
+            return
+        # check if something is selected
+        index = self.editor_manage_radio_var.get()
+        if index < 0:
+            tkinter.messagebox.showwarning("Warning", "Please select something to trim")
+            return
         # check if save as new choreography is ticked
         save_as_new_choreography = self.editor_manage_save_checkbox.get()
         # get trim start
@@ -1307,7 +1332,6 @@ class App(customtkinter.CTk):
         # get trim end
         trim_end = self.editor_manage_trim_end_slider_var.get()
         # get the choreography name
-        index = self.editor_manage_radio_var.get()
         name = self.choreographies_list[index]
         # check trim validity
         if trim_start >= trim_end:
