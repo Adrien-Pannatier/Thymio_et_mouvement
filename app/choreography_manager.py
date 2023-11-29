@@ -254,13 +254,13 @@ class ChoreographyManager:
             json.dump(choreography, f)
 
     # SEQUENCE FUNCTIONS
-    def create_sequence(self, name, creation_date, description, sequence_l=[], path=None):
+    def create_sequence(self, name, creation_date, path, description, sequence_l=[]):
         """
         Creates a sequence
         """
         if path == None:
             path = self.sequence_path
-        sequence = Sequence(name, creation_date, description, sequence_l, path)
+        sequence = Sequence(name, creation_date, path, description, sequence_l)
         self.sequence_dict[name] = sequence
         self.save_sequence_dict()
 
@@ -288,7 +288,7 @@ class ChoreographyManager:
 
             # if name not in self.sequence_dict:
             if sucess:
-                self.sequence_dict[name] = Sequence(name, creation_date=creation_date, description=description, sequence_l=sequence_l, path=path)
+                self.sequence_dict[name] = Sequence(name, creation_date, path, description=description, sequence_l=sequence_l)
     
     def save_sequence_dict(self, path=None):
         """
@@ -400,7 +400,7 @@ class Choreography:
         ax.set_facecolor("#dbdbdb")
         plt.gcf().set_size_inches(10, 5)
         # plt.show()
-        plt.savefig(f"app/GUI_assets/temp_fig/{self.name}_light_graph.png")
+        plt.savefig(f"C:/Users/adrie/Desktop/PDS_Thymio/001_code/Python/Thymio_et_mouvement/app/GUI_assets/temp_fig/{self.name}_light_graph.png")
         # change background color
         ax.set_facecolor('#2b2b2b')
         ax.spines['bottom'].set_color('white')
@@ -412,7 +412,7 @@ class Choreography:
         ax.set(ylabel=None)
         # plt.xlabel("time (s)", color='white')
         # plt.ylabel("speed (m/s)", color='white')
-        plt.savefig(f"app/GUI_assets/temp_fig/{self.name}_dark_graph.png", transparent=True)  
+        plt.savefig(f"C:/Users/adrie/Desktop/PDS_Thymio/001_code/Python/Thymio_et_mouvement/app/GUI_assets/temp_fig/{self.name}_dark_graph.png", transparent=True)  
         plt.clf()
         plt.close()
 
@@ -422,7 +422,7 @@ class Choreography:
         """
         start_time = int(start_time)
         end_time = int(end_time)
-        print(self.step_list[:])
+        # print(self.step_list[:])
         start_index = self.find_nearest(self.step_list[:,0], start_time)
         end_index = self.find_nearest(self.step_list[:,0], end_time)
         self.step_list = self.step_list[start_index:end_index+1,:]
@@ -450,7 +450,7 @@ class Sequence:
     Func get_info: returns the info of the sequence
     Func empty: empties the sequence
     """
-    def __init__(self, name, creation_date, description="", sequence_l=[], path=DEFAULT_PATH_SEQUENCE):
+    def __init__(self, name, creation_date, path, description="", sequence_l=[]):
         self.name = name
         self.creation_date = creation_date
         self.sequence_l = sequence_l

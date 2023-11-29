@@ -1,0 +1,260 @@
+{
+    "name": "random_chor_smoother_1",
+    "creation_date": "2023-11-28 11:10:03",
+    "last_modified": "2023-11-28 16:44:33",
+    "description": "random choreography smoother 1",
+    "choreography": [
+        {
+            "time": -30.0,
+            "timestep": 100.0,
+            "left_wheel_speed": 1.0,
+            "right_wheel_speed": 0.0
+        },
+        {
+            "time": 70.0,
+            "timestep": 100.0,
+            "left_wheel_speed": 1.0,
+            "right_wheel_speed": 1.0
+        },
+        {
+            "time": 170.0,
+            "timestep": 100.0,
+            "left_wheel_speed": 1.0,
+            "right_wheel_speed": 1.0
+        },
+        {
+            "time": 270.0,
+            "timestep": 100.0,
+            "left_wheel_speed": 1.0,
+            "right_wheel_speed": 1.0
+        },
+        {
+            "time": 370.0,
+            "timestep": 100.0,
+            "left_wheel_speed": 1.0,
+            "right_wheel_speed": 1.0
+        },
+        {
+            "time": 470.0,
+            "timestep": 100.0,
+            "left_wheel_speed": 1.0,
+            "right_wheel_speed": 1.0
+        },
+        {
+            "time": 570.0,
+            "timestep": 100.0,
+            "left_wheel_speed": 1.0,
+            "right_wheel_speed": 1.0
+        },
+        {
+            "time": 670.0,
+            "timestep": 100.0,
+            "left_wheel_speed": 1.0,
+            "right_wheel_speed": 1.0
+        },
+        {
+            "time": 770.0,
+            "timestep": 100.0,
+            "left_wheel_speed": 1.0,
+            "right_wheel_speed": 1.0
+        },
+        {
+            "time": 870.0,
+            "timestep": 100.0,
+            "left_wheel_speed": 1.0,
+            "right_wheel_speed": 1.0
+        },
+        {
+            "time": 970.0,
+            "timestep": 100.0,
+            "left_wheel_speed": 0.0,
+            "right_wheel_speed": 1.0
+        },
+        {
+            "time": 1070.0,
+            "timestep": 100.0,
+            "left_wheel_speed": 0.0,
+            "right_wheel_speed": 1.0
+        },
+        {
+            "time": 1170.0,
+            "timestep": 100.0,
+            "left_wheel_speed": 0.0,
+            "right_wheel_speed": 1.0
+        },
+        {
+            "time": 1270.0,
+            "timestep": 100.0,
+            "left_wheel_speed": 1.0,
+            "right_wheel_speed": 0.0
+        },
+        {
+            "time": 1370.0,
+            "timestep": 100.0,
+            "left_wheel_speed": 1.0,
+            "right_wheel_speed": 0.0
+        },
+        {
+            "time": 1470.0,
+            "timestep": 100.0,
+            "left_wheel_speed": 1.0,
+            "right_wheel_speed": 0.0
+        },
+        {
+            "time": 1570.0,
+            "timestep": 100.0,
+            "left_wheel_speed": 1.0,
+            "right_wheel_speed": 0.0
+        },
+        {
+            "time": 1670.0,
+            "timestep": 100.0,
+            "left_wheel_speed": 1.0,
+            "right_wheel_speed": 0.0
+        },
+        {
+            "time": 1770.0,
+            "timestep": 100.0,
+            "left_wheel_speed": 1.0,
+            "right_wheel_speed": 0.0
+        },
+        {
+            "time": 1870.0,
+            "timestep": 100.0,
+            "left_wheel_speed": 1.0,
+            "right_wheel_speed": 0.0
+        },
+        {
+            "time": 1970.0,
+            "timestep": 100.0,
+            "left_wheel_speed": 1.0,
+            "right_wheel_speed": 1.0
+        },
+        {
+            "time": 2070.0,
+            "timestep": 100.0,
+            "left_wheel_speed": 1.0,
+            "right_wheel_speed": 1.0
+        },
+        {
+            "time": 2170.0,
+            "timestep": 100.0,
+            "left_wheel_speed": 1.0,
+            "right_wheel_speed": 1.0
+        },
+        {
+            "time": 2270.0,
+            "timestep": 100.0,
+            "left_wheel_speed": 1.0,
+            "right_wheel_speed": 2.0
+        },
+        {
+            "time": 2370.0,
+            "timestep": 100.0,
+            "left_wheel_speed": 1.0,
+            "right_wheel_speed": 2.0
+        },
+        {
+            "time": 2470.0,
+            "timestep": 100.0,
+            "left_wheel_speed": 1.0,
+            "right_wheel_speed": 2.0
+        },
+        {
+            "time": 2570.0,
+            "timestep": 100.0,
+            "left_wheel_speed": 1.0,
+            "right_wheel_speed": 2.0
+        },
+        {
+            "time": 2670.0,
+            "timestep": 100.0,
+            "left_wheel_speed": 1.0,
+            "right_wheel_speed": 2.0
+        },
+        {
+            "time": 2770.0,
+            "timestep": 100.0,
+            "left_wheel_speed": 1.0,
+            "right_wheel_speed": 2.0
+        },
+        {
+            "time": 2870.0,
+            "timestep": 100.0,
+            "left_wheel_speed": 1.0,
+            "right_wheel_speed": 2.0
+        },
+        {
+            "time": 2970.0,
+            "timestep": 100.0,
+            "left_wheel_speed": 1.0,
+            "right_wheel_speed": 2.0
+        },
+        {
+            "time": 3070.0,
+            "timestep": 100.0,
+            "left_wheel_speed": 1.0,
+            "right_wheel_speed": 2.0
+        },
+        {
+            "time": 3170.0,
+            "timestep": 100.0,
+            "left_wheel_speed": 1.0,
+            "right_wheel_speed": 2.0
+        },
+        {
+            "time": 3270.0,
+            "timestep": 100.0,
+            "left_wheel_speed": 1.0,
+            "right_wheel_speed": 2.0
+        },
+        {
+            "time": 3370.0,
+            "timestep": 100.0,
+            "left_wheel_speed": 1.0,
+            "right_wheel_speed": 2.0
+        },
+        {
+            "time": 3470.0,
+            "timestep": 100.0,
+            "left_wheel_speed": 1.0,
+            "right_wheel_speed": 2.0
+        },
+        {
+            "time": 3570.0,
+            "timestep": 100.0,
+            "left_wheel_speed": 1.0,
+            "right_wheel_speed": 2.0
+        },
+        {
+            "time": 3670.0,
+            "timestep": 100.0,
+            "left_wheel_speed": 1.0,
+            "right_wheel_speed": 2.0
+        },
+        {
+            "time": 3770.0,
+            "timestep": 100.0,
+            "left_wheel_speed": 1.0,
+            "right_wheel_speed": 2.0
+        },
+        {
+            "time": 3870.0,
+            "timestep": 100.0,
+            "left_wheel_speed": 1.0,
+            "right_wheel_speed": 2.0
+        },
+        {
+            "time": 3970.0,
+            "timestep": 100.0,
+            "left_wheel_speed": 1.0,
+            "right_wheel_speed": 2.0
+        },
+        {
+            "time": 4070.0,
+            "timestep": 100.0,
+            "left_wheel_speed": 0.0,
+            "right_wheel_speed": 1.0
+        }
+    ]
+}

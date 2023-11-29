@@ -65,35 +65,43 @@ class ProcessControlerData:
         if self.server_socket != 0:
             self.server_socket.close()
 
-    def record(self):
+    def record_step(self):
         """
         starts the recording
         """
         data_array = []
 
-        self.recording_state = True
+        # send start message
+        self.client_socket.send("start".encode('utf-8'))
+        t, dt, gx, gy, gz, x_offset, y_offset = 0, 0, 0, 0, 0, 0, 0
 
-        client_socket, client_address = self.server_socket.accept()
-        print(f"Accepted connection from {client_address}")
-
-        client_socket.send("start".encode('utf-8'))
-        
-        while self.recording_state:
-            data_str = client_socket.recv(37).decode('utf-8')
-            print(f"Received data is: {data_str}")
+        # Wait for message starting with "s"
+        char = ""
+        message = ""
+        message_status = ""
+        while message_status != "got":
+            char = self.client_socket.recv(1).decode('utf-8')
+            # info(f"Received char: {char}")
+            if char.startswith("n"):
+                message_status = "got"
+                # print(f"Received message: {message}")
+            elif message_status == "start":
+                message = message + char
+            elif char.startswith("s"):
+                message_status = "start"
+        data_str = message[1:-1] # remove the first and last character
+        try:
             data = [float(x) for x in data_str.split(',')]
-            data_array.append(data)
-
-            if data[0] >= self.record_length:
-                print("Recording stopped")
-                self.recording_state = False
-
-        client_socket.send("stop".encode('utf-8'))
-        client_socket.close()
-
-        output = self.process_data_array(data_array)
-
-        return output
+        except Exception as e:
+            warning(f"Exception: {e}")
+        t = data[0]
+        dt = data[1]
+        gx = data[2]
+        gy = data[3]
+        gz = data[4]
+        x_offset = data[5]
+        y_offset = data[6]
+        return t, dt, gx, gy, gz, x_offset, y_offset
 
     def process_data_array(self, data_array):
         processed_data_array = []

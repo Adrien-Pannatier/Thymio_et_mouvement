@@ -92,7 +92,7 @@ class MotionControl():
 
     def play_loop(self, choreography, speed_factor):
         """Play a choreography in loop"""
-        for i in range(10): # MODIFY TO INFINITE LOOP -----------------------------------------------------------------------------
+        for i in range(50): # MODIFY TO INFINITE LOOP -----------------------------------------------------------------------------
             last_dt = self.play_once(choreography, speed_factor)
         time.sleep(last_dt/1000)
         aw(self.node.set_variables(  # apply the control on the wheels
@@ -108,7 +108,8 @@ class MotionControl():
             for step in step_list:
                 # info(step)    
                 # info(f"sleeping for {step[DT]/speed_factor/1000} seconds")
-                time.sleep(step[DT]/1000/speed_factor) #step in ms
+                # info(f"time is {step[T]/1000} seconds")
+                time.sleep(step[DT]/1000/speed_factor/10) #step in ms  °°°°°°°pourquoi /10 necessaire?°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
 
                 left_motor_speed = step[LS]*speed_factor/THYMIO_TO_CM # convert the speed from cm/s to thymio speed
                 right_motor_speed = step[RS]*speed_factor/THYMIO_TO_CM

@@ -69,15 +69,15 @@ class App(customtkinter.CTk):
         self.settings_button.grid(row=1, column=0, padx=20, pady=(10, 0))
 
         self.appearance_mode_label = customtkinter.CTkLabel(self.sidebar_frame, text="Appearance Mode:", anchor="w")
-        self.appearance_mode_label.grid(row=5, column=0, padx=20, pady=(10, 0))
+        self.appearance_mode_label.grid(row=7, column=0, padx=20, pady=(10, 0))
         self.appearance_mode_optionemenu = customtkinter.CTkOptionMenu(self.sidebar_frame, values=["Light", "Dark", "System"],
                                                                        command=self.change_appearance_mode_event)
-        self.appearance_mode_optionemenu.grid(row=6, column=0, padx=20, pady=(10, 10))
-        self.scaling_label = customtkinter.CTkLabel(self.sidebar_frame, text="UI Scaling:", anchor="w")
-        self.scaling_label.grid(row=7, column=0, padx=20, pady=(10, 0))
-        self.scaling_optionemenu = customtkinter.CTkOptionMenu(self.sidebar_frame, values=["80%", "90%", "100%", "110%", "120%"],
-                                                               command=self.change_scaling_event)
-        self.scaling_optionemenu.grid(row=8, column=0, padx=20, pady=(10, 20))
+        self.appearance_mode_optionemenu.grid(row=8, column=0, padx=20, pady=(10, 10))
+        # self.scaling_label = customtkinter.CTkLabel(self.sidebar_frame, text="UI Scaling:", anchor="w")
+        # self.scaling_label.grid(row=8, column=0, padx=20, pady=(10, 0))
+        # self.scaling_optionemenu = customtkinter.CTkOptionMenu(self.sidebar_frame, values=["80%", "90%", "100%", "110%", "120%"],
+        #                                                        command=self.change_scaling_event)
+        # self.scaling_optionemenu.grid(row=8, column=0, padx=20, pady=(10, 20))
 
         # create main tabview
         self.tabview = customtkinter.CTkTabview(self, width=250)
@@ -270,7 +270,7 @@ class App(customtkinter.CTk):
 
         # SET DEFAULT VALUES ===============================================================================================
         self.appearance_mode_optionemenu.set("Dark")
-        self.scaling_optionemenu.set("100%")
+        # self.scaling_optionemenu.set("100%")
         # lock window size
         self.resizable(False, False)
         # put info buttons to zero
@@ -379,9 +379,12 @@ class App(customtkinter.CTk):
     def change_appearance_mode_event(self, new_appearance_mode: str):
         customtkinter.set_appearance_mode(new_appearance_mode)
 
-    def change_scaling_event(self, new_scaling: str):
-        new_scaling_float = int(new_scaling.replace("%", "")) / 100
-        customtkinter.set_widget_scaling(new_scaling_float)
+    # def change_scaling_event(self, new_scaling: str):
+    #     new_scaling_float = int(new_scaling.replace("%", "")) / 100
+    #     try:
+    #         customtkinter.set_widget_scaling(new_scaling_float)
+    #     except Exception as e:
+    #         error(f"Unexpected error: {e}")
 
     def key_pressed_event(self, event):
         # if the key pressed is Enter
@@ -521,6 +524,8 @@ class App(customtkinter.CTk):
         connection_status = self.play_connect_switch.get()
         if connection_status == True:
             if play_mode == "Choreography":
+                # deactivate loop checkbox
+                self.play_loop_checkbox.configure(state="normal")
                 name = self.choreographies_list[index]
                 choreography_name, _, _, _, speed_factor, _ = self.modules.choreographer.choreography_dict[name].get_info()
                 self.play_chor_name_label.configure(text=f"Name:\t\t\t\t{choreography_name}")
@@ -542,6 +547,10 @@ class App(customtkinter.CTk):
                 self.play_speed_factor_entry.configure(state="disabled")
                 # change the color of the entry
                 self.play_speed_factor_entry.configure(fg_color = (LIGHT_COLOR,DARK_COLOR))
+                # deactivate loop checkbox
+                self.play_loop_checkbox.deselect()
+                self.play_loop_checkbox.configure(state="disabled")
+                
         
     def play_loop_event(self):
         # get the loop status
@@ -564,23 +573,34 @@ class App(customtkinter.CTk):
         connection_status = self.play_connect_switch.get()
         if connection_status == True:
             # try to connect the thymio
-            if not self.modules.motion_control.init_thymio_connection():
-                # if the connection failed, set the slider back to false
-                self.play_connect_variable.set(False)
-                print("no connection")
-                connection_status = False
-                pass
-            else:            
-                # try to connect to the thymio
-                self.play_thymio_status_label.configure(text="Thymio status: Connected")
-                self.update_play_tooltip()
-                self.display_play_layout()
-                self.refresh_play_info()
+            self.play_thymio_status_label.configure(text="Thymio status: Connecting...", text_color=("#1a1a1a","#dce4ee"))
+            self.play_connect_threading()
+
         if connection_status == False:
             # disconnect from the thymio
             self.modules.motion_control.disconnect_thymio()
             self.play_thymio_status_label.configure(text="Thymio status: Not connected")
             self.remove_play_layout()
+
+    def play_connect_threading(self):
+        # create the thread
+        self.connect_thread = Thread(target=self.play_connect)
+        # start the thread
+        self.connect_thread.start()
+
+    def play_connect(self):
+        if not self.modules.motion_control.init_thymio_connection():
+            # if the connection failed, set the slider back to false
+            self.play_connect_variable.set(False)
+            self.connection_status = False
+            self.play_thymio_status_label.configure(text="Thymio status: Failed to connect", text_color="red")
+        else:            
+            # try to connect to the thymio
+            self.play_thymio_status_label.configure(text="Thymio status: Connected")
+            self.update_play_tooltip()
+            self.display_play_layout()
+            self.refresh_play_info()
+
 
     def display_play_layout(self):
         # add settings frame underneath
@@ -731,7 +751,7 @@ class App(customtkinter.CTk):
                             self.modules.motion_control.stop_motors()
                             # unlock every entry and slider
                             self.play_speed_factor_entry.configure(state="normal")
-                            self.play_nbr_repetition_entry.configure(state="normal")
+                            self.play_nbr_repetition_entry.configure(state="normal") if self.play_loop_checkbox.get() == False else None
                             self.play_loop_checkbox.configure(state="normal")
                             self.play_connect_switch.configure(state="normal")
                             self.update_bar_update = False
@@ -748,7 +768,7 @@ class App(customtkinter.CTk):
 
         # unlock every entry and slider
         self.play_speed_factor_entry.configure(state="normal")
-        self.play_nbr_repetition_entry.configure(state="normal")
+        self.play_nbr_repetition_entry.configure(state="normal") if self.play_loop_checkbox.get() == False else None
         self.play_loop_checkbox.configure(state="normal")
         self.play_connect_switch.configure(state="normal")
         self.update_bar_update = False
@@ -829,7 +849,7 @@ class App(customtkinter.CTk):
         # add record and stop buttons inside
         self.record_record_button = customtkinter.CTkButton(self.record_record_frame, text="◉", command=self.record_event)
         self.record_record_button.place(relx=0.01, rely=0.5, relwidth=0.15, relheight=0.7, anchor="w")
-        self.record_stop_button = customtkinter.CTkButton(self.record_record_frame, text="■", command=self.stop_event)
+        self.record_stop_button = customtkinter.CTkButton(self.record_record_frame, text="■", command=self.stop_event_record)
         self.record_stop_button.place(relx=0.2, rely=0.5, relwidth=0.15, relheight=0.7, anchor="w")
         # add debug button inside
         self.record_debug_button = customtkinter.CTkButton(self.record_record_frame, text="Debug", command=self.debug_event)
@@ -901,6 +921,7 @@ class App(customtkinter.CTk):
         self.modules.process_controler_data.save_calibration(self.calibration_offset)
         
     def record_event(self):
+        self.record_on = True
         # get name entry
         name = self.record_name_entry.get()
         if name == "":
@@ -916,36 +937,47 @@ class App(customtkinter.CTk):
             if answer == "no":
                 return
             
+        # load the calibration
+        self.calibration_offset = self.modules.process_controler_data.load_calibration()
+        # check if the calibration is done
+        if self.calibration_offset == 0:
+            tkinter.messagebox.showwarning("Warning", "Please calibrate the robot first")
+            return
+        
+        # update the message in the info box
+        self.record_info_textbox.configure(state="normal")
+        self.record_info_textbox.delete("1.0", "end")
+        self.record_info_textbox.insert("1.0", "Recording...")
+
+        debug("recording")
+        # create recording thread
+        self.record_threading()        
+            
     def record_threading(self):
         # thread for recording
         self.recordthread = Thread(target=self.record, daemon=True)
         self.recordthread.start()
 
     def record(self):
-        # start the recording
-        self.modules.process_controler_data.record_start()
-        # wait 2 seconds
-        time.sleep(2)
+        choreography_steps_unprocessed = []
+        x_position = 0
+        y_position = 0
+        ct = 0
         # display the counter
-        self.record_info_textbox.insert("end", f"\nCounter : {self.modules.process_controler_data.counter}")
-        # while the counter is less than 100
-        while self.modules.process_controler_data.counter <= 100:
-            # get the new counter
-            new_counter = self.modules.process_controler_data.record_step()
-            # if the counter changed
-            if new_counter != None:
-                # display the counter
-                self.record_info_textbox.insert("end", f"\nCounter : {new_counter}")
-                # wait 0.1 second
-                time.sleep(0.1)
+        while self.record_on:
+            t, dt, gx, gy, gz, x_offset, y_offset = self.modules.process_controler_data.record_step()
+            choreography_steps_unprocessed.append([t, dt, gx, gy, gz, x_offset, y_offset])
+            debug(f"step {ct}: {choreography_steps_unprocessed[ct]}")
+            # wait 0.1 second
+            time.sleep(0.1)
+            ct = ct + 1
+        debug("recording stopped")
         # display end of communication
         self.record_info_textbox.insert("end", "\nEnd of communication")
-        # stop the recording
-        self.modules.process_controler_data.record_stop()
 
-    def stop(self):
-        # stop the recording
-        pass
+    def stop_event_record(self):
+        self.record_on = False
+        debug("recording button stop")
 
     def debug_event(self):
         if self.debug_on == False:
@@ -1287,8 +1319,8 @@ class App(customtkinter.CTk):
         index = self.editor_manage_radio_var.get()
         # get the choreography name
         name = self.choreographies_list[index] 
-        self.editor_manage_graph_image_light = Image.open(f"app/GUI_assets/temp_fig/{name}_light_graph.png") # open the image
-        self.editor_manage_graph_image_dark = Image.open(f"app/GUI_assets/temp_fig/{name}_dark_graph.png") # open the image
+        self.editor_manage_graph_image_light = Image.open(f"C:/Users/adrie/Desktop/PDS_Thymio/001_code/Python/Thymio_et_mouvement/app/GUI_assets/temp_fig/{name}_light_graph.png") # open the image
+        self.editor_manage_graph_image_dark = Image.open(f"C:/Users/adrie/Desktop/PDS_Thymio/001_code/Python/Thymio_et_mouvement/app/GUI_assets/temp_fig/{name}_dark_graph.png") # open the image
         self.editor_manage_graph_image = customtkinter.CTkImage(light_image=self.editor_manage_graph_image_light, dark_image=self.editor_manage_graph_image_dark, size=(400,200)) # convert the image to tkinter format
         self.editor_manage_graph_image_label.configure(image=self.editor_manage_graph_image) # display the image
 
@@ -1353,7 +1385,7 @@ class App(customtkinter.CTk):
         self.editor_create_seq_chor_radio_var = tkinter.IntVar(value=-1)
         self.editor_create_seq_scrollable_frame_chor = []
         for i in range(len(self.choreographies_list)):
-            newbutton = customtkinter.CTkRadioButton(master=self.editor_create_seq_chor_radiobutton_frame, corner_radius=0, state="disabled", radiobutton_width=5, radiobutton_height=5, variable=self.editor_create_seq_chor_radio_var, value=i, text=self.choreographies_list[i], command=self.editor_create_seq_refresh_info_chor)
+            newbutton = customtkinter.CTkRadioButton(master=self.editor_create_seq_chor_radiobutton_frame, corner_radius=0, state="disabled", radiobutton_width=5, radiobutton_height=5, variable=self.editor_create_seq_chor_radio_var, value=i, text=f"{i+1} - {self.choreographies_list[i]}", command=self.editor_create_seq_refresh_info_chor)
             newbutton.grid(row=i, column=0, padx=10, pady=(0, 10), sticky="w")
             self.scrollable_frame_chor.append(newbutton)
         # add "sequence list" frame
@@ -1402,7 +1434,7 @@ class App(customtkinter.CTk):
         self.editor_create_seq_scrollable_frame_chor = []
         # refresh list
         for i in range(len(self.choreographies_list)):
-            newbutton = customtkinter.CTkRadioButton(master=self.editor_create_seq_chor_radiobutton_frame, corner_radius=0, state="disabled", radiobutton_width=5, radiobutton_height=5, variable=self.editor_create_seq_chor_radio_var, value=i, text=self.choreographies_list[i], command=self.editor_create_seq_refresh_info_chor)
+            newbutton = customtkinter.CTkRadioButton(master=self.editor_create_seq_chor_radiobutton_frame, corner_radius=0, state="disabled", radiobutton_width=5, radiobutton_height=5, variable=self.editor_create_seq_chor_radio_var, value=i, text=f"{i+1} - {self.choreographies_list[i]}", command=self.editor_create_seq_refresh_info_chor)
             newbutton.grid(row=i, column=0, padx=10, pady=(0, 10), sticky="w")
             self.editor_create_seq_scrollable_frame_chor.append(newbutton)
     
@@ -1428,6 +1460,10 @@ class App(customtkinter.CTk):
         if name == "":
             tkinter.messagebox.showwarning("Warning", "Please enter a name")
             return
+        # check if name is taken
+        if name in self.sequences_list:
+            tkinter.messagebox.showwarning("Warning", "This name is already taken")
+            return
         # create input dialog
         self.editor_create_dialog = customtkinter.CTkInputDialog(text=f"Sequence order for: {name}", title="Create Sequence")
         sequence_string = self.editor_create_dialog.get_input()
@@ -1437,7 +1473,7 @@ class App(customtkinter.CTk):
         creation_date = (str(datetime.now()))[:-7]
         # creates the sequence
         try:
-            sequence_order = sequence_string.split(">")
+            sequence_order = sequence_string.split("-")
             sequence_order = [int(i) for i in sequence_order]
             for element in sequence_order:
                 if element < 1 or element > len(self.choreographies_list):
