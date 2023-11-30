@@ -339,7 +339,7 @@ class App(customtkinter.CTk):
             self.settings_path_chor_entry.insert(0, path)
             self.settings_changed = True
             # refocus on settings window
-            self.settings_window.focus()
+        self.settings_window.focus()
 
     def settings_path_seq_event(self):
         path = tkinter.filedialog.askdirectory()

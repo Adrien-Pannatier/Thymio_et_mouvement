@@ -133,7 +133,7 @@ class ProcessControlerData:
             positions_y.append(position_y)
 
             # Compute the forward speed and angular speed
-            angular_speed = math.radians(-gyro_z)
+            angular_speed = math.radians(-gyro_z)*GYRO_SCALING
             rot_speed_x = math.radians(gyro_x)
             rot_speed_y = math.radians(gyro_y)
             tangential_speed = 1000 * (positions_y[i] - positions_y[i-1])/ timestep   # in cm/s
