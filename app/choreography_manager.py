@@ -3,7 +3,9 @@
 import os
 import json
 import numpy as np
-import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use('Agg')
+from matplotlib import pyplot as plt
 import random
 from datetime import datetime
 

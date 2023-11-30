@@ -954,7 +954,7 @@ class App(customtkinter.CTk):
         self.calibration_offset = self.modules.process_controler_data.calibration()
         # save the calibration offset
         self.modules.process_controler_data.save_calibration(self.calibration_offset)
-        
+
     def record_event(self):
         self.record_on = True
         # get name entry
@@ -971,7 +971,14 @@ class App(customtkinter.CTk):
             answer = tkinter.messagebox.askquestion("Warning", "This name already exists, do you want to overwrite it?")
             if answer == "no":
                 return
-            
+
+        self.recorded_chor_name = name
+        description =  self.record_description_textbox.get("1.0", "end")
+
+        # delete all /n
+        self.recorded_chor_description = description.replace("\n", " ")
+
+        
         # load the calibration
         self.calibration_offset = self.modules.process_controler_data.load_calibration()
         # check if the calibration is done
@@ -995,20 +1002,37 @@ class App(customtkinter.CTk):
 
     def record(self):
         choreography_steps_unprocessed = []
-        x_position = 0
-        y_position = 0
+        choreography_steps_processed = []
         ct = 0
         # display the counter
         while self.record_on:
             t, dt, gx, gy, gz, x_offset, y_offset = self.modules.process_controler_data.record_step()
             choreography_steps_unprocessed.append([t, dt, gx, gy, gz, x_offset, y_offset])
-            debug(f"step {ct}: {choreography_steps_unprocessed[ct]}")
+            # debug(f"step {ct}: {choreography_steps_unprocessed[ct]}")
             # wait 0.1 second
             time.sleep(0.1)
             ct = ct + 1
         debug("recording stopped")
+        # send stop to the robot
+        self.modules.process_controler_data.send_stop()
         # display end of communication
         self.record_info_textbox.insert("end", "\nEnd of communication")
+        debug("buffer emptied")
+        # process the data
+        choreography_steps_processed = self.modules.process_controler_data.process_data_array(choreography_steps_unprocessed, self.calibration_offset)
+
+        # display choreography
+        debug(choreography_steps_processed)
+
+        # get creation date
+        creation_date = (str(datetime.now()))[:-7]
+        last_modified = creation_date
+
+        # create the choreography
+        self.modules.choreographer.create_choreography(self.recorded_chor_name, creation_date, last_modified, choreography_steps_processed, self.recorded_chor_description)
+
+        # refreshes the list
+        self.refresh()
 
     def stop_event_record(self):
         self.record_on = False
@@ -1054,8 +1078,8 @@ class App(customtkinter.CTk):
                 # display the counter
                 self.record_info_textbox.insert("end", f"\nCounter : {counter}")
                 # transform into cm
-                x_offset = x_offset / self.calibration_offset * 10
-                y_offset = y_offset / self.calibration_offset * 10
+                x_offset = x_offset / self.calibration_offset
+                y_offset = y_offset / self.calibration_offset 
                 # print(f"x offset in cm: {x_offset}")
                 # display in the info box
                 # self.record_info_textbox.insert("end", f"\nOffset : {x_offset}")

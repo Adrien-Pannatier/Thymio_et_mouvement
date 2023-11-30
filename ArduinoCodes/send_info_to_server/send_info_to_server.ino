@@ -16,7 +16,7 @@ unsigned long last_time;
 
 WiFiClient client;
 
-const int port = 8888;                // Port number for communication
+const int port = 2222;                // Port number for communication
 
 // Mouse info
 #define MOUSE_DATA 5

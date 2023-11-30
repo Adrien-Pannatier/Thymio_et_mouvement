@@ -28,7 +28,7 @@ DEFAULT_PATH_SEQUENCE = "C:/Users/adrie/Desktop/PDS_Thymio/001_code/Python/Thymi
 
 # == Process controller data == #
 PIXELS_TO_METERS = 0.01  # replace with actual value
-GYRO_SCALING = 1  # replace with actual value
+GYRO_SCALING = 20  # replace with actual value
 AS_THRESH = 0.05  # replace with actual value
 
 # == ui config == #

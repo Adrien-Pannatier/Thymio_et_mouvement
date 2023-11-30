@@ -1,3 +1,4 @@
+import math
 from typing import Any
 from app.utils.console import *
 from app.config import PIXELS_TO_METERS, GYRO_SCALING, AS_THRESH, DIAMETER, SETTINGS_PATH
@@ -20,7 +21,7 @@ class ProcessControlerData:
         """
         # Set the IP address and port to match Arduino configuration
         host = '0.0.0.0'  # Listen on all available network interfaces
-        port = 8888
+        port = 2222
 
         try:
             # Create a socket and bind it to the address
@@ -40,21 +41,23 @@ class ProcessControlerData:
         while True:
             try:
                 buffer = (self.client_socket.recv(1))
-                # print(buffer)
+                print(buffer)
                 if buffer == b'c':
-                    # print("Buffer emptied")
+                    print("Buffer emptied")
                     break
             except:
-                # error("Could not empty buffer")
+                error("Could not empty buffer")
                 break
             
     def accept_connection(self):
+        info("trying to accept connection")
         try:
             self.client_socket, self.client_address = self.server_socket.accept()
             info(f"Accepted connection from {self.client_address}")
             if self.client_socket != 0 and self.client_address != 0:
                 return True
-        except:
+        except Exception as e:
+            info(f"connection refused {e}")
             return False
         
     def close_connection(self):
@@ -103,40 +106,58 @@ class ProcessControlerData:
         y_offset = data[6]
         return t, dt, gx, gy, gz, x_offset, y_offset
 
-    def process_data_array(self, data_array):
+    def process_data_array(self, data_array, calibration_const):
+        debug(f"calibration_const: {calibration_const}")
+        time_offset = data_array[0][0]
+        position_x = 0
+        position_y = 0
+        positions_y = []
         processed_data_array = []
-        try:
-            # Extract the necessary data from the incoming wifi message
-            for i in range(len(data_array)):
-                time = data_array[i][0]
-                timestep = data_array[i][0] - data_array[i-1][0]
-                current_pos = data_array[i][1:3]
-                current_gyro_z = data_array[i][3]
-                last_pos = data_array[i-1][1:3]
+        # Extract the necessary data from the incoming wifi message
+        for i in range(len(data_array)):
+            time = data_array[i][0]
+            timestep = data_array[i][1]
+            gyro_x = data_array[i][2]
+            gyro_y = data_array[i][3]
+            gyro_z = data_array[i][4]
+            x_offset = data_array[i][5]
+            y_offset = data_array[i][6]
 
-                # Compute the forward speed and angular speed
-                forward_speed, angular_speed = self.compute_speeds(current_pos, current_gyro_z, timestep, last_pos)
+            debug(f"position_y: {position_y}")
 
-                # Apply threshold to the angular speed
-                angular_speed = self.threshold_angular_speed(angular_speed) 
+            # compute position with offsets
+            position_x = position_x + x_offset/calibration_const
+            position_y = position_y + y_offset/calibration_const
 
-                # Tangential speed
-                tangential_speed = np.sqrt(forward_speed[0]**2 + forward_speed[1]**2)
+            # Append the data to the array
+            positions_y.append(position_y)
 
-                # Separating speed to left and right wheels
-                left_wheel_speed = tangential_speed - angular_speed * DIAMETER/2
-                right_wheel_speed = tangential_speed + angular_speed * DIAMETER/2
+            # Compute the forward speed and angular speed
+            angular_speed = math.radians(-gyro_z)
+            rot_speed_x = math.radians(gyro_x)
+            rot_speed_y = math.radians(gyro_y)
+            tangential_speed = 1000 * (positions_y[i] - positions_y[i-1])/ timestep   # in cm/s
 
-                # Append the data to the array
-                processed_data_array.append([time, timestep, left_wheel_speed, right_wheel_speed])   
-            
-            return processed_data_array
+            # debug(f"tangential_speed: {tangential_speed} cm/s, angular_speed: {angular_speed} rad/s")
 
-        except KeyError:
-            warning("KeyError: One or more necessary variables are missing.")
+            # Apply threshold to the angular speed
+            angular_speed = self.threshold_angular_speed(angular_speed) 
 
-        except Exception as e:
-            warning(f"Exception: {e}")
+            # Separating speed to left and right wheels
+            left_wheel_speed = tangential_speed - angular_speed * DIAMETER/2
+            right_wheel_speed = tangential_speed + angular_speed * DIAMETER/2
+
+            # round the speeds to 2 decimals
+            left_wheel_speed = round(left_wheel_speed, 2)
+            right_wheel_speed = round(right_wheel_speed, 2)
+
+            # correct time
+            time = time - time_offset
+
+            # Append the data to the array but not the first term
+            processed_data_array.append([time, timestep, left_wheel_speed, right_wheel_speed]) if i != 0 else None
+        
+        return processed_data_array
 
     def calibration(self):
         """
@@ -156,6 +177,7 @@ class ProcessControlerData:
             while message_status != "got":
                 char = self.client_socket.recv(1).decode('utf-8')
                 if char.startswith("n"):
+                    print("got")
                     message_status = "got"
                     # print(f"Received message: {message}")
                 elif message_status == "start":
@@ -163,6 +185,7 @@ class ProcessControlerData:
                 elif char.startswith("s"):
                     message_status = "start"
             data_str = message[1:-1] # remove the first and last character
+            debug(f"Received message: {data_str}")
             try:
                 data = [float(x) for x in data_str.split(',')]
             except Exception as e:
@@ -246,22 +269,17 @@ class ProcessControlerData:
         self.empty_buffer()
         time.sleep(1)
 
-    def compute_speeds(self, current_pos, current_gyro_z, timestep, last_pos):
-        # Convert position from pixels to meters
-        current_pos_meters = [pos * PIXELS_TO_METERS for pos in current_pos]
-        last_pos_meters = [pos * PIXELS_TO_METERS for pos in last_pos]
-
-        # Calculate the change in position and gyroscope Z
-        delta_pos = np.array(current_pos_meters) - np.array(last_pos_meters)
-        angular_speed = current_gyro_z
-
-        # Calculate the forward speed and angular speed
-        forward_speed = delta_pos / timestep
-
-        return forward_speed, angular_speed
-
     def threshold_angular_speed(self, angular_speed):
         if abs(angular_speed) < AS_THRESH:
             return 0
         else:
             return angular_speed
+        
+    def send_stop(self):
+        debug("sending stop")
+        self.client_socket.send("stop".encode('utf-8'))
+        time.sleep(1)
+        self.client_socket.send("stop".encode('utf-8'))
+        time.sleep(1)
+        self.empty_buffer()
+        time.sleep(1)
