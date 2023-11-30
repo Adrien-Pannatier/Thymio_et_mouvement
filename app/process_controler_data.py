@@ -133,7 +133,7 @@ class ProcessControlerData:
             positions_y.append(position_y)
 
             # Compute the forward speed and angular speed
-            angular_speed = math.radians(-gyro_z)*GYRO_SCALING
+            angular_speed = math.radians(-gyro_z)
             rot_speed_x = math.radians(gyro_x)
             rot_speed_y = math.radians(gyro_y)
             tangential_speed = 1000 * (positions_y[i] - positions_y[i-1])/ timestep   # in cm/s
@@ -166,18 +166,32 @@ class ProcessControlerData:
         self.client_socket.send("start".encode('utf-8'))
         info("Calibration started")
 
+        # wait for 10 seconds
+        time.sleep(10)
+
+        info("letting the data come in")
+        self.client_socket.send("stop".encode('utf-8'))
+
         raw_x_position = 0 
         raw_y_position = 0
 
-        while self.calibration_on:
+        counter = 0
+
+        while counter < 100:
+            # info("treating data")
             # Wait for message starting with "s"
             char = ""
             message = ""
             message_status = ""
             while message_status != "got":
                 char = self.client_socket.recv(1).decode('utf-8')
-                if char.startswith("n"):
-                    print("got")
+                # print(char)
+                if char.startswith("c"):
+                    message_status = "over"
+                    message = "-leave-"
+                    break
+                elif char.startswith("n"):
+                    # print("got")
                     message_status = "got"
                     # print(f"Received message: {message}")
                 elif message_status == "start":
@@ -186,17 +200,20 @@ class ProcessControlerData:
                     message_status = "start"
             data_str = message[1:-1] # remove the first and last character
             debug(f"Received message: {data_str}")
-            try:
-                data = [float(x) for x in data_str.split(',')]
-            except Exception as e:
-                warning(f"Exception: {e}")
-                continue
-            raw_y_position = raw_y_position + data[6]
-            info(f"raw_y_position: {raw_y_position}")
+            if data_str != "leave":
+                counter = counter + 1
+                debug(f"counter: {counter}")
+                try:
+                    data = [float(x) for x in data_str.split(',')]
+                except Exception as e:
+                    warning(f"Exception: {e}")
+                    continue
+                raw_y_position = raw_y_position + data[6]
+            elif data_str == "leave":
+                break
+            # info(f"raw_y_position: {raw_y_position}")
             # time.sleep(0.1)
         
-        self.client_socket.send("stop".encode('utf-8'))
-        self.empty_buffer()
         # compute offset rounded to 2 decimals
         offset = round(raw_y_position / 20.00, 2)
         info(f"offset: {offset}")

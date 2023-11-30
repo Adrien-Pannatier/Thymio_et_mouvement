@@ -2,7 +2,6 @@
 #include <Arduino_LSM6DS3.h>
 #include <PS2MouseHandler.h>
 
-
 // Wi-Fi info
 // char ssid[] = "bwm-11914";      // Your WiFi network SSID
 // char pass[] = "Bruniere11?";  // Your WiFi network password
@@ -21,12 +20,17 @@ const int port = 2222;                // Port number for communication
 // Mouse info
 #define MOUSE_DATA 5
 #define MOUSE_CLOCK 6
+#define ARRAY_SIZE 40
 
 // Mode info
 int mode = 0; // 0 = idle, 1 = record
 
-PS2MouseHandler mouse(MOUSE_CLOCK, MOUSE_DATA, PS2_MOUSE_REMOTE);
+// Count sending data
+int count = 0;
 
+String data_to_send[ARRAY_SIZE];
+
+PS2MouseHandler mouse(MOUSE_CLOCK, MOUSE_DATA, PS2_MOUSE_REMOTE);
 
 void setup() {
   // Initialize serial communication for debugging
@@ -77,9 +81,6 @@ void setup() {
   Serial.println();
 }
 
-
-
-
 void loop() {
   float gx, gy, gz;  // gyroscope values [in rad/s]
   unsigned long time, dt; // time values [in ms]
@@ -88,45 +89,46 @@ void loop() {
   if (client.connected()) {
 
     if (mode == 1) {
-      // get optical mouse data
-      if (millis() - last_time > 20) {
-        Serial.println("getting mouse data");
-        mouse.get_data();
-        status_mouse = mouse.status(); // Status Byte
-        x_mvt_raw = mouse.x_movement(); // X Movement Data [in pixels]
-        y_mvt_raw = mouse.y_movement(); // Y Movement Data [in pixels]
+        while(count <= ARRAY_SIZE) {
+          // get optical mouse data
+          if (millis() - last_time > 20) {
+            Serial.println("getting mouse data");
+            mouse.get_data();
+            status_mouse = mouse.status(); // Status Byte
+            x_mvt_raw = mouse.x_movement(); // X Movement Data [in pixels]
+            y_mvt_raw = mouse.y_movement(); // Y Movement Data [in pixels]
+          }
+
+          // get IMU data
+          if (IMU.gyroscopeAvailable()) {
+            IMU.readGyroscope(gx, gy, gz);
+            }
+
+          // get time
+          time = millis();
+          dt = time - last_time;
+
+          // Convert data to strings
+          String gxStr = String(gx);
+          String gyStr = String(gy);
+          String gzStr = String(gz);
+          String xMvtRawStr = String(x_mvt_raw);
+          String yMvtRawStr = String(y_mvt_raw);
+          String timeStr = String(time);
+          String timeDiffStr = String(dt);
+
+          //create the message to send
+          String dataStr = "s," + timeStr + "," + timeDiffStr + "," + gxStr + "," + gyStr + "," + gzStr + "," + xMvtRawStr + "," + yMvtRawStr + ",n";
+
+          data_to_send[count] = dataStr;
+
+          Serial.print("saved : ");
+          Serial.println(data_to_send[count]);
+
+          last_time = time;
+          count = count + 1;
+        }
       }
-
-      // get IMU data
-      if (IMU.gyroscopeAvailable()) {
-        IMU.readGyroscope(gx, gy, gz);
-        }
-
-      // get time
-      time = millis();
-      dt = time - last_time;
-
-      // Convert data to strings
-      String gxStr = String(gx);
-      String gyStr = String(gy);
-      String gzStr = String(gz);
-      String xMvtRawStr = String(x_mvt_raw);
-      String yMvtRawStr = String(y_mvt_raw);
-      String timeStr = String(time);
-      String timeDiffStr = String(dt);
-
-      //create the message to send
-      String dataStr = "s," + timeStr + "," + timeDiffStr + "," + gxStr + "," + gyStr + "," + gzStr + "," + xMvtRawStr + "," + yMvtRawStr + ",n";
-
-      // Send your string to the Python script
-      if (last_time != 0) { // Do not send the first value
-        client.print(dataStr); 
-        }
-      Serial.print("message sent: ");
-      Serial.println(dataStr);
-
-      last_time = time;
-    }
 
     // Check for a response from the server
     while (client.available()) {
@@ -136,13 +138,27 @@ void loop() {
       Serial.print("Message recieved: ");
       Serial.println(msg);
       if (msg == "start"){
+        count = 0;
         mode = 1;
         Serial.println("Mode changed to record");
       }
       else if (msg == "stop"){
         mode = 0;
-        Serial.println("Mode changed to idle");
+        Serial.println("Mode changed to idle, sending whole data");
+
+        // Send your string to the Python script
+        for (int i = 0; i <= ARRAY_SIZE; i++) {
+          Serial.print("sending : ");
+          Serial.println(data_to_send[i]);
+          client.print(data_to_send[i]); 
+        }
         client.print("c");
+
+        Serial.println("empty the data buffer");
+        // empty table
+        for (int i = 0; i <= ARRAY_SIZE; i++) {
+          data_to_send[i] = "";
+        }
       }
 
     }
