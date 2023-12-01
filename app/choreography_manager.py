@@ -12,11 +12,13 @@ from datetime import datetime
 
 from app.utils.console import *
 from app.config import DEFAULT_SPEED_FACT, SLEEP_DURATION, DEFAULT_PATH_CHOREO, DEFAULT_PATH_SEQUENCE, SETTINGS_PATH
+from app.emotions import *
 
 class ChoreographyManager:
     def __init__(self):
         self.choreography_dict = {}
         self.sequence_dict = {}
+        self.emotion_dict = {"fear": None, "curiosity": None}
         self.choreography_path = DEFAULT_PATH_CHOREO
         self.sequence_path = DEFAULT_PATH_SEQUENCE
         self.load_settings()
@@ -304,6 +306,7 @@ class ChoreographyManager:
             data_to_save['creation_date'] = sequence.creation_date
             data_to_save['description'] = sequence.description
             data_to_save['sequence_order'] = sequence.sequence_l
+            data_to_save['emotion_list'] = sequence.emotion_list
             if not os.path.isfile(path + sequence.name + ".json"):
                 with open(path + sequence.name + ".json", "w") as file:
                     json.dump(data_to_save, file, indent=4)
@@ -337,6 +340,18 @@ class ChoreographyManager:
     def empty_sequence_dict(self):
         # empties the sequence dictionary
         self.sequence_dict = {}
+
+    # emotions
+    def load_emotions(self, node):
+        """
+        Loads the emotions
+        """        
+        # add emotions
+        fear = Fear(node=node, fear_level=1)
+        curiosity = Curiosity(node=node, curiosity_level=1)
+
+        self.emotion_dict['fear'] = fear
+        self.emotion_dict['curiosity'] = curiosity
 
 # CLASSES
 
@@ -453,12 +468,13 @@ class Sequence:
     Func get_info: returns the info of the sequence
     Func empty: empties the sequence
     """
-    def __init__(self, name, creation_date, path, description="", sequence_l=[]):
+    def __init__(self, name, creation_date, path, description="", sequence_l=[], emotion_list=[]):
         self.name = name
         self.creation_date = creation_date
         self.sequence_l = sequence_l
         self.description = description
         self.path = path + name + ".json"
+        self.emotion_list = emotion_list
 
     def __str__(self):
         return self.name
@@ -467,10 +483,34 @@ class Sequence:
         """
         Returns the info of the sequence
         """
-        return self.name, self.creation_date, self.description, self.path, self.sequence_l
+        return self.name, self.creation_date, self.description, self.path, self.sequence_l, self.emotion_list
     
     def empty(self):
         """
         Empties the sequence
         """
         self.sequence_l = []
+
+    def add_emotion(self, emotion):
+        """
+        Adds an emotion to the sequence
+        """
+        # check if the emotion exists
+        if emotion in self.emotion_list:
+            debug(f"emotion already in")
+            return False
+        # check if the emotion is already in the sequence
+        if emotion in self.emotion_list:
+            return False
+        # add the emotion to the sequence
+        self.emotion_list.append(emotion)
+
+    def remove_emotion(self, emotion):
+        """
+        Removes an emotion from the sequence
+        """
+        # check if the emotion exists
+        if emotion not in self.emotion_list:
+            return False
+        # remove the emotion from the sequence
+        self.emotion_list.remove(emotion)

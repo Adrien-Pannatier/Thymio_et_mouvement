@@ -250,7 +250,7 @@ class App(customtkinter.CTk):
         
         # EDIT TAB CREATION ================================================================================================
         # add option menu mode between Manager and Create sequence
-        self.editor_optionemenu = customtkinter.CTkOptionMenu(self.tabview.tab("Edit"), values=["Manage", "Create Sequence", "Create rand chor"], command=self.editor_mode_select_event)
+        self.editor_optionemenu = customtkinter.CTkOptionMenu(self.tabview.tab("Edit"), values=["Manage", "Create Sequence", "Create rand chor", "Set emotions"], command=self.editor_mode_select_event)
         self.editor_optionemenu.place(relx=0.01, rely=0.01, relwidth=0.25, relheight=0.05)
 
         # add tooltip frame
@@ -467,11 +467,11 @@ class App(customtkinter.CTk):
     def refresh_info_seq(self):
         index = self.seq_radio_var.get()
         name = self.sequences_list[index]
-        sequence_name, creation_date, description, path, sequence_order = self.modules.choreographer.sequence_dict[name].get_info()
+        sequence_name, creation_date, description, path, sequence_order, emotions = self.modules.choreographer.sequence_dict[name].get_info()
         self.seq_info_text.configure(state="normal")
         self.seq_info_text.delete("1.0", "end")
         seq_names = self.info_seq_number_to_name(sequence_order)
-        self.seq_info_text.insert("1.0", f"Name:\t\t{sequence_name}\nCreation date:\t\t{creation_date}\nDescription:\t\t{description}\nSequence order:\t\t{sequence_order}\nSequences:\t\t{seq_names}")
+        self.seq_info_text.insert("1.0", f"Name:\t\t{sequence_name}\nCreation date:\t\t{creation_date}\nDescription:\t\t{description}\nSequence order:\t\t{sequence_order}\nSequences:\t\t{seq_names}\nEmotions:\t\t{emotions}")
         self.seq_info_text.tag_config("bluename", foreground="#1e5eac")
         self.seq_info_text.tag_add("bluename", "1.0", "1.5")
         self.seq_info_text.tag_config("bluecreadate", foreground="#1e5eac")
@@ -482,6 +482,8 @@ class App(customtkinter.CTk):
         self.seq_info_text.tag_add("blueseqorder", "4.0", "4.15")
         self.seq_info_text.tag_config("blueseq", foreground="#1e5eac")
         self.seq_info_text.tag_add("blueseq", "5.0", "5.11")
+        self.seq_info_text.tag_config("blueemotions", foreground="#1e5eac")
+        self.seq_info_text.tag_add("blueemotions", "6.0", "6.9")
         self.seq_info_text.configure(state="disabled")
     
     def info_seq_number_to_name(self, sequence_order):
@@ -575,7 +577,7 @@ class App(customtkinter.CTk):
                     self.play_nbr_repetition_entry.insert(0, "1")
             elif play_mode == "Sequence":
                 name = self.sequences_list[index]
-                sequence_name, _, _, _, _ = self.modules.choreographer.sequence_dict[name].get_info()
+                sequence_name, _, _, _, _, _ = self.modules.choreographer.sequence_dict[name].get_info()
                 self.play_chor_name_label.configure(text=f"Name:\t\t\t\t{sequence_name}")
                 # lock the speed factor entry
                 self.play_speed_factor_entry.delete(0, "end")
@@ -635,6 +637,8 @@ class App(customtkinter.CTk):
             self.update_play_tooltip()
             self.display_play_layout()
             self.refresh_play_info()
+            # load emotions
+            self.modules.choreographer.load_emotions(node=self.modules.motion_control.node)
 
 
     def display_play_layout(self):
@@ -1121,6 +1125,90 @@ class App(customtkinter.CTk):
             self.editor_display_create_seq_layout()
         elif new_editor_mode == "Create rand chor":
             self.editor_display_create_rand_chor_layout()
+        elif new_editor_mode == "Set emotions":
+            self.editor_display_set_emotions_layout()
+
+    def editor_display_set_emotions_layout(self):
+        # display sequence list on the left
+        self.editor_set_emotions_sequence_list_frame = customtkinter.CTkFrame(self.tabview.tab("Edit"))
+        self.editor_set_emotions_sequence_list_frame.place(relx=0, rely=0.08, relwidth=0.33, relheight=0.90)
+        # add title
+        self.editor_set_emotions_sequence_list_title_label = customtkinter.CTkLabel(self.editor_set_emotions_sequence_list_frame, text="SEQUENCES", font=customtkinter.CTkFont(size=20, weight="bold"))
+        self.editor_set_emotions_sequence_list_title_label.place(relx=0.01, rely=0.01, relwidth=0.98, relheight=0.05)
+        # add scrollable frame
+        self.editor_set_emotions_sequence_list_scrollable_frame = customtkinter.CTkScrollableFrame(self.editor_set_emotions_sequence_list_frame, fg_color=(LIGHT_COLOR, DARK_COLOR))
+        self.editor_set_emotions_sequence_list_scrollable_frame.place(relx=0.01, rely=0.1, relwidth=0.98, relheight=0.80)
+        # desselect
+        self.editor_set_emotions_sequence_radio_var = tkinter.IntVar(value=-1)
+        # add sequence buttons
+        self.scrollable_frame_set_emotions = []
+
+        for i in range(len(self.sequences_list)):
+            # add radio button
+            self.scrollable_frame_set_emotions.append(customtkinter.CTkRadioButton(self.editor_set_emotions_sequence_list_scrollable_frame, text=self.sequences_list[i], variable=self.editor_set_emotions_sequence_radio_var, value=i, command=self.editor_set_emotions_sequence_select_event))
+            self.scrollable_frame_set_emotions[i].pack(anchor="w")
+
+        # create emotions frame on the left
+        self.editor_set_emotions_emotions_frame = customtkinter.CTkFrame(self.tabview.tab("Edit"))
+        self.editor_set_emotions_emotions_frame.place(relx=0.35, rely=0.08, relwidth=0.63, relheight=0.90)
+        # add title
+        self.editor_set_emotions_emotions_title_label = customtkinter.CTkLabel(self.editor_set_emotions_emotions_frame, text="EMOTIONS", font=customtkinter.CTkFont(size=20, weight="bold"))
+        self.editor_set_emotions_emotions_title_label.place(relx=0.01, rely=0.01, relwidth=0.98, relheight=0.05)
+        # add frame do display actuator emotions
+        self.editor_set_emotions_emotions_display_frame_act = customtkinter.CTkFrame(self.editor_set_emotions_emotions_frame, fg_color=(LIGHT_COLOR, DARK_COLOR))
+        self.editor_set_emotions_emotions_display_frame_act.place(relx=0.01, rely=0.1, relwidth=0.32, relheight=0.80)
+        # add frame to display light emotions
+        self.editor_set_emotions_emotions_display_frame_light = customtkinter.CTkFrame(self.editor_set_emotions_emotions_frame, fg_color=(LIGHT_COLOR, DARK_COLOR))
+        self.editor_set_emotions_emotions_display_frame_light.place(relx=0.34, rely=0.1, relwidth=0.32, relheight=0.80)
+        # add frame to display sound emotions
+        self.editor_set_emotions_emotions_display_frame_sound = customtkinter.CTkFrame(self.editor_set_emotions_emotions_frame, fg_color=(LIGHT_COLOR, DARK_COLOR))
+        self.editor_set_emotions_emotions_display_frame_sound.place(relx=0.67, rely=0.1, relwidth=0.32, relheight=0.80)
+        # add variable to select emotions
+        self.editor_set_emotions_emotions_radio_var_act = tkinter.IntVar(value=-1)
+        # add emotion radiobuttons "fear", "curiosity"
+        self.editor_set_emotions_emotions_radiob_act = []
+        for i in range(len(list(self.modules.choreographer.emotion_dict.keys()))):
+            self.editor_set_emotions_emotions_radiob_act.append(customtkinter.CTkRadioButton(self.editor_set_emotions_emotions_display_frame_act, text=list(self.modules.choreographer.emotion_dict.keys())[i], variable=self.editor_set_emotions_emotions_radio_var_act, value=i, command=self.editor_set_emotions_emotions_select_event_act))
+            self.editor_set_emotions_emotions_radiob_act[i].pack(anchor="w")
+
+    def editor_set_emotions_sequence_select_event(self):
+        # check if the sequence has emotions
+        # desselect emotions
+        self.editor_set_emotions_emotions_radio_var_act.set(-1)
+        # get the sequence selected
+        index = self.editor_set_emotions_sequence_radio_var.get()
+        sequence_name = self.sequences_list[index]
+        # get the emotion_list of the sequence
+        emotion_list = self.modules.choreographer.sequence_dict[sequence_name].emotion_list
+        # select the emotions
+        for i in range(len(emotion_list)):
+            if emotion_list[i] in list(self.modules.choreographer.emotion_dict.keys()):
+                self.editor_set_emotions_emotions_radiob_act[list(self.modules.choreographer.emotion_dict.keys()).index(emotion_list[i])].select()
+                self.editor_set_emotions_emotions_select_event_act()
+        # print("sequence selected")
+
+    def editor_set_emotions_emotions_select_event_act(self):
+        print("emotion selected")
+        # get the sequence selected
+        index = self.editor_set_emotions_sequence_radio_var.get()
+        if index != -1:    
+            sequence_name = self.sequences_list[index]
+            # add emotion to the sequence
+            # get the emotion selected
+            emotion_index = self.editor_set_emotions_emotions_radio_var_act.get()
+            if emotion_index != -1:
+                emotion_name = list(self.modules.choreographer.emotion_dict.keys())[emotion_index]
+                # add the emotion to the sequence
+                self.modules.choreographer.sequence_dict[sequence_name].add_emotion(emotion_name)
+                debug(self.modules.choreographer.sequence_dict[sequence_name].emotion_list)
+            else: 
+                # remove the emotion from the sequence
+                self.modules.choreographer.sequence_dict[sequence_name].remove_emotion(emotion_name)
+                
+            # save the sequence dict
+            self.modules.choreographer.save_sequence_dict()
+            self.refresh()
+            
 
     def editor_display_create_rand_chor_layout(self):
         # create rand chor frame
