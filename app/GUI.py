@@ -392,25 +392,8 @@ class App(customtkinter.CTk):
         # debug(f"Key pressed: {event.keysym}")
         # if the key pressed is Enter
         if event.keysym == "Return":
-            # check the tab
-            if self.tabview.tab("Record").winfo_ismapped():
-                # if calibration is running
-                if self.modules.process_controler_data.calibration_on:
-                    # stop calibration
-                    self.modules.process_controler_data.calibration_on = False
-                    # wait 2 seconds
-                    time.sleep(2)
-                    # show the calibration parameter
-                    self.record_info_textbox.insert("end", f"\nOffset : {self.calibration_offset}")
-                    # start the calibration thread
-                    self.record_info_textbox.configure(state="disabled")
-                    # unblock connection slider
-                    self.record_server_switch.configure(state="normal")
-                    # save the calibration
-                elif self.debug_on:
-                    # stop debug
-                    self.debug_on = False
         # delete mode
+            pass
         if event.keysym == "Delete":
             # check the tab
             if self.tabview.tab("Edit").winfo_ismapped():
@@ -954,6 +937,13 @@ class App(customtkinter.CTk):
         self.calibration_offset = self.modules.process_controler_data.calibration()
         # save the calibration offset
         self.modules.process_controler_data.save_calibration(self.calibration_offset)
+        time.sleep(2)
+        # show the calibration parameter
+        self.record_info_textbox.insert("end", f"\nOffset : {self.calibration_offset}")
+        # start the calibration thread
+        self.record_info_textbox.configure(state="disabled")
+        # unblock connection slider
+        self.record_server_switch.configure(state="normal")
 
     def record_event(self):
         self.record_on = True
@@ -1039,19 +1029,20 @@ class App(customtkinter.CTk):
         debug("recording button stop")
 
     def debug_event(self):
-        if self.debug_on == False:
-            self.debug_on = True
-            # load the calibration
-            self.calibration_offset = self.modules.process_controler_data.load_calibration()
-            if self.calibration_offset == None:
-                tkinter.messagebox.showwarning("Warning", "Please calibrate the robot first")
-                return
-            else:
-                # print(f"calibration offset: {self.calibration_offset}")
-                # block connection slider
-                self.record_server_switch.configure(state="disabled")
-            # start the debug thread
-            self.debug_threading()
+        pass
+        # if self.debug_on == False:
+        #     self.debug_on = True
+        #     # load the calibration
+        #     self.calibration_offset = self.modules.process_controler_data.load_calibration()
+        #     if self.calibration_offset == None:
+        #         tkinter.messagebox.showwarning("Warning", "Please calibrate the robot first")
+        #         return
+        #     else:
+        #         # print(f"calibration offset: {self.calibration_offset}")
+        #         # block connection slider
+        #         self.record_server_switch.configure(state="disabled")
+        #     # start the debug thread
+        #     self.debug_threading()
 
     def debug_threading(self):
         # thread for debug
