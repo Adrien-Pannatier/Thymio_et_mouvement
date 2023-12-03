@@ -20,7 +20,7 @@ const int port = 2222;                // Port number for communication
 // Mouse info
 #define MOUSE_DATA 5
 #define MOUSE_CLOCK 6
-#define ARRAY_SIZE 100
+#define ARRAY_SIZE 65
 
 // Mode info
 int mode = 0; // 0 = idle, 1 = record
@@ -29,6 +29,7 @@ bool send = 0;
 // Count sending data
 int count = 0;
 int inner_count = 0;
+int cout_firsts = 6;
 
 String data_to_send[ARRAY_SIZE];
 
@@ -111,7 +112,7 @@ void loop() {
             x_mvt_added = x_mvt_added + x_mvt_raw;
             y_mvt_added = y_mvt_added + y_mvt_raw;
             inner_count = inner_count + 1;
-            // Serial.println("m");
+            Serial.println(y_mvt_added);
           }
         }
 
@@ -149,13 +150,15 @@ void loop() {
       // if asked to send, then send
       if (send == 1) {
         // Send your string to the Python script
-        for (int i = 0; i < ARRAY_SIZE; i++) {
+        for (int i = 5; i < ARRAY_SIZE; i++) { // do not end the 5 first
           Serial.print("sending : ");
           Serial.println(data_to_send[i]);
           client.print(data_to_send[i]); 
         }
         send = 0;
         mode = 0;
+        client.print("c");
+
         // memset(data_to_send, 0, ARRAY_SIZE);
         String data_to_send[ARRAY_SIZE];
       }
@@ -172,14 +175,8 @@ void loop() {
           count = 0;
           mode = 1;
           Serial.println("Mode changed to record");
-        } else if (msg.indexOf("stop") != -1) {
-          mode = 0;
-          Serial.println("Mode changed to idle, sending whole data");
-
-          client.print("c");
-
-
         }
+        
       }
         
       } else {
