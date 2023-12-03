@@ -80,7 +80,7 @@ class App(customtkinter.CTk):
         # self.scaling_optionemenu.grid(row=8, column=0, padx=20, pady=(10, 20))
 
         # create main tabview
-        self.tabview = customtkinter.CTkTabview(self, width=250)
+        self.tabview = customtkinter.CTkTabview(self, width=250, command=self.tabview_change_event)
         self.tabview.grid(row=0, column=1, padx=(20, 20), pady=(20, 20), sticky="nsew")
         self.tabview.add("Play")
         self.tabview.add("Record")
@@ -276,20 +276,33 @@ class App(customtkinter.CTk):
         self.chor_radio_var.set(-1)
         self.seq_radio_var.set(-1)
         # deselect all optionmenu
-        
 
-
-
-
-
-
-
-
-
-
-
-
-
+    def tabview_change_event(self):
+        # get the new tab
+        new_tab = self.tabview.get()
+        # check if the new tab is the edit tab
+        if new_tab == "Edit":
+            # check the mode
+            if self.editor_optionemenu.get() == "Manage":
+                # refresh the list
+                self.refresh_choreographies_list()
+                self.refresh_sequences_list()
+            elif self.editor_optionemenu.get() == "Create Sequence":
+                # refresh the list
+                self.play_refresh_chor_list()
+            elif self.editor_optionemenu.get() == "Create rand chor":
+                # refresh the list
+                self.play_refresh_seq_list()
+        elif new_tab == "Info":
+            # refresh the list
+            self.refresh_choreographies_list()
+            self.refresh_sequences_list()
+        elif new_tab == "Play":
+            # refresh the list
+            self.play_refresh_chor_list()
+        elif new_tab == "Record":
+            # refresh the list
+            pass
 
     def settings_event(self):
         self.settings_window = ToplevelWindow(self)  # create window if its None or destroyed
@@ -869,8 +882,8 @@ class App(customtkinter.CTk):
         # self.record_stop_button = customtkinter.CTkButton(self.record_record_frame, text="■", command=self.stop_event_record)
         # self.record_stop_button.place(relx=0.2, rely=0.5, relwidth=0.15, relheight=0.7, anchor="w")
         # add debug button inside
-        self.record_calibrate_button = customtkinter.CTkButton(self.record_record_frame, text="Calibrate", command=self.calibrate_event)
-        self.record_calibrate_button.place(relx=0.4, rely=0.5, relwidth=0.15, relheight=0.7, anchor="w")
+        self.record_calibrate_button = customtkinter.CTkButton(self.record_record_frame, text="Calib", command=self.calibrate_event)
+        self.record_calibrate_button.place(relx=0.2, rely=0.5, relwidth=0.15, relheight=0.7, anchor="w")
 
         # add info box in the middle
         self.record_info_frame = customtkinter.CTkFrame(self.tabview.tab("Record"))
@@ -1022,9 +1035,9 @@ class App(customtkinter.CTk):
         time.sleep(3)
         while self.record_on:
             self.record_record_button.configure(text="◉")
-            time.sleep(0.5)
+            time.sleep(1)
             self.record_record_button.configure(text="◎")
-            time.sleep(0.5)
+            time.sleep(1)
         self.record_record_button.configure(text="◉")
         
     # def stop_event_record(self):
