@@ -637,7 +637,7 @@ class App(customtkinter.CTk):
             self.update_play_tooltip()
             self.display_play_layout()
             self.refresh_play_info()
-            # load emotions
+            # # load emotions
             self.modules.choreographer.load_emotions(node=self.modules.motion_control.node)
 
 
@@ -777,6 +777,15 @@ class App(customtkinter.CTk):
                 # for every choreography in the sequence
                 # get nbr repetition
                 nbr_repetition = self.play_nbr_repetition_entry.get()
+                # get first emotion name if any
+                try:
+                    emotion_name = self.modules.choreographer.sequence_dict[name].emotion_list[0]
+                except:
+                    emotion_name = None
+                # create the emotion object
+                emotion = self.modules.choreographer.emotion_dict[emotion_name] if emotion_name != None else None
+                # debug(f"emotion name: {emotion_name}")
+                debug(f"emotion: {emotion}")
                 for i in range(int(nbr_repetition)):
                     for choreography_index in sequence.sequence_l:
                         # transform the index into a name
@@ -785,7 +794,7 @@ class App(customtkinter.CTk):
                         choreography = self.modules.choreographer.choreography_dict[choreography_name]
                         print(f"now playing {choreography_name}")
                         self.modules.motion_control.choreography_status = "play"
-                        self.modules.motion_control.play_choreography(choreography, int(speed_factor), "mult", int(nbr_repetition))
+                        self.modules.motion_control.play_choreography(choreography, int(speed_factor), "mult", int(nbr_repetition), emotion)
                         if self.modules.motion_control.choreography_status == "stop":
                             self.modules.motion_control.stop_motors()
                             # unlock every entry and slider
@@ -1156,13 +1165,13 @@ class App(customtkinter.CTk):
         self.editor_set_emotions_emotions_title_label.place(relx=0.01, rely=0.01, relwidth=0.98, relheight=0.05)
         # add frame do display actuator emotions
         self.editor_set_emotions_emotions_display_frame_act = customtkinter.CTkFrame(self.editor_set_emotions_emotions_frame, fg_color=(LIGHT_COLOR, DARK_COLOR))
-        self.editor_set_emotions_emotions_display_frame_act.place(relx=0.01, rely=0.1, relwidth=0.32, relheight=0.80)
+        self.editor_set_emotions_emotions_display_frame_act.place(relx=0.01, rely=0.1, relwidth=0.32, relheight=0.70)
         # add frame to display light emotions
         self.editor_set_emotions_emotions_display_frame_light = customtkinter.CTkFrame(self.editor_set_emotions_emotions_frame, fg_color=(LIGHT_COLOR, DARK_COLOR))
-        self.editor_set_emotions_emotions_display_frame_light.place(relx=0.34, rely=0.1, relwidth=0.32, relheight=0.80)
+        self.editor_set_emotions_emotions_display_frame_light.place(relx=0.34, rely=0.1, relwidth=0.32, relheight=0.70)
         # add frame to display sound emotions
         self.editor_set_emotions_emotions_display_frame_sound = customtkinter.CTkFrame(self.editor_set_emotions_emotions_frame, fg_color=(LIGHT_COLOR, DARK_COLOR))
-        self.editor_set_emotions_emotions_display_frame_sound.place(relx=0.67, rely=0.1, relwidth=0.32, relheight=0.80)
+        self.editor_set_emotions_emotions_display_frame_sound.place(relx=0.67, rely=0.1, relwidth=0.32, relheight=0.70)
         # add variable to select emotions
         self.editor_set_emotions_emotions_radio_var_act = tkinter.IntVar(value=-1)
         # add emotion radiobuttons "fear", "curiosity"
@@ -1170,6 +1179,28 @@ class App(customtkinter.CTk):
         for i in range(len(list(self.modules.choreographer.emotion_dict.keys()))):
             self.editor_set_emotions_emotions_radiob_act.append(customtkinter.CTkRadioButton(self.editor_set_emotions_emotions_display_frame_act, text=list(self.modules.choreographer.emotion_dict.keys())[i], variable=self.editor_set_emotions_emotions_radio_var_act, value=i, command=self.editor_set_emotions_emotions_select_event_act))
             self.editor_set_emotions_emotions_radiob_act[i].pack(anchor="w")
+
+        # add a button to desselect emotions
+        self.editor_set_emotions_emotions_desselect_button_act = customtkinter.CTkButton(self.editor_set_emotions_emotions_display_frame_act, text="Desselect", command=self.editor_set_emotions_emotions_desselect_event_act)
+        self.editor_set_emotions_emotions_desselect_button_act.place(relx=0.01, rely=0.80, relwidth=0.98, relheight=0.15)
+
+    def editor_set_emotions_emotions_desselect_event_act(self):
+        # desselect emotions
+        self.editor_set_emotions_emotions_radio_var_act.set(-1)
+        # get the sequence selected
+        index = self.editor_set_emotions_sequence_radio_var.get()
+        if index != -1:
+            sequence_name = self.sequences_list[index]
+            # remove all emotions from the sequence
+            self.modules.choreographer.sequence_dict[sequence_name].remove_emotions()
+            # debug(f"emotions removed from sequence {sequence_name}")
+            # debug(self.modules.choreographer.sequence_dict[sequence_name].emotion_list)
+            self.modules.choreographer.sequence_dict[sequence_name].save_sequence()
+            self.refresh()
+        # display all sequences emotion lists
+        # for i in range(len(self.sequences_list)):
+        #     debug(f"{self.modules.choreographer.sequence_dict[self.sequences_list[i]]} : {self.modules.choreographer.sequence_dict[self.sequences_list[i]].emotion_list}")
+    
 
     def editor_set_emotions_sequence_select_event(self):
         # check if the sequence has emotions
@@ -1200,15 +1231,13 @@ class App(customtkinter.CTk):
                 emotion_name = list(self.modules.choreographer.emotion_dict.keys())[emotion_index]
                 # add the emotion to the sequence
                 self.modules.choreographer.sequence_dict[sequence_name].add_emotion(emotion_name)
-                debug(self.modules.choreographer.sequence_dict[sequence_name].emotion_list)
-            else: 
-                # remove the emotion from the sequence
-                self.modules.choreographer.sequence_dict[sequence_name].remove_emotion(emotion_name)
-                
-            # save the sequence dict
-            self.modules.choreographer.save_sequence_dict()
-            self.refresh()
-            
+                # debug(f"emotion added to sequence {sequence_name}")
+                # debug(self.modules.choreographer.sequence_dict[sequence_name].emotion_list)
+                self.modules.choreographer.sequence_dict[sequence_name].save_sequence()
+                self.refresh()
+            # display all sequences emotion lists
+            # for i in range(len(self.sequences_list)):
+            #     debug(f"{self.modules.choreographer.sequence_dict[self.sequences_list[i]]} : {self.modules.choreographer.sequence_dict[self.sequences_list[i]].emotion_list}")
 
     def editor_display_create_rand_chor_layout(self):
         # create rand chor frame

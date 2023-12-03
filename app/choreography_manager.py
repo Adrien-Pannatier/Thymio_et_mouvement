@@ -284,6 +284,7 @@ class ChoreographyManager:
                 creation_date = data['creation_date']
                 description = data['description']
                 sequence_l = data['sequence_order']
+                emotion_list = data['emotion_list']
 
             except:
                 error(f"sequence [bold white]{name}[/] is corrupted")
@@ -292,7 +293,7 @@ class ChoreographyManager:
 
             # if name not in self.sequence_dict:
             if sucess:
-                self.sequence_dict[name] = Sequence(name, creation_date, path, description=description, sequence_l=sequence_l)
+                self.sequence_dict[name] = Sequence(name, creation_date, path, description=description, sequence_l=sequence_l, emotion_list=emotion_list)
     
     def save_sequence_dict(self, path=None):
         """
@@ -307,6 +308,7 @@ class ChoreographyManager:
             data_to_save['description'] = sequence.description
             data_to_save['sequence_order'] = sequence.sequence_l
             data_to_save['emotion_list'] = sequence.emotion_list
+            debug(f"data to save: {data_to_save}")
             if not os.path.isfile(path + sequence.name + ".json"):
                 with open(path + sequence.name + ".json", "w") as file:
                     json.dump(data_to_save, file, indent=4)
@@ -495,22 +497,31 @@ class Sequence:
         """
         Adds an emotion to the sequence
         """
-        # check if the emotion exists
-        if emotion in self.emotion_list:
-            debug(f"emotion already in")
-            return False
         # check if the emotion is already in the sequence
         if emotion in self.emotion_list:
             return False
+        # remove emotions from the sequence
+        self.remove_emotions()
         # add the emotion to the sequence
-        self.emotion_list.append(emotion)
+        self.emotion_list = [emotion]
+        # debug(f"emotion {emotion} added to sequence {self.name}")
 
-    def remove_emotion(self, emotion):
+    def remove_emotions(self):
         """
         Removes an emotion from the sequence
         """
-        # check if the emotion exists
-        if emotion not in self.emotion_list:
-            return False
-        # remove the emotion from the sequence
-        self.emotion_list.remove(emotion)
+        self.emotion_list = []
+
+    def save_sequence(self):
+        """
+        Saves the sequence
+        """
+        data_to_save = {}
+        data_to_save['name'] = self.name
+        data_to_save['creation_date'] = self.creation_date
+        data_to_save['description'] = self.description
+        data_to_save['sequence_order'] = self.sequence_l
+        data_to_save['emotion_list'] = self.emotion_list
+        with open(self.path, "w") as file:
+            json.dump(data_to_save, file, indent=4)
+        debug(f"sequence saved at {self.path}")

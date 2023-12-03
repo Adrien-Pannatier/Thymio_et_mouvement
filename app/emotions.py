@@ -1,5 +1,6 @@
 from tdmclient import aw
 import threading
+import time
 
 class Emotion:
     def __init__(self, name, color, sensors, reactions, node):
@@ -21,26 +22,32 @@ class Emotion:
     def emotion_loop(self):
         while True:
             # Wait for sensor information
-            self.sensors_values = aw(self.node.wait_for_variables(self.sensors))
+            # self.sensors_values = aw(self.node.wait_for_variables({self.sensors}))
+            aw(self.node.wait_for_variables())
+            for i in range(10):
+                print(list(self.node['prox.horizontal']))
+                time.sleep(1)
             # React to sensor information
-            self.react()
+            # self.react()
 
     def react(self):
+        # print("Reacting to sensor information")
         pass
 
     def get_emotion_status(self):
         return self.emotion_status
+    
+    def get_emotion_sensors(self):
+        return self.sensors_values
 
 class Fear(Emotion):
     def __init__(self, node, fear_level):
-        super().__init__(node=node)
-        self.name = "Fear"
-        self.color = "blue"
-        self.sensors = ["prox.horizontal"]
-        self.reactions = ["motor.left.target", "motor.right.target"]
+        super().__init__(name="Fear", color="blue", sensors="prox.horizontal", reactions=["motor.left.target", "motor.right.target"], node=node)
         self.fear_level = fear_level
 
-    def react(self):
+    # def react(self):
+        # print(f"getting info from {self.sensors}")
+        # print(self.sensors_values)
         # when sensors triggered -> flee from the source
         # sensors weights
         w_l = [40,  20, -20, -20, -40,  30, -10, 8, 0]
@@ -75,11 +82,7 @@ class Fear(Emotion):
 
 class Curiosity(Emotion):
     def __init__(self, node, curiosity_level):
-        super().__init__(node=node)
-        self.name = "Curiosity"
-        self.color = "yellow"
-        self.sensors = ["prox.horizontal"]
-        self.reactions = ["motor.left.target", "motor.right.target"]
+        super().__init__(name="Curiosity", color="yellow", sensors=["prox.horizontal"], reactions=["motor.left.target", "motor.right.target"], node=node)
         self.curiosity_level = curiosity_level
 
     def react(self):
