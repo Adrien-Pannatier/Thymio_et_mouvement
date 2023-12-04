@@ -308,7 +308,7 @@ class ChoreographyManager:
             data_to_save['description'] = sequence.description
             data_to_save['sequence_order'] = sequence.sequence_l
             data_to_save['emotion_list'] = sequence.emotion_list
-            debug(f"data to save: {data_to_save}")
+            # debug(f"data to save: {data_to_save}")
             if not os.path.isfile(path + sequence.name + ".json"):
                 with open(path + sequence.name + ".json", "w") as file:
                     json.dump(data_to_save, file, indent=4)
@@ -453,6 +453,33 @@ class Choreography:
         array = np.asarray(array)
         return (np.abs(array - value)).argmin()
     
+    def rename(self, new_name):
+        """
+        Renames the choreography
+        """
+        # delete the old choreography
+        os.remove(self.path)
+        # save the choreography
+        self.path = self.path[:-len(self.name)-5] + new_name + ".json"
+        self.name = new_name
+        # debug(f"choreography renamed to {self.name}")
+        # debug(f"path changed to {self.path}")
+        self.save_choreography()
+
+    def save_choreography(self):
+        """
+        Saves the choreography
+        """
+        data_to_save = {}
+        data_to_save['name'] = self.name
+        data_to_save['creation_date'] = self.creation_date
+        data_to_save['last_modified'] = (str(datetime.now()))[:-7]
+        data_to_save['description'] = self.description
+        data_to_save['choreography'] = [{'time': float(item[0]), 'timestep': float(item[1]), 'left_wheel_speed': float(item[2]), 'right_wheel_speed': float(item[3])} for item in self.step_list]
+        with open(self.path, "w") as file:
+            # if not os.path.isfile(path + choreography.name + ".json"):
+            json.dump(data_to_save, file, indent=4)
+    
 class Sequence:
     """
     Class containing the sequence
@@ -512,6 +539,19 @@ class Sequence:
         """
         self.emotion_list = []
 
+    def rename(self, new_name):
+        """
+        Renames the sequence
+        """
+        # delete the old sequence
+        os.remove(self.path)
+        self.path = self.path[:-len(self.name)-5] + new_name + ".json"
+        self.name = new_name
+        # debug(f"sequence renamed to {self.name}")
+        # debug(f"path changed to {self.path}")
+        # save the sequence
+        self.save_sequence()
+
     def save_sequence(self):
         """
         Saves the sequence
@@ -524,4 +564,4 @@ class Sequence:
         data_to_save['emotion_list'] = self.emotion_list
         with open(self.path, "w") as file:
             json.dump(data_to_save, file, indent=4)
-        debug(f"sequence saved at {self.path}")
+        # debug(f"sequence saved at {self.path}")

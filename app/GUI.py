@@ -720,8 +720,6 @@ class App(customtkinter.CTk):
         self.playthread.start()
 
     def play_threading_progress(self):
-        print("creating thread")
-        # print(self.modules.motion_control.choreography_status)
         # thread for progress bar
         self.progress_thread = Thread(target=self.update_progress, daemon=True)
         self.progress_thread.start()
@@ -755,12 +753,12 @@ class App(customtkinter.CTk):
                     self.modules.motion_control.play_choreography(choreography, int(speed_factor), "loop")
                     self.modules.motion_control.choreography_status = "stop"
                     self.modules.motion_control.stop_motors()
-                    print("choreography played")
+                    info("choreography played")
                 elif loop_status == False:
                     # get nbr repetition
                     nbr_repetition = self.play_nbr_repetition_entry.get()
                     self.modules.motion_control.play_choreography(choreography, int(speed_factor), "mult", int(nbr_repetition))
-                    print("choreography played")
+                    info("choreography played")
                     self.modules.motion_control.choreography_status = "stop"
                     self.modules.motion_control.stop_motors()
             elif play_mode == "Sequence":
@@ -787,7 +785,7 @@ class App(customtkinter.CTk):
                         choreography_name = self.choreographies_list[choreography_index-1]
                         # get the choreography
                         choreography = self.modules.choreographer.choreography_dict[choreography_name]
-                        print(f"now playing {choreography_name}")
+                        info(f"now playing {choreography_name}")
                         self.modules.motion_control.choreography_status = "play"
                         self.modules.motion_control.play_choreography(choreography, int(speed_factor), "mult", int(nbr_repetition), emotion)
                         if self.modules.motion_control.choreography_status == "stop":
@@ -803,7 +801,6 @@ class App(customtkinter.CTk):
                 self.modules.motion_control.stop_motors()
 
         elif play_status == "pause":
-            print("pause to play")
             # set the play_status to play
             self.modules.motion_control.choreography_status = "play"
             self.play_threading_progress()
@@ -1223,10 +1220,8 @@ class App(customtkinter.CTk):
             if emotion_list[i] in list(self.modules.choreographer.emotion_dict.keys()):
                 self.editor_set_emotions_emotions_radiob_act[list(self.modules.choreographer.emotion_dict.keys()).index(emotion_list[i])].select()
                 self.editor_set_emotions_emotions_select_event_act()
-        # print("sequence selected")
 
     def editor_set_emotions_emotions_select_event_act(self):
-        print("emotion selected")
         # get the sequence selected
         index = self.editor_set_emotions_sequence_radio_var.get()
         if index != -1:    
@@ -1365,7 +1360,7 @@ class App(customtkinter.CTk):
         # add labels on the right of title
         # add frame
         self.editor_manage_info_frame = customtkinter.CTkFrame(self.editor_frame, fg_color=(LIGHT_COLOR, DARK_COLOR))
-        self.editor_manage_info_frame.place(relx=0.66, rely=0, relwidth=0.25, relheight=0.09)
+        self.editor_manage_info_frame.place(relx=0.66, rely=0, relwidth=0.25, relheight=0.08)
         # add label inside
         self.editor_manage_info_label_rs = customtkinter.CTkLabel(self.editor_manage_info_frame, text="right motor speed", anchor="w", font=customtkinter.CTkFont(size=12))
         self.editor_manage_info_label_rs.place(relx=0.05, rely=0.05, relwidth=0.98, relheight=0.35)
@@ -1379,7 +1374,7 @@ class App(customtkinter.CTk):
 
         # add buttons frame underneath
         self.editor_manage_buttons_frame = customtkinter.CTkFrame(self.editor_frame, fg_color=(DEFAULT_LIGHT, DEFAULT_DARK))
-        self.editor_manage_buttons_frame.place(relx=0.4, rely=0.13, relwidth=0.55, relheight=0.1)
+        self.editor_manage_buttons_frame.place(relx=0.4, rely=0.08, relwidth=0.55, relheight=0.1)
         # add delete button and trim button inside
         self.editor_manage_delete_button = customtkinter.CTkButton(self.editor_manage_buttons_frame, text="🗑", command=self.editor_manage_delete_event)
         self.editor_manage_delete_button.place(relx=0.01, rely=0.5, relwidth=0.15, relheight=0.7, anchor="w")
@@ -1388,6 +1383,15 @@ class App(customtkinter.CTk):
         # add save as new choreography checkbox
         self.editor_manage_save_checkbox = customtkinter.CTkCheckBox(self.editor_manage_buttons_frame, text="Save as new choreography")
         self.editor_manage_save_checkbox.place(relx=0.4, rely=0.5, relwidth=0.5, relheight=0.7, anchor="w")
+        # add second button frame underneath
+        self.editor_manage_buttons_frame_2 = customtkinter.CTkFrame(self.editor_frame, fg_color=(DEFAULT_LIGHT, DEFAULT_DARK))
+        self.editor_manage_buttons_frame_2.place(relx=0.4, rely=0.18, relwidth=0.55, relheight=0.07)
+        # add a rename button underneath
+        self.editor_manage_rename_button = customtkinter.CTkButton(self.editor_manage_buttons_frame_2, text="✎", command=self.editor_manage_rename_event)
+        self.editor_manage_rename_button.place(relx=0.01, rely=0.5, relwidth=0.15, relheight=1, anchor="w")
+        # add a copy button on the right
+        self.editor_manage_copy_button = customtkinter.CTkButton(self.editor_manage_buttons_frame_2, text="📋", command=self.editor_manage_copy_event)
+        self.editor_manage_copy_button.place(relx=0.2, rely=0.5, relwidth=0.15, relheight=1, anchor="w")
 
         # add graph display underneath
         self.editor_manage_graph_frame = customtkinter.CTkFrame(self.editor_frame, fg_color=(DEFAULT_LIGHT, DEFAULT_DARK))
@@ -1461,6 +1465,66 @@ class App(customtkinter.CTk):
     def editor_manage_deselect_button(self):
         # deselect the radiobutton
         self.editor_manage_radio_var.set(-1)
+
+    def editor_manage_rename_event(self):
+        # get if choreography or sequence
+        option = self.editor_manage_optionemenu.get()
+        if option == "Sequence":
+            # ask for a new sequence name
+            while True:
+                new_name = tkinter.simpledialog.askstring("Rename sequence", "Please enter a name for the new sequence")
+                # check if name is valid
+                if new_name == None:
+                    return
+                elif new_name == "":
+                    tkinter.messagebox.showwarning("Warning", "Please enter a name")
+                elif new_name.isdigit():
+                    tkinter.messagebox.showwarning("Warning", "Please enter a valid name")
+                elif new_name in self.sequences_list:
+                    tkinter.messagebox.showwarning("Warning", "This name already exists")
+                else:
+                    break
+            # get the sequence name
+            index = self.editor_manage_radio_var.get()
+            sequence_name = self.sequences_list[index]
+            # rename the sequence
+            self.modules.choreographer.sequence_dict[sequence_name].rename(new_name)
+            # also change the name in the sequence list
+            self.sequences_list[index] = new_name
+            # load again the sequence dict
+            self.modules.choreographer.load_sequence_dict()
+            # refresh the sequence list
+            self.editor_manage_refresh_seq_list()
+        elif option == "Choreography":
+            # ask for a new choreography name
+            while True:
+                new_name = tkinter.simpledialog.askstring("Rename choreography", "Please enter a name for the new choreography")
+                # check if name is valid
+                if new_name == None:
+                    return
+                elif new_name == "":
+                    tkinter.messagebox.showwarning("Warning", "Please enter a name")
+                elif new_name.isdigit():
+                    tkinter.messagebox.showwarning("Warning", "Please enter a valid name")
+                elif new_name in self.choreographies_list:
+                    tkinter.messagebox.showwarning("Warning", "This name already exists")
+                else:
+                    break
+            # get the choreography name
+            index = self.editor_manage_radio_var.get()
+            choreography_name = self.choreographies_list[index]
+            # rename the choreography
+            self.modules.choreographer.choreography_dict[choreography_name].rename(new_name)
+            # also change the name in the choreography list
+            self.choreographies_list[index] = new_name
+            # load again the choreography dict
+            self.modules.choreographer.load_choreography_dict()
+            # refresh the choreography list
+            self.editor_manage_refresh_chor_list()
+        self.refresh()
+
+    def editor_manage_copy_event(self):
+        pass
 
     def editor_manage_trim_event(self):
         # check the optionemenu
