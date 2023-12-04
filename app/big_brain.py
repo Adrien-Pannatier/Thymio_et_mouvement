@@ -20,13 +20,12 @@ class Modules:
 class Gui:
     def __init__(self, modules):
         self.app = App(modules=modules)
-        self.app.mainloop()    
+        self.app.mainloop()
+        modules.choreographer.save_settings()
         ui("Goodbye!")
-        
 
 class BigBrain:
     def __init__(self):
-        self.wanted_mode = "First time"
 
         # record script choices
         self.r_asw = None
@@ -39,7 +38,6 @@ class BigBrain:
 
         modules = self.init_modules()
         ui("Welcome!")
-        time.sleep(0.5) # USER EXPERIENCE
         self.loop(modules)
 
 
@@ -51,9 +49,12 @@ class BigBrain:
             with open(SETTINGS_PATH, "r") as file:
                 pass
         except FileNotFoundError:
+            # if directory not found, create it
+            if not os.path.exists(SETTINGS_DIR):
+                os.makedirs(SETTINGS_DIR)
+            # if file not found, create it
             with open(SETTINGS_PATH, "w") as file:
                 json.dump({}, file)
-
         self.stop_requested = False
 
     def init_modules(self):

@@ -80,7 +80,7 @@ class App(customtkinter.CTk):
         # self.scaling_optionemenu.grid(row=8, column=0, padx=20, pady=(10, 20))
 
         # create main tabview
-        self.tabview = customtkinter.CTkTabview(self, width=250)
+        self.tabview = customtkinter.CTkTabview(self, width=250, command=self.tabview_change_event)
         self.tabview.grid(row=0, column=1, padx=(20, 20), pady=(20, 20), sticky="nsew")
         self.tabview.add("Play")
         self.tabview.add("Record")
@@ -246,7 +246,6 @@ class App(customtkinter.CTk):
                                         + " be sure to connect to it first.\n")
 
 
-        self.debug_on = False # boolean for debug status
         
         # EDIT TAB CREATION ================================================================================================
         # add option menu mode between Manager and Create sequence
@@ -277,20 +276,33 @@ class App(customtkinter.CTk):
         self.chor_radio_var.set(-1)
         self.seq_radio_var.set(-1)
         # deselect all optionmenu
-        
 
-
-
-
-
-
-
-
-
-
-
-
-
+    def tabview_change_event(self):
+        # get the new tab
+        new_tab = self.tabview.get()
+        # check if the new tab is the edit tab
+        if new_tab == "Edit":
+            # check the mode
+            if self.editor_optionemenu.get() == "Manage":
+                # refresh the list
+                self.refresh_choreographies_list()
+                self.refresh_sequences_list()
+            elif self.editor_optionemenu.get() == "Create Sequence":
+                # refresh the list
+                self.play_refresh_chor_list()
+            elif self.editor_optionemenu.get() == "Create rand chor":
+                # refresh the list
+                self.play_refresh_seq_list()
+        elif new_tab == "Info":
+            # refresh the list
+            self.refresh_choreographies_list()
+            self.refresh_sequences_list()
+        elif new_tab == "Play":
+            # refresh the list
+            self.play_refresh_chor_list()
+        elif new_tab == "Record":
+            # refresh the list
+            pass
 
     def settings_event(self):
         self.settings_window = ToplevelWindow(self)  # create window if its None or destroyed
@@ -392,25 +404,8 @@ class App(customtkinter.CTk):
         # debug(f"Key pressed: {event.keysym}")
         # if the key pressed is Enter
         if event.keysym == "Return":
-            # check the tab
-            if self.tabview.tab("Record").winfo_ismapped():
-                # if calibration is running
-                if self.modules.process_controler_data.calibration_on:
-                    # stop calibration
-                    self.modules.process_controler_data.calibration_on = False
-                    # wait 2 seconds
-                    time.sleep(2)
-                    # show the calibration parameter
-                    self.record_info_textbox.insert("end", f"\nOffset : {self.calibration_offset}")
-                    # start the calibration thread
-                    self.record_info_textbox.configure(state="disabled")
-                    # unblock connection slider
-                    self.record_server_switch.configure(state="normal")
-                    # save the calibration
-                elif self.debug_on:
-                    # stop debug
-                    self.debug_on = False
         # delete mode
+            pass
         if event.keysym == "Delete":
             # check the tab
             if self.tabview.tab("Edit").winfo_ismapped():
@@ -897,11 +892,11 @@ class App(customtkinter.CTk):
         # add record and stop buttons inside
         self.record_record_button = customtkinter.CTkButton(self.record_record_frame, text="◉", command=self.record_event)
         self.record_record_button.place(relx=0.01, rely=0.5, relwidth=0.15, relheight=0.7, anchor="w")
-        self.record_stop_button = customtkinter.CTkButton(self.record_record_frame, text="■", command=self.stop_event_record)
-        self.record_stop_button.place(relx=0.2, rely=0.5, relwidth=0.15, relheight=0.7, anchor="w")
+        # self.record_stop_button = customtkinter.CTkButton(self.record_record_frame, text="■", command=self.stop_event_record)
+        # self.record_stop_button.place(relx=0.2, rely=0.5, relwidth=0.15, relheight=0.7, anchor="w")
         # add debug button inside
-        self.record_debug_button = customtkinter.CTkButton(self.record_record_frame, text="Debug", command=self.debug_event)
-        self.record_debug_button.place(relx=0.4, rely=0.5, relwidth=0.15, relheight=0.7, anchor="w")
+        self.record_calibrate_button = customtkinter.CTkButton(self.record_record_frame, text="Calib", command=self.calibrate_event)
+        self.record_calibrate_button.place(relx=0.2, rely=0.5, relwidth=0.15, relheight=0.7, anchor="w")
 
         # add info box in the middle
         self.record_info_frame = customtkinter.CTkFrame(self.tabview.tab("Record"))
@@ -914,8 +909,8 @@ class App(customtkinter.CTk):
         self.record_info_textbox.place(relx=0.01, rely=0.15, relwidth=0.98, relheight=0.78)
 
         # add calbration button next to title, on the right
-        self.record_calibration_button = customtkinter.CTkButton(self.tabview.tab("Record"), text="Calibrate", command=self.calibrate_event)
-        self.record_calibration_button.place(relx=0.65, rely=0.02, relwidth=0.1, relheight=0.05)
+        # self.record_calibration_button = customtkinter.CTkButton(self.tabview.tab("Record"), text="Calibrate", command=self.calibrate_event)
+        # self.record_calibration_button.place(relx=0.65, rely=0.02, relwidth=0.1, relheight=0.05)
 
     def remove_record_layout(self):
         # remove all widgets
@@ -967,9 +962,15 @@ class App(customtkinter.CTk):
         self.calibration_offset = self.modules.process_controler_data.calibration()
         # save the calibration offset
         self.modules.process_controler_data.save_calibration(self.calibration_offset)
+        time.sleep(2)
+        # show the calibration parameter
+        self.record_info_textbox.insert("end", f"\nOffset : {self.calibration_offset}")
+        # start the calibration thread
+        self.record_info_textbox.configure(state="disabled")
+        # unblock connection slider
+        self.record_server_switch.configure(state="normal")
 
     def record_event(self):
-        self.record_on = True
         # get name entry
         name = self.record_name_entry.get()
         if name == "":
@@ -1007,30 +1008,26 @@ class App(customtkinter.CTk):
         debug("recording")
         # create recording thread
         self.record_threading()        
+
+        debug("recording thread created")
             
     def record_threading(self):
         # thread for recording
         self.recordthread = Thread(target=self.record, daemon=True)
         self.recordthread.start()
+        # thread for blinking
+        self.blinkthread = Thread(target=self.record_blink, daemon=True)
+        self.blinkthread.start()
 
     def record(self):
         choreography_steps_unprocessed = []
         choreography_steps_processed = []
-        ct = 0
-        # display the counter
-        while self.record_on:
-            t, dt, gx, gy, gz, x_offset, y_offset = self.modules.process_controler_data.record_step()
-            choreography_steps_unprocessed.append([t, dt, gx, gy, gz, x_offset, y_offset])
-            # debug(f"step {ct}: {choreography_steps_unprocessed[ct]}")
-            # wait 0.1 second
-            time.sleep(0.1)
-            ct = ct + 1
-        debug("recording stopped")
-        # send stop to the robot
-        self.modules.process_controler_data.send_stop()
+        self.record_on = True
+        choreography_steps_unprocessed = self.modules.process_controler_data.record()
+        debug("recording over")
+        self.record_on = False
         # display end of communication
         self.record_info_textbox.insert("end", "\nEnd of communication")
-        debug("buffer emptied")
         # process the data
         choreography_steps_processed = self.modules.process_controler_data.process_data_array(choreography_steps_unprocessed, self.calibration_offset)
 
@@ -1045,79 +1042,89 @@ class App(customtkinter.CTk):
         self.modules.choreographer.create_choreography(self.recorded_chor_name, creation_date, last_modified, choreography_steps_processed, self.recorded_chor_description)
 
         # refreshes the list
-        self.refresh()
+        # self.refresh()
 
-    def stop_event_record(self):
-        self.record_on = False
-        debug("recording button stop")
+    def record_blink(self):
+        time.sleep(3)
+        while self.record_on:
+            self.record_record_button.configure(text="◉")
+            time.sleep(1)
+            self.record_record_button.configure(text="◎")
+            time.sleep(1)
+        self.record_record_button.configure(text="◉")
+        
+    # def stop_event_record(self):
+    #     self.record_on = False
+    #     debug("recording button stop")
 
-    def debug_event(self):
-        if self.debug_on == False:
-            self.debug_on = True
-            # load the calibration
-            self.calibration_offset = self.modules.process_controler_data.load_calibration()
-            if self.calibration_offset == None:
-                tkinter.messagebox.showwarning("Warning", "Please calibrate the robot first")
-                return
-            else:
-                # print(f"calibration offset: {self.calibration_offset}")
-                # block connection slider
-                self.record_server_switch.configure(state="disabled")
-            # start the debug thread
-            self.debug_threading()
+    # def debug_event(self):
+    #     pass
+        # if self.debug_on == False:
+        #     self.debug_on = True
+        #     # load the calibration
+        #     self.calibration_offset = self.modules.process_controler_data.load_calibration()
+        #     if self.calibration_offset == None:
+        #         tkinter.messagebox.showwarning("Warning", "Please calibrate the robot first")
+        #         return
+        #     else:
+        #         # print(f"calibration offset: {self.calibration_offset}")
+        #         # block connection slider
+        #         self.record_server_switch.configure(state="disabled")
+        #     # start the debug thread
+        #     self.debug_threading()
 
-    def debug_threading(self):
-        # thread for debug
-        self.debugthread = Thread(target=self.debug, daemon=True)
-        self.debugthread.start()
+    # def debug_threading(self):
+    #     # thread for debug
+    #     self.debugthread = Thread(target=self.debug, daemon=True)
+    #     self.debugthread.start()
 
-    def debug(self):
-        counter = 0
-        x_position = 0
-        y_position = 0
-        # start the debug
-        self.modules.process_controler_data.debug_start()
-        # display the counter
-        self.record_info_textbox.insert("end", f"\n Debuging started")
+    # def debug(self):
+    #     counter = 0
+    #     x_position = 0
+    #     y_position = 0
+    #     # start the debug
+    #     self.modules.process_controler_data.debug_start()
+    #     # display the counter
+    #     self.record_info_textbox.insert("end", f"\n Debuging started")
 
-        # while counter <= 100:
-        while self.debug_on:
-            x_offset, y_offset = self.modules.process_controler_data.debug_step()
-            if x_offset and y_offset is not None:
-                self.record_info_textbox.configure(state="normal")
-                self.record_info_textbox.delete("1.0", "end")
-                self.record_info_textbox.insert("1.0", "Debugging...\nPress enter to stop")
+    #     # while counter <= 100:
+    #     while self.debug_on:
+    #         x_offset, y_offset = self.modules.process_controler_data.debug_step()
+    #         if x_offset and y_offset is not None:
+    #             self.record_info_textbox.configure(state="normal")
+    #             self.record_info_textbox.delete("1.0", "end")
+    #             self.record_info_textbox.insert("1.0", "Debugging...\nPress enter to stop")
 
-                # display the counter
-                self.record_info_textbox.insert("end", f"\nCounter : {counter}")
-                # transform into cm
-                x_offset = x_offset / self.calibration_offset
-                y_offset = y_offset / self.calibration_offset 
-                # print(f"x offset in cm: {x_offset}")
-                # display in the info box
-                # self.record_info_textbox.insert("end", f"\nOffset : {x_offset}")
+    #             # display the counter
+    #             self.record_info_textbox.insert("end", f"\nCounter : {counter}")
+    #             # transform into cm
+    #             x_offset = x_offset / self.calibration_offset
+    #             y_offset = y_offset / self.calibration_offset 
+    #             # print(f"x offset in cm: {x_offset}")
+    #             # display in the info box
+    #             # self.record_info_textbox.insert("end", f"\nOffset : {x_offset}")
 
-                # add to x position
-                x_position = np.round(x_position + x_offset,2)
-                y_position = np.round(y_position + y_offset,2)
-                # print(f"x position: {x_position}")  
-                # display in the info box
-                self.record_info_textbox.insert("end", f"\nX Position : {x_position}")
-                self.record_info_textbox.insert("end", f"\nY Position : {y_position}")
-                counter += 1
-                # wait 0.1 second
-                time.sleep(0.1)
-                self.record_info_textbox.configure(state="disabled")
+    #             # add to x position
+    #             x_position = np.round(x_position + x_offset,2)
+    #             y_position = np.round(y_position + y_offset,2)
+    #             # print(f"x position: {x_position}")  
+    #             # display in the info box
+    #             self.record_info_textbox.insert("end", f"\nX Position : {x_position}")
+    #             self.record_info_textbox.insert("end", f"\nY Position : {y_position}")
+    #             counter += 1
+    #             # wait 0.1 second
+    #             time.sleep(0.1)
+    #             self.record_info_textbox.configure(state="disabled")
 
-        # display end of communication
-        self.record_info_textbox.configure(state="normal")
-        self.record_info_textbox.delete("1.0", "end")
-        self.record_info_textbox.insert("1.0", "\nDebugging ended")
-        self.record_info_textbox.configure(state="disabled")
+    #     # display end of communication
+    #     self.record_info_textbox.configure(state="normal")
+    #     self.record_info_textbox.delete("1.0", "end")
+    #     self.record_info_textbox.insert("1.0", "\nDebugging ended")
+    #     self.record_info_textbox.configure(state="disabled")
         
 
-        # stop the debug
-        self.modules.process_controler_data.debug_stop()
+    #     # stop the debug
+    #     self.modules.process_controler_data.debug_stop()
 
 
         
