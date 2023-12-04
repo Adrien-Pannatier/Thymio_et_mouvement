@@ -344,13 +344,13 @@ class ChoreographyManager:
         self.sequence_dict = {}
 
     # emotions
-    def load_emotions(self, node):
+    def load_emotions(self, node, client):
         """
         Loads the emotions
         """        
         # add emotions
-        fear = Fear(node=node, fear_level=1)
-        curiosity = Curiosity(node=node, curiosity_level=1)
+        fear = Fear(node=node, client=client, fear_level=1)
+        curiosity = Curiosity(node=node, client=client, curiosity_level=1)
 
         self.emotion_dict['fear'] = fear
         self.emotion_dict['curiosity'] = curiosity

@@ -9,28 +9,29 @@ class MotionControl():
 
     def __init__(self):
         self.node = None
+        self.client = None
         self.choreography_status = "stop" # start, pause, stop
         self.completion_percentage = 0
 
     def init_thymio_connection(self):
-        status = console.status("Connecting to Thymio driver", spinner_style="cyan")
+        # status = console.status("Connecting to Thymio driver", spinner_style="cyan")
         
-        status.start()
+        # status.start()
 
         try:
-            client = ClientAsync()
-            status.update("Waiting for Thymio node")
+            self.client = ClientAsync()
+            # status.update("Waiting for Thymio node")
             
 
-            self.node = aw(client.wait_for_node())
+            self.node = aw(self.client.wait_for_node())
             aw(self.node.lock())
 
-            status.stop()
+            # status.stop()
 
             info("Thymio node connected")
-            debug(f"Node lock on {self.node}")
+            # debug(f"Node lock on {self.node}")
 
-            status = None
+            # status = None
             return True
 
         except ConnectionRefusedError:
@@ -45,9 +46,9 @@ class MotionControl():
             error(f"Unexpected error: {e}")
             return False
 
-        finally:
-            if status is not None:
-                status.stop()
+        # finally:
+        #     if status is not None:
+        #         status.stop()
                 
     def disconnect_thymio(self):
         """Disconnect the Thymio driver"""
@@ -56,7 +57,9 @@ class MotionControl():
             return
         info("Disconnecting Thymio node")
         aw(self.node.stop())
+        aw(self.client.sleep(0.1))
         aw(self.node.unlock())
+        aw(self.client.sleep(0.1))
         self.node = None
         info("Thymio node disconnected")        
     
@@ -115,9 +118,12 @@ class MotionControl():
 
                 # check emotion status
                 if emotion is not None:
-                    debug(emotion.get_emotion_status())
+                    # debug(emotion.get_emotion_status())
+                    # start emotion
+                    emotion.start_emotion()
                     if emotion.get_emotion_status() == True:
-                        debug(emotion.get_emotion_sensors())
+                        # debug(emotion.get_emotion_sensors())
+                        print("emotion detected")
                         self.choreography_status = "pause"
             
                 if self.choreography_status == "pause":
@@ -129,9 +135,13 @@ class MotionControl():
                         if self.choreography_status == "stop":
                             self.completion_percentage = 0
                             info("Choreography stopped")
+                            emotion.stop_emotion() if emotion is not None else None
                             return last_dt
-                        elif self.choreography_status == "play":
+                        elif self.choreography_status == "play" or emotion.get_emotion_status() == False:
                             info("Choreography resumed")
+                            if emotion is not None:
+                                self.choreography_status = "play"
+                                emotion.stop_emotion()
                             break
 
                 elif self.choreography_status == "stop":
@@ -139,6 +149,7 @@ class MotionControl():
                     self.completion_percentage = 0
                     aw(self.node.set_variables(  # apply the control on the wheels
                         {"motor.left.target": [int(0)], "motor.right.target": [int(0)]}))
+                    emotion.stop_emotion() if emotion is not None else None
                     return last_dt
                 
                 aw(self.node.set_variables(  # apply the control on the wheels
@@ -148,7 +159,7 @@ class MotionControl():
                 self.completion_percentage = step[T]/1000/end_time
             # self.choreography_status = "stop"
             self.completion_percentage = 0
-        
+        emotion.stop_emotion() if emotion is not None else None
         return last_dt
         
         

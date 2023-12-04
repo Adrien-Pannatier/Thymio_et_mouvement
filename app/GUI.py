@@ -638,7 +638,7 @@ class App(customtkinter.CTk):
             self.display_play_layout()
             self.refresh_play_info()
             # # load emotions
-            self.modules.choreographer.load_emotions(node=self.modules.motion_control.node)
+            self.modules.choreographer.load_emotions(node=self.modules.motion_control.node, client=self.modules.motion_control.client)
 
 
     def display_play_layout(self):

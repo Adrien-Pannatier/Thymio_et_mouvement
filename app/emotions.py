@@ -3,15 +3,18 @@ import threading
 import time
 
 class Emotion:
-    def __init__(self, name, color, sensors, reactions, node):
+    def __init__(self, name, color, sensors, reactions, node, client):
         self.name = name
         self.color = color
         self.sensors = sensors
         self.reactions = reactions
         self.node = node
+        self.client = client
 
         self.emotion_status = False
         self.sensors_values = None
+
+        self.emotion_on = False
 
         self.start_emotion_thread()
 
@@ -21,18 +24,24 @@ class Emotion:
 
     def emotion_loop(self):
         while True:
-            # Wait for sensor information
-            # self.sensors_values = aw(self.node.wait_for_variables({self.sensors}))
-            aw(self.node.wait_for_variables())
-            for i in range(10):
-                print(list(self.node['prox.horizontal']))
-                time.sleep(1)
-            # React to sensor information
-            # self.react()
+            if self.emotion_on:
+                # Wait for sensor information
+                aw(self.node.wait_for_variables({self.sensors}))
+                aw(self.client.sleep(0.01))
+                self.sensors_values = list(self.node['prox.horizontal'])
+                # React to sensor information
+                self.react()
+            time.sleep(0.1)
 
     def react(self):
         # print("Reacting to sensor information")
         pass
+
+    def start_emotion(self):
+        self.emotion_on = True
+
+    def stop_emotion(self):
+        self.emotion_on = False
 
     def get_emotion_status(self):
         return self.emotion_status
@@ -41,11 +50,11 @@ class Emotion:
         return self.sensors_values
 
 class Fear(Emotion):
-    def __init__(self, node, fear_level):
-        super().__init__(name="Fear", color="blue", sensors="prox.horizontal", reactions=["motor.left.target", "motor.right.target"], node=node)
+    def __init__(self, node, client, fear_level):
+        super().__init__(name="Fear", color="blue", sensors="prox.horizontal", reactions=["motor.left.target", "motor.right.target"], node=node, client=client)
         self.fear_level = fear_level
 
-    # def react(self):
+    def react(self):
         # print(f"getting info from {self.sensors}")
         # print(self.sensors_values)
         # when sensors triggered -> flee from the source
@@ -56,7 +65,7 @@ class Fear(Emotion):
         # Scale factors for sensors and constant factor
         sensor_scale = 200
         
-        if self.sensors_values != None:
+        if self.sensors_values != [0, 0, 0, 0, 0, 0, 0]:
 
             self.emotion_status = True
 
@@ -81,21 +90,21 @@ class Fear(Emotion):
             self.emotion_status = False
 
 class Curiosity(Emotion):
-    def __init__(self, node, curiosity_level):
-        super().__init__(name="Curiosity", color="yellow", sensors=["prox.horizontal"], reactions=["motor.left.target", "motor.right.target"], node=node)
+    def __init__(self, node, client, curiosity_level):
+        super().__init__(name="Curiosity", color="yellow", sensors="prox.horizontal", reactions=["motor.left.target", "motor.right.target"], node=node, client=client)
         self.curiosity_level = curiosity_level
 
     def react(self):
         # when sensors triggered -> get closer to the source
         # sensors weights
-        w_l = -[40,  20, -20, -20, -40,  30, -10, 8, 0]
-        w_r = -[-40, -20, -20,  20,  40, -10, 30, 0, 8]
+        w_l = [-40,  -20, 20, 20, 40,  -30, 10, -8, 0]
+        w_r = [40, 20, 20,  -20,  -40, 10, -30, 0, -8]
 
         
         # Scale factors for sensors and constant factor
         sensor_scale = 200
         
-        if self.sensors_values != None:
+        if self.sensors_values != [0, 0, 0, 0, 0, 0, 0]:
 
             self.emotion_status = True
 
