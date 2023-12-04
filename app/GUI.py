@@ -230,7 +230,8 @@ class App(customtkinter.CTk):
         self.record_server_status_label = customtkinter.CTkLabel(self.record_server_status_frame, text="Server status: Not running", anchor="w")
         self.record_server_status_label.place(relx=0.01, rely=0.5, relwidth=0.98, relheight=0.98, anchor="w")
         # add server slider
-        self.record_server_switch = customtkinter.CTkSwitch(self.record_server_status_frame, text="", command=self.record_server_event)
+        self.record_server_switch_var = tkinter.BooleanVar(value=False)
+        self.record_server_switch = customtkinter.CTkSwitch(self.record_server_status_frame, variable=self.record_server_switch_var,  text="", command=self.record_server_event)
         self.record_server_switch.place(relx=0.99, rely=0.5, relwidth=0.25, relheight=0.98, anchor="e")
 
         # record tooltip
@@ -245,6 +246,7 @@ class App(customtkinter.CTk):
                                         + " choreographies with the Mimyo robot. Please\n"
                                         + " be sure to connect to it first.\n")
 
+        # self.display_record_layout() # for DEBUG PURPOSES ONLY
 
         
         # EDIT TAB CREATION ================================================================================================
@@ -266,6 +268,29 @@ class App(customtkinter.CTk):
         
         # select optionemenu
         self.editor_mode_select_event("Manage")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         # SET DEFAULT VALUES ===============================================================================================
         self.appearance_mode_optionemenu.set("System")
@@ -490,7 +515,7 @@ class App(customtkinter.CTk):
     def refresh_choreographies_list(self):
         # remove all buttons
         for button in self.scrollable_frame_chor:
-            button.destroy()
+            button.destroy() if button is not None else None
         self.scrollable_frame_chor = []
         for i in range(len(self.choreographies_list)):
             newbutton = customtkinter.CTkRadioButton(master=self.chor_radiobutton_frame, variable=self.chor_radio_var, value=i, text=self.choreographies_list[i], command=self.refresh_info_chor)
@@ -550,17 +575,22 @@ class App(customtkinter.CTk):
     def refresh_play_info(self):
         # get the new play mode
         play_mode = self.play_optionemenu.get()
-        # get the selection
-        index = self.play_radio_var.get()
         # get the connection status
         connection_status = self.play_connect_switch.get()
+        # progress bar to 0
+        # self.play_progress_bar.set(0)
         if connection_status == True:
+            # get the selection
+            index = self.play_radio_var.get()
             if play_mode == "Choreography":
                 # deactivate loop checkbox
                 self.play_loop_checkbox.configure(state="normal")
-                name = self.choreographies_list[index]
-                choreography_name, _, _, _, speed_factor, _ = self.modules.choreographer.choreography_dict[name].get_info()
-                self.play_chor_name_label.configure(text=f"Name:\t\t\t\t{choreography_name}")
+                if index != -1:
+                    name = self.choreographies_list[index]
+                    choreography_name, _, _, _, speed_factor, _ = self.modules.choreographer.choreography_dict[name].get_info()
+                    self.play_chor_name_label_across.configure(text=f"{choreography_name}")
+                else:
+                    speed_factor = 1
                 # show the speed factor entry
                 self.play_speed_factor_entry.configure(state="normal")
                 self.play_speed_factor_entry.delete(0, "end")
@@ -571,14 +601,17 @@ class App(customtkinter.CTk):
                 if self.play_loop_checkbox.get() == False:
                     self.play_nbr_repetition_entry.insert(0, "1")
             elif play_mode == "Sequence":
-                name = self.sequences_list[index]
-                sequence_name, _, _, _, _, _ = self.modules.choreographer.sequence_dict[name].get_info()
-                self.play_chor_name_label.configure(text=f"Name:\t\t\t\t{sequence_name}")
+                if index != 0:
+                    name = self.sequences_list[index]
+                    sequence_name, _, _, _, _, _ = self.modules.choreographer.sequence_dict[name].get_info()
+                    self.play_chor_name_label_across.configure(text=f"{sequence_name}") if index != -1 else None
                 # lock the speed factor entry
                 self.play_speed_factor_entry.delete(0, "end")
                 self.play_speed_factor_entry.configure(state="disabled")
                 # change the color of the entry
                 self.play_speed_factor_entry.configure(fg_color = (LIGHT_COLOR,DARK_COLOR))
+                self.play_nbr_repetition_entry.delete(0, "end")
+                self.play_nbr_repetition_entry.insert(0, "1")
                 # deactivate loop checkbox
                 self.play_loop_checkbox.deselect()
                 self.play_loop_checkbox.configure(state="disabled")
@@ -644,6 +677,9 @@ class App(customtkinter.CTk):
         # add choreography name label
         self.play_chor_name_label = customtkinter.CTkLabel(self.play_settings_frame, text="Name:", anchor="w")
         self.play_chor_name_label.place(relx=0.01, rely=0.1, relwidth=0.98, relheight=0.15)
+        # add name label across
+        self.play_chor_name_label_across = customtkinter.CTkLabel(self.play_settings_frame, text="", anchor="e")
+        self.play_chor_name_label_across.place(relx=0.3, rely=0.1, relwidth=0.45, relheight=0.15)
         # add speed factor entry
         self.play_speed_factor_label = customtkinter.CTkLabel(self.play_settings_frame, text="Speed factor:", anchor="w")
         self.play_speed_factor_label.place(relx=0.01, rely=0.3, relwidth=0.98, relheight=0.15)
@@ -674,7 +710,9 @@ class App(customtkinter.CTk):
         self.play_progress_frame.place(relx=0.4, rely=0.65, relwidth=0.55, relheight=0.10)
         # add progress bar inside
         self.play_progress_bar = customtkinter.CTkProgressBar(self.play_progress_frame, orientation="horizontal") # set value between 1 and 0
+        self.play_progress_bar.set(0)
         self.play_progress_bar.place(relx=0.01, rely=0.5, relwidth=0.98, relheight=0.48, anchor="w")
+        # put progress bar to 0
 
     def remove_play_layout(self):
         self.play_settings_frame.destroy() if hasattr(self, "play_settings_frame") else None
@@ -863,9 +901,9 @@ class App(customtkinter.CTk):
     def display_record_connecting_message(self):
         # add text box in the middle
         self.record_connecting_frame = customtkinter.CTkFrame(self.tabview.tab("Record"))
-        self.record_connecting_frame.place(relx=0.7, rely=0.25, relwidth=0.55, relheight=0.65)
+        self.record_connecting_frame.place(relx=0.5, rely=0.25, relwidth=0.55, relheight=0.65)
         # add label inside in the middle
-        self.record_connecting_label = customtkinter.CTkLabel(self.record_connecting_frame, text="Connecting to mimyo...", anchor="w")
+        self.record_connecting_label = customtkinter.CTkLabel(self.record_connecting_frame, text="Connecting to Mymio...", anchor="w")
         self.record_connecting_label.place(relx=0.01, rely=0.01, relwidth=0.98, relheight=0.98)
 
     def connect_threading(self):
@@ -881,6 +919,8 @@ class App(customtkinter.CTk):
         else:
             self.record_server_status_label.configure(text="Server status: Not connected")
             self.remove_record_layout()
+            # if the connection failed, set the switch back to false
+            self.record_server_switch_var.set(False)
 
     def display_record_layout(self):
         # add record frame underneath
@@ -905,6 +945,26 @@ class App(customtkinter.CTk):
         self.record_info_textbox = customtkinter.CTkTextbox(self.record_info_frame, wrap='none', state="disabled")
         self.record_info_textbox.place(relx=0.01, rely=0.15, relwidth=0.98, relheight=0.78)
 
+        # add progress bar frame underneath
+        self.record_progress_frame = customtkinter.CTkFrame(self.tabview.tab("Record"))
+        self.record_progress_frame.place(relx=0.41, rely=0.2, relwidth=0.18, relheight=0.05)
+
+        # add progress bar underneath the buttons
+        self.record_progress_bar = customtkinter.CTkProgressBar(self.record_progress_frame, orientation="horizontal") # set value between 1 and 0
+        self.record_progress_bar.set(0)
+        self.record_progress_bar.place(relx=0.01, rely=0.5, relwidth=0.98, relheight=0.48, anchor="w")
+
+        # add calibration value display frame top right
+        self.record_calibration_frame = customtkinter.CTkFrame(self.tabview.tab("Record"))
+        self.record_calibration_frame.place(relx=0.75, rely=0.2, relwidth=0.1, relheight=0.05)
+        self.record_calibration_label = customtkinter.CTkLabel(self.record_calibration_frame, text="Calibration:", anchor="w")
+        self.record_calibration_label.place(relx=0.01, rely=0.3, relwidth=1, relheight=0.5)
+        loaded_calibration = self.modules.process_controler_data.load_calibration()
+        self.record_calibration_entrybox = customtkinter.CTkEntry(self.tabview.tab("Record"), fg_color=(LIGHT_COLOR, DARK_COLOR))
+        self.record_calibration_entrybox.place(relx=0.855, rely=0.2, relwidth=0.08, relheight=0.05)
+        self.record_calibration_entrybox.insert(0, loaded_calibration)
+        self.record_calibration_entrybox.configure(state="disabled")
+        
         # add calbration button next to title, on the right
         # self.record_calibration_button = customtkinter.CTkButton(self.tabview.tab("Record"), text="Calibrate", command=self.calibrate_event)
         # self.record_calibration_button.place(relx=0.65, rely=0.02, relwidth=0.1, relheight=0.05)
@@ -915,6 +975,7 @@ class App(customtkinter.CTk):
         self.record_connecting_frame.destroy() if hasattr(self, "record_connecting_frame") else None
         self.record_record_frame.destroy() if hasattr(self, "record_record_frame") else None
         self.record_info_frame.destroy() if hasattr(self, "record_info_frame") else None
+        self.record_progress_frame.destroy() if hasattr(self, "record_progress_frame") else None
 
     def calibrate_event(self):
         self.calibration_offset = 0
@@ -926,6 +987,11 @@ class App(customtkinter.CTk):
         loaded_calibration = self.modules.process_controler_data.load_calibration()
 
         if loaded_calibration != None:
+            # display the calibration value
+            self.record_calibration_entrybox.configure(state="normal")
+            self.record_calibration_entrybox.delete(0, "end")
+            self.record_calibration_entrybox.insert(0, str(loaded_calibration))
+            self.record_calibration_entrybox.configure(state="disabled")
             # ask the use if he wants to recalibrate
             answer = tkinter.messagebox.askquestion("Warning", f"A calibration already exists, do you want to recalibrate?\n The previous calibration is {loaded_calibration}")
             if answer == "no":
@@ -982,30 +1048,23 @@ class App(customtkinter.CTk):
             answer = tkinter.messagebox.askquestion("Warning", "This name already exists, do you want to overwrite it?")
             if answer == "no":
                 return
-
         self.recorded_chor_name = name
         description =  self.record_description_textbox.get("1.0", "end")
-
         # delete all /n
         self.recorded_chor_description = description.replace("\n", " ")
-
-        
         # load the calibration
         self.calibration_offset = self.modules.process_controler_data.load_calibration()
         # check if the calibration is done
         if self.calibration_offset == 0:
             tkinter.messagebox.showwarning("Warning", "Please calibrate the robot first")
             return
-        
         # update the message in the info box
         self.record_info_textbox.configure(state="normal")
         self.record_info_textbox.delete("1.0", "end")
         self.record_info_textbox.insert("1.0", "Recording...")
-
         debug("recording")
         # create recording thread
         self.record_threading()        
-
         debug("recording thread created")
             
     def record_threading(self):
@@ -1015,6 +1074,9 @@ class App(customtkinter.CTk):
         # thread for blinking
         self.blinkthread = Thread(target=self.record_blink, daemon=True)
         self.blinkthread.start()
+        # start progression thread
+        self.record_progressthread = Thread(target=self.update_progress_record, daemon=True)
+        self.record_progressthread.start()
 
     def record(self):
         choreography_steps_unprocessed = []
@@ -1039,7 +1101,7 @@ class App(customtkinter.CTk):
         self.modules.choreographer.create_choreography(self.recorded_chor_name, creation_date, last_modified, choreography_steps_processed, self.recorded_chor_description)
 
         # refreshes the list
-        # self.refresh()
+        self.refresh()
 
     def record_blink(self):
         time.sleep(3)
@@ -1049,6 +1111,15 @@ class App(customtkinter.CTk):
             self.record_record_button.configure(text="◎")
             time.sleep(1)
         self.record_record_button.configure(text="◉")
+
+    def update_progress_record(self):
+        # while thymio is connected
+        time_prog = 0
+        while time_prog < RECORDING_DURATION:
+            time.sleep(0.1)
+            time_prog += 0.1
+            self.record_progress_bar.set(time_prog/RECORDING_DURATION)
+        self.record_progress_bar.set(0)
         
     # def stop_event_record(self):
     #     self.record_on = False
@@ -1394,13 +1465,14 @@ class App(customtkinter.CTk):
         self.editor_manage_copy_button.place(relx=0.2, rely=0.5, relwidth=0.15, relheight=1, anchor="w")
 
         # add graph display underneath
+        # self.editor_manage_graph_frame = customtkinter.CTkFrame(self.editor_frame)
         self.editor_manage_graph_frame = customtkinter.CTkFrame(self.editor_frame, fg_color=(DEFAULT_LIGHT, DEFAULT_DARK))
         self.editor_manage_graph_frame.place(relx=0.4, rely=0.25, relwidth=0.55, relheight=0.5)
         # add image inside
         self.editor_manage_graph_image = Image.open("C:\\Users\\adrie\\Desktop\\PDS_Thymio\\001_code\\Python\\Thymio_et_mouvement\\app\\GUI_assets\\j_dark_graph.png")
         self.editor_manage_graph_image = customtkinter.CTkImage(self.editor_manage_graph_image,  size=(300,200))
         self.editor_manage_graph_image_label = customtkinter.CTkLabel(self.editor_manage_graph_frame, image=self.editor_manage_graph_image, text="")
-        self.editor_manage_graph_image_label.place(relx=0.5, rely=0.5, relwidth=0.98, relheight=0.98, anchor="center")
+        self.editor_manage_graph_image_label.place(relx=0.5, rely=0.5, relwidth=1, relheight=1, anchor="center")
 
         # add trim sliders frame underneath
         self.editor_manage_trim_frame = customtkinter.CTkFrame(self.editor_frame, fg_color=(DEFAULT_LIGHT, DEFAULT_DARK))
@@ -1524,7 +1596,43 @@ class App(customtkinter.CTk):
         self.refresh()
 
     def editor_manage_copy_event(self):
-        pass
+        # get if choreography or sequence
+        option = self.editor_manage_optionemenu.get()
+        # get what is selected
+        index = self.editor_manage_radio_var.get()
+        if index < 0:
+            tkinter.messagebox.showwarning("Warning", "Please select something to copy")
+            return
+        if option == "Sequence":
+            # get the sequence name
+            sequence_name = self.sequences_list[index]
+            new_name = sequence_name + "_copy"
+            while True:
+                # check if name is valid
+                debug(new_name)
+                if new_name not in self.sequences_list:
+                    break
+                # add _copy to the name
+                new_name = new_name + "_copy"
+            self.modules.choreographer.copy_sequence(sequence_name, new_name)
+            # refresh the sequence list
+            self.refresh()
+            self.editor_manage_refresh_seq_list()
+        elif option == "Choreography":
+            # get the choreography name
+            choreography_name = self.choreographies_list[index]
+            while True:
+                # add _copy to the name
+                new_name = choreography_name + "_copy"
+                # check if name is valid
+                if new_name not in self.choreographies_list:
+                    break
+            self.modules.choreographer.copy_choreography(choreography_name, new_name)
+
+            # refresh the choreography list
+            self.refresh()
+            self.editor_manage_refresh_chor_list()
+
 
     def editor_manage_trim_event(self):
         # check the optionemenu
@@ -1603,13 +1711,12 @@ class App(customtkinter.CTk):
         self.editor_manage_trim_start_label.place(relx=0.01, rely=0.1, relwidth=0.98, relheight=0.2)
         self.editor_manage_trim_start_slider_var = tkinter.IntVar(value=0)
         self.editor_manage_trim_start_slider = customtkinter.CTkSlider(self.editor_manage_trim_frame, orientation="horizontal", to=last_time, variable=self.editor_manage_trim_start_slider_var, command=self.editor_manage_trim_start_event)
-        self.editor_manage_trim_start_slider.configure()
-        self.editor_manage_trim_start_slider.place(relx=0.01, rely=0.3, relwidth=0.98, relheight=0.2)
+        self.editor_manage_trim_start_slider.place(relx=0.525, rely=0.4, relwidth=0.81, relheight=0.2, anchor="center")
         self.editor_manage_trim_end_label = customtkinter.CTkLabel(self.editor_manage_trim_frame, text="End:", anchor="w")
         self.editor_manage_trim_end_label.place(relx=0.01, rely=0.5, relwidth=0.98, relheight=0.2)
         self.editor_manage_trim_end_slider_var = tkinter.IntVar(value=last_time)
         self.editor_manage_trim_end_slider = customtkinter.CTkSlider(self.editor_manage_trim_frame, orientation="horizontal", to=last_time, variable=self.editor_manage_trim_end_slider_var, command=self.editor_manage_trim_end_event)
-        self.editor_manage_trim_end_slider.place(relx=0.01, rely=0.7, relwidth=0.98, relheight=0.2)
+        self.editor_manage_trim_end_slider.place(relx=0.525, rely=0.8, relwidth=0.83, relheight=0.2, anchor="center")
 
     def editor_manage_trim_start_event(self, value):
         # round value to 2 decimals

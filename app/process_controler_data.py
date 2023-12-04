@@ -1,7 +1,7 @@
 import math
 from typing import Any
 from app.utils.console import *
-from app.config import PIXELS_TO_METERS, GYRO_SCALING, AS_THRESH, DIAMETER, SETTINGS_PATH
+from app.config import PIXELS_TO_METERS, GYRO_SCALING, AS_THRESH, DIAMETER, SETTINGS_PATH, TIMEOUT_CONNECTION
 import numpy as np
 import time
 import socket
@@ -10,10 +10,7 @@ import json
 class ProcessControlerData:
      
     def __init__(self):
-        self.recording_state = False
         self.server_socket = None
-        self.record_length = 5 # seconds
-        self.calibration_on = False
 
     def init_record(self):
         """
@@ -28,6 +25,7 @@ class ProcessControlerData:
             self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.server_socket.bind((host, port))
             self.server_socket.listen(1)
+            self.server_socket.settimeout(TIMEOUT_CONNECTION)
             info(f"Listening on {host}:{port}...")
         
             self.client_socket = 0
@@ -56,6 +54,9 @@ class ProcessControlerData:
             info(f"Accepted connection from {self.client_address}")
             if self.client_socket != 0 and self.client_address != 0:
                 return True
+        except socket.timeout:
+            warning("No connection received")
+            return False
         except Exception as e:
             info(f"connection refused {e}")
             return False

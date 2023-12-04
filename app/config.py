@@ -27,9 +27,11 @@ DEFAULT_PATH_CHOREO = "C:/Users/adrie/Desktop/PDS_Thymio/001_code/Python/Thymio_
 DEFAULT_PATH_SEQUENCE = "C:/Users/adrie/Desktop/PDS_Thymio/001_code/Python/Thymio_et_mouvement/app/sequences/"
 
 # == Process controller data == #
-PIXELS_TO_METERS = 0.01  # replace with actual value
-GYRO_SCALING = 20  # replace with actual value
-AS_THRESH = 0.05  # replace with actual value
+PIXELS_TO_METERS = 0.01  
+GYRO_SCALING = 20 
+AS_THRESH = 0.05  
+TIMEOUT_CONNECTION = 5  # seconds
+RECORDING_DURATION = 10  # seconds
 
 # == ui config == #
 SPC = "           "

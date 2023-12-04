@@ -188,7 +188,7 @@ class ChoreographyManager:
             data_array.append(list(step))
         creation_date = (str(datetime.now()))[:-7]
         last_modified = creation_date
-        description = choreography.description + " (copied)"
+        description = choreography.description + f" (copied from {name})"
         # transforms the ellements in float
         for i in range(len(data_array)):
             data_array[i] = [float(j) for j in data_array[i]]
@@ -258,13 +258,13 @@ class ChoreographyManager:
             json.dump(choreography, f)
 
     # SEQUENCE FUNCTIONS
-    def create_sequence(self, name, creation_date, description, sequence_l=[], path=None):
+    def create_sequence(self, name, creation_date, description, sequence_l=[], path=None, emotion_list=[]):
         """
         Creates a sequence
         """
         if path == None:
             path = self.sequence_path
-        sequence = Sequence(name, creation_date, path, description, sequence_l)
+        sequence = Sequence(name, creation_date, path, description, sequence_l, emotion_list)
         self.sequence_dict[name] = sequence
         self.save_sequence_dict()
 
@@ -312,6 +312,19 @@ class ChoreographyManager:
             if not os.path.isfile(path + sequence.name + ".json"):
                 with open(path + sequence.name + ".json", "w") as file:
                     json.dump(data_to_save, file, indent=4)
+
+    def copy_sequence(self, name, new_name):
+        """
+        Copies a sequence
+        """
+        sequence = self.sequence_dict[name]
+        creation_date = (str(datetime.now()))[:-7]
+        description = sequence.description + f" (copied from {name})"
+        path = self.sequence_path
+        sequence_l = sequence.sequence_l
+        emotion_list = sequence.emotion_list
+        self.create_sequence(new_name, creation_date, description, sequence_l, path, emotion_list)
+        self.save_sequence_dict()
     
     def delete_sequence(self, name):
         """
