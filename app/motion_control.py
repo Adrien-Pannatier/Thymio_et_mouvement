@@ -132,16 +132,19 @@ class MotionControl():
                         {"motor.left.target": [int(0)], "motor.right.target": [int(0)]}))
                     while self.choreography_status == "pause":
                         time.sleep(0.1)
+                        if emotion is not None and not self.pause_by_button:
+                            if emotion.get_emotion_status() == False:
+                                self.choreography_status = "play"
+                                emotion.stop_emotion()
+                                break
                         if self.choreography_status == "stop":
                             self.completion_percentage = 0
                             info("Choreography stopped")
                             emotion.stop_emotion() if emotion is not None else None
                             return last_dt
-                        elif self.choreography_status == "play" or emotion.get_emotion_status() == False:
+                        elif self.choreography_status == "play" and self.pause_by_button == True:
                             info("Choreography resumed")
-                            if emotion is not None:
-                                self.choreography_status = "play"
-                                emotion.stop_emotion()
+                            self.pause_by_button = False
                             break
 
                 elif self.choreography_status == "stop":

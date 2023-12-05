@@ -261,10 +261,10 @@ class App(customtkinter.CTk):
         self.editor_tooltip_label = customtkinter.CTkLabel(self.editor_tooltip_frame, text="❓", anchor="center")
         self.editor_tooltip_label.place(relx=0.5, rely=0.5, relwidth=0.98, relheight=0.48, anchor="w")
         # add tooltip
-        self.editor_tooltip = CTkToolTip(self.editor_tooltip_label, justify="left", message="🤖 This is the edit mode, here you can manage\n"
-                                        + " choreographies and sequences. You can also\n"
-                                        + " create new sequences. Please select what you\n"
-                                        + " want to do on the left.")
+        # self.editor_manage_mode_tooltip_manage_mode = CTkToolTip(self.editor_manage_mode_label, justify="left", message="🤖 This is the manage mode, here you can manage\n"
+        #                                 + " choreographies and sequences. You can select\n"
+        #                                 + " what to manage on the left. You can also delete\n"
+        #                                 + " and trim choreographies and sequences.\n")
         
         # select optionemenu
         self.editor_mode_select_event("Manage")
@@ -515,6 +515,7 @@ class App(customtkinter.CTk):
     def refresh_choreographies_list(self):
         # remove all buttons
         for button in self.scrollable_frame_chor:
+            # if in tab manage
             button.destroy() if button is not None else None
         self.scrollable_frame_chor = []
         for i in range(len(self.choreographies_list)):
@@ -816,7 +817,7 @@ class App(customtkinter.CTk):
                 # create the emotion object
                 emotion = self.modules.choreographer.emotion_dict[emotion_name] if emotion_name != None else None
                 # debug(f"emotion name: {emotion_name}")
-                debug(f"emotion: {emotion}")
+                # debug(f"emotion: {emotion}")
                 for i in range(int(nbr_repetition)):
                     for choreography_index in sequence.sequence_l:
                         # transform the index into a name
@@ -856,6 +857,8 @@ class App(customtkinter.CTk):
     def pause_event(self):
         if self.modules.motion_control.choreography_status == "play":
             self.modules.motion_control.choreography_status = "pause"
+            # debug("pause button pressed")
+            self.modules.motion_control.pause_by_button = True
 
     def stop_event(self):
         self.modules.motion_control.choreography_status = "stop"
@@ -1062,10 +1065,10 @@ class App(customtkinter.CTk):
         self.record_info_textbox.configure(state="normal")
         self.record_info_textbox.delete("1.0", "end")
         self.record_info_textbox.insert("1.0", "Recording...")
-        debug("recording")
+        # debug("recording")
         # create recording thread
         self.record_threading()        
-        debug("recording thread created")
+        # debug("recording thread created")
             
     def record_threading(self):
         # thread for recording
@@ -1083,7 +1086,7 @@ class App(customtkinter.CTk):
         choreography_steps_processed = []
         self.record_on = True
         choreography_steps_unprocessed = self.modules.process_controler_data.record()
-        debug("recording over")
+        # debug("recording over")
         self.record_on = False
         # display end of communication
         self.record_info_textbox.insert("end", "\nEnd of communication")
@@ -1091,7 +1094,7 @@ class App(customtkinter.CTk):
         choreography_steps_processed = self.modules.process_controler_data.process_data_array(choreography_steps_unprocessed, self.calibration_offset)
 
         # display choreography
-        debug(choreography_steps_processed)
+        # debug(choreography_steps_processed)
 
         # get creation date
         creation_date = (str(datetime.now()))[:-7]
@@ -1307,6 +1310,7 @@ class App(customtkinter.CTk):
                 # debug(f"emotion added to sequence {sequence_name}")
                 # debug(self.modules.choreographer.sequence_dict[sequence_name].emotion_list)
                 self.modules.choreographer.sequence_dict[sequence_name].save_sequence()
+                # debug(f"emotion added to sequence {sequence_name}")
                 self.refresh()
             # display all sequences emotion lists
             # for i in range(len(self.sequences_list)):
@@ -1541,6 +1545,11 @@ class App(customtkinter.CTk):
     def editor_manage_rename_event(self):
         # get if choreography or sequence
         option = self.editor_manage_optionemenu.get()
+        # check if something is selected
+        index = self.editor_manage_radio_var.get()
+        if index < 0:
+            tkinter.messagebox.showwarning("Warning", "Please select something to rename")
+            return
         if option == "Sequence":
             # ask for a new sequence name
             while True:
@@ -1557,7 +1566,6 @@ class App(customtkinter.CTk):
                 else:
                     break
             # get the sequence name
-            index = self.editor_manage_radio_var.get()
             sequence_name = self.sequences_list[index]
             # rename the sequence
             self.modules.choreographer.sequence_dict[sequence_name].rename(new_name)
@@ -1609,7 +1617,7 @@ class App(customtkinter.CTk):
             new_name = sequence_name + "_copy"
             while True:
                 # check if name is valid
-                debug(new_name)
+                # debug(new_name)
                 if new_name not in self.sequences_list:
                     break
                 # add _copy to the name
@@ -1765,7 +1773,7 @@ class App(customtkinter.CTk):
         for i in range(len(self.choreographies_list)):
             newbutton = customtkinter.CTkRadioButton(master=self.editor_create_seq_chor_radiobutton_frame, corner_radius=0, state="disabled", radiobutton_width=5, radiobutton_height=5, variable=self.editor_create_seq_chor_radio_var, value=i, text=f"{i+1} - {self.choreographies_list[i]}", command=self.editor_create_seq_refresh_info_chor)
             newbutton.grid(row=i, column=0, padx=10, pady=(0, 10), sticky="w")
-            self.scrollable_frame_chor.append(newbutton)
+            self.editor_create_seq_scrollable_frame_chor.append(newbutton)
         # add "sequence list" frame
         self.editor_create_seq_seq_label = customtkinter.CTkLabel(self.editor_frame, text="Sequences ", anchor="w")
         self.editor_create_seq_seq_label.place(relx=0.01, rely=0.55)
@@ -1776,7 +1784,7 @@ class App(customtkinter.CTk):
         for i in range(len(self.sequences_list)):
             newbutton = customtkinter.CTkRadioButton(master=self.editor_create_seq_seq_radiobutton_frame, corner_radius=0, state="disabled", radiobutton_width=5, radiobutton_height=5, variable=self.editor_create_seq_seq_radio_var, value=i, text=self.sequences_list[i], command=self.editor_create_seq_refresh_info_seq)
             newbutton.grid(row=i, column=0, padx=10, pady=(0, 10), sticky="w")
-            self.scrollable_frame_seq.append(newbutton)
+            self.editor_create_seq_scrollable_frame_seq.append(newbutton)
 
         # add title on the right
         self.editor_create_seq_title_label = customtkinter.CTkLabel(self.editor_frame, text="CREATE SEQUENCE MODE", font=customtkinter.CTkFont(size=20, weight="bold"), anchor="center")
@@ -1804,6 +1812,8 @@ class App(customtkinter.CTk):
         # add sequence order button inside
         self.editor_create_seq_order_button = customtkinter.CTkButton(self.editor_create_seq_order_frame, text="Create Sequence", command=self.editor_create_seq_order_event)
         self.editor_create_seq_order_button.place(relx=0.01, rely=0.5, relwidth=0.98, relheight=0.9, anchor="w")
+
+        # self.refresh()
 
     def editor_create_seq_refresh_info_chor(self):
         # delete buttons
@@ -1876,7 +1886,7 @@ class App(customtkinter.CTk):
 
     def editor_manage_mode_tooltip_update(self):
         # update tooltip
-        self.editor_manage_mode_tooltip.hide()
+        self.editor_hide_all_tooltips()
         self.editor_manage_mode_tooltip_manage_mode = CTkToolTip(self.editor_manage_mode_label, justify="left", message="🤖 This is the manage mode, here you can manage\n"
                                         + " choreographies and sequences. You can select\n"
                                         + " what to manage on the left. You can also delete\n"
@@ -1884,7 +1894,12 @@ class App(customtkinter.CTk):
         
     def editor_create_seq_mode_tooltip_update(self):
         # update tooltip
-        self.editor_create_seq_mode_tooltip.hide()
+        self.editor_hide_all_tooltips()
         self.editor_create_seq_mode_tooltip_create_seq_mode = CTkToolTip(self.editor_create_seq_mode_label, justify="left", message="🤖 This is the create sequence mode, here you can\n"
                                         + " create sequences. You can see the choreographies you\n"
                                         + " can add to the sequence on the left.\n")
+        
+    def editor_hide_all_tooltips(self):
+        self.editor_manage_mode_tooltip.hide()
+        self.editor_manage_mode_tooltip_manage_mode()
+        self.editor_create_seq_mode_tooltip.hide()
