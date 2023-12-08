@@ -25,7 +25,7 @@ class ProcessControlerData:
             self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.server_socket.bind((host, port))
             self.server_socket.listen(1)
-            self.server_socket.settimeout(TIMEOUT_CONNECTION)
+            # self.server_socket.settimeout(TIMEOUT_CONNECTION)
             info(f"Listening on {host}:{port}...")
         
             self.client_socket = 0
@@ -76,7 +76,6 @@ class ProcessControlerData:
         data_array = []
 
         self.client_socket.send("start".encode('utf-8'))
-        info("Calibration started")
 
         # wait for 10 seconds
         time.sleep(10)
@@ -108,10 +107,10 @@ class ProcessControlerData:
                 elif char.startswith("s"):
                     message_status = "start"
             step_str = message[1:-1] # remove the first and last character
-            debug(f"Received message: {step_str}")
+            # debug(f"Received message: {step_str}")
             if step_str != "leave":
                 counter = counter + 1
-                debug(f"counter: {counter}")
+                # debug(f"counter: {counter}")
                 try:
                     step = [float(x) for x in step_str.split(',')]
                     data_array.append(step)
@@ -123,7 +122,7 @@ class ProcessControlerData:
         return data_array
 
     def process_data_array(self, data_array, calibration_const):
-        debug(f"calibration_const: {calibration_const}")
+        # debug(f"calibration_const: {calibration_const}")
         time_offset = data_array[0][0]
         position_x = 0
         position_y = 0
@@ -139,7 +138,7 @@ class ProcessControlerData:
             x_offset = data_array[i][5]
             y_offset = data_array[i][6]
 
-            debug(f"position_y: {position_y}")
+            # debug(f"position_y: {position_y}")
 
             # compute position with offsets
             position_x = position_x + x_offset/calibration_const
@@ -215,10 +214,10 @@ class ProcessControlerData:
                 elif char.startswith("s"):
                     message_status = "start"
             data_str = message[1:-1] # remove the first and last character
-            debug(f"Received message: {data_str}")
+            # debug(f"Received message: {data_str}")
             if data_str != "leave":
                 counter = counter + 1
-                debug(f"counter: {counter}")
+                # debug(f"counter: {counter}")
                 try:
                     data = [float(x) for x in data_str.split(',')]
                 except Exception as e:
@@ -309,7 +308,7 @@ class ProcessControlerData:
             return angular_speed
         
     def send_stop(self):
-        debug("sending stop")
+        # debug("sending stop")
         self.client_socket.send("stop".encode('utf-8'))
         time.sleep(1)
         self.client_socket.send("stop".encode('utf-8'))

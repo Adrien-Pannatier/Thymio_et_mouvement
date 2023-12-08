@@ -26,7 +26,7 @@ class ToplevelWindow(customtkinter.CTkToplevel):
         super().__init__(*args, **kwargs)
         self.geometry("400x300")
 
-        self.label = customtkinter.CTkLabel(self, text="ToplevelWindow")
+        self.label = customtkinter.CTkLabel(self, text="")
         self.label.pack(padx=20, pady=20)
 
 class App(customtkinter.CTk):
@@ -93,7 +93,7 @@ class App(customtkinter.CTk):
 
         # INFO TAB CREATION =================================================================================================
         # add "refresh" button
-        self.refresh_button = customtkinter.CTkButton(self.tabview.tab("Info"), text="⟳", command=self.refresh)
+        self.refresh_button = customtkinter.CTkButton(self.tabview.tab("Info"), text="⟳", command=self.refresh_event)
         self.refresh_button.place(relx=0.01, rely=0.01, relwidth=0.05, relheight=0.05)
 
         # add "choreography list" frame
@@ -450,6 +450,11 @@ class App(customtkinter.CTk):
 
 
     # INFO METHODS --------------------------------------------------------------------------------------------------------
+    def refresh_event(self):
+        self.refresh()
+        self.refresh_choreographies_list()
+        self.refresh_sequences_list()
+
     def refresh(self):
         # empty both lists
         self.choreographies_list = []
@@ -458,10 +463,8 @@ class App(customtkinter.CTk):
         self.modules.choreographer.update_database()
         # refresh choreography list
         self.choreographies_list = list(self.modules.choreographer.choreography_dict.keys())
-        self.refresh_choreographies_list()
         # refresh sequence list
         self.sequences_list = list(self.modules.choreographer.sequence_dict.keys())
-        self.refresh_sequences_list()
 
     def refresh_info_chor(self):
         index = self.chor_radio_var.get()
@@ -730,8 +733,8 @@ class App(customtkinter.CTk):
             tkinter.messagebox.showwarning("Warning", "Please enter a number of repetition")
             return
         # check if a speed factor is entered
-        elif self.play_speed_factor_entry.get() == "" and self.play_optionemenu.get() == "Choreography":
-            tkinter.messagebox.showwarning("Warning", "Please enter a speed factor")
+        elif self.play_speed_factor_entry.get() == "":
+            tkinter.messagebox.showwarning("Warning", "Please enter a speed factor between 0 and 10")
             return
         # check if number of repetition is an int
         try:
@@ -740,13 +743,13 @@ class App(customtkinter.CTk):
         except:
             tkinter.messagebox.showwarning("Warning", "Please enter a number of repetition")
             return
-        # check if speed factor is an int
+        # check if speed factor is a float
         try:
-            # if in choreography mode
-            if self.play_optionemenu.get() == "Choreography":
-                int(self.play_speed_factor_entry.get())
+            speed_fact = float(self.play_speed_factor_entry.get())
+            if speed_fact<=0 or speed_fact>=10:
+                raise 
         except:
-            tkinter.messagebox.showwarning("Warning", "Please enter a valid speed factor")
+            tkinter.messagebox.showwarning("Warning", "Please enter a valid speed factor between 0 and 10")
             return
         
         if self.modules.motion_control.choreography_status != "play":
@@ -789,21 +792,20 @@ class App(customtkinter.CTk):
                 # get loop status
                 loop_status = self.play_loop_checkbox.get()
                 if loop_status == True:
-                    self.modules.motion_control.play_choreography(choreography, int(speed_factor), "loop")
+                    self.modules.motion_control.play_choreography(choreography, float(speed_factor), "loop")
                     self.modules.motion_control.choreography_status = "stop"
                     self.modules.motion_control.stop_motors()
                     info("choreography played")
                 elif loop_status == False:
                     # get nbr repetition
                     nbr_repetition = self.play_nbr_repetition_entry.get()
-                    self.modules.motion_control.play_choreography(choreography, int(speed_factor), "mult", int(nbr_repetition))
+                    self.modules.motion_control.play_choreography(choreography, float(speed_factor), "mult", int(nbr_repetition))
                     info("choreography played")
                     self.modules.motion_control.choreography_status = "stop"
                     self.modules.motion_control.stop_motors()
             elif play_mode == "Sequence":
                 name = self.sequences_list[index]
                 sequence = self.modules.choreographer.sequence_dict[name]
-                speed_factor = "1" # CHANGE THIS LATER °°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
                 # get loop status
                 # loop_status = self.play_loop_checkbox.get() # IMPLEMENT THAT °°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
                 # for every choreography in the sequence
@@ -826,7 +828,7 @@ class App(customtkinter.CTk):
                         choreography = self.modules.choreographer.choreography_dict[choreography_name]
                         info(f"now playing {choreography_name}")
                         self.modules.motion_control.choreography_status = "play"
-                        self.modules.motion_control.play_choreography(choreography, int(speed_factor), "mult", int(nbr_repetition), emotion)
+                        self.modules.motion_control.play_choreography(choreography, float(speed_factor), "mult", int(nbr_repetition), emotion)
                         if self.modules.motion_control.choreography_status == "stop":
                             self.modules.motion_control.stop_motors()
                             # unlock every entry and slider
@@ -948,15 +950,6 @@ class App(customtkinter.CTk):
         self.record_info_textbox = customtkinter.CTkTextbox(self.record_info_frame, wrap='none', state="disabled")
         self.record_info_textbox.place(relx=0.01, rely=0.15, relwidth=0.98, relheight=0.78)
 
-        # add progress bar frame underneath
-        self.record_progress_frame = customtkinter.CTkFrame(self.tabview.tab("Record"))
-        self.record_progress_frame.place(relx=0.41, rely=0.2, relwidth=0.18, relheight=0.05)
-
-        # add progress bar underneath the buttons
-        self.record_progress_bar = customtkinter.CTkProgressBar(self.record_progress_frame, orientation="horizontal") # set value between 1 and 0
-        self.record_progress_bar.set(0)
-        self.record_progress_bar.place(relx=0.01, rely=0.5, relwidth=0.98, relheight=0.48, anchor="w")
-
         # add calibration value display frame top right
         self.record_calibration_frame = customtkinter.CTkFrame(self.tabview.tab("Record"))
         self.record_calibration_frame.place(relx=0.75, rely=0.2, relwidth=0.1, relheight=0.05)
@@ -981,7 +974,7 @@ class App(customtkinter.CTk):
         self.record_progress_frame.destroy() if hasattr(self, "record_progress_frame") else None
 
     def calibrate_event(self):
-        self.calibration_offset = 0
+        self.calibration_offset = self.record_calibration_entrybox.get()
 
         # block connection slider
         self.record_server_switch.configure(state="disabled")
@@ -1012,7 +1005,6 @@ class App(customtkinter.CTk):
 
         # ask to move the robot 20cm forward
         self.record_info_textbox.insert("end", "\nPlease move the robot 20cm forward")
-        self.record_info_textbox.insert("end", "\nPress enter when done")
         # change the calibration status to on
         self.modules.process_controler_data.calibration_on = True
         # activate the thread
@@ -1022,13 +1014,23 @@ class App(customtkinter.CTk):
         # thread for calibration
         self.calibrationthread = Thread(target=self.calibrate, daemon=True)
         self.calibrationthread.start()
+        # start progression thread
+        self.record_progressthread = Thread(target=self.update_progress_record, daemon=True)
+        self.record_progressthread.start()
 
     def calibrate(self):
-        # get the latest raw x position
+        # get the calibration offset
         self.calibration_offset = self.modules.process_controler_data.calibration()
+        last_cal = self.record_calibration_entrybox.get()
         # save the calibration offset
         self.modules.process_controler_data.save_calibration(self.calibration_offset)
         time.sleep(2)
+        # destroy the top level window
+        self.record_progress_window.destroy()
+        answer = tkinter.messagebox.askquestion("Warning", f"New calibration is {self.calibration_offset}, do you want to keep it?")
+        if answer == "no":
+            self.calibration_offset = last_cal
+            self.modules.process_controler_data.save_calibration(self.calibration_offset)
         # show the calibration parameter
         self.record_info_textbox.insert("end", f"\nOffset : {self.calibration_offset}")
         # start the calibration thread
@@ -1074,9 +1076,6 @@ class App(customtkinter.CTk):
         # thread for recording
         self.recordthread = Thread(target=self.record, daemon=True)
         self.recordthread.start()
-        # thread for blinking
-        self.blinkthread = Thread(target=self.record_blink, daemon=True)
-        self.blinkthread.start()
         # start progression thread
         self.record_progressthread = Thread(target=self.update_progress_record, daemon=True)
         self.record_progressthread.start()
@@ -1084,12 +1083,13 @@ class App(customtkinter.CTk):
     def record(self):
         choreography_steps_unprocessed = []
         choreography_steps_processed = []
-        self.record_on = True
+        # self.record_on = True
         choreography_steps_unprocessed = self.modules.process_controler_data.record()
         # debug("recording over")
-        self.record_on = False
+        # self.record_on = False
         # display end of communication
         self.record_info_textbox.insert("end", "\nEnd of communication")
+        self.record_info_textbox.configure(state="disabled")
         # process the data
         choreography_steps_processed = self.modules.process_controler_data.process_data_array(choreography_steps_unprocessed, self.calibration_offset)
 
@@ -1102,27 +1102,59 @@ class App(customtkinter.CTk):
 
         # create the choreography
         self.modules.choreographer.create_choreography(self.recorded_chor_name, creation_date, last_modified, choreography_steps_processed, self.recorded_chor_description)
-
-        # refreshes the list
+        debug("choreography created")
+        # refreshes the 
         self.refresh()
 
-    def record_blink(self):
-        time.sleep(3)
-        while self.record_on:
-            self.record_record_button.configure(text="◉")
-            time.sleep(1)
-            self.record_record_button.configure(text="◎")
-            time.sleep(1)
-        self.record_record_button.configure(text="◉")
+        debug("refreshed")
 
     def update_progress_record(self):
         # while thymio is connected
-        time_prog = 0
-        while time_prog < RECORDING_DURATION:
-            time.sleep(0.1)
-            time_prog += 0.1
-            self.record_progress_bar.set(time_prog/RECORDING_DURATION)
+        # open a top level window
+        self.record_progress_window = ToplevelWindow(self)
+        self.record_progress_window.geometry("300x100")
+        self.record_progress_window.title("Recording")
+        self.record_progress_window.after(100,self.record_progress_window.lift) # Workaround for bug where main window takes focus
+        # give focus to the window
+        self.record_progress_window.focus()
+        self.record_progress_window.grab_set()  # Grab the top-level window
+        # add progress bar inside
+        self.record_progress_bar = customtkinter.CTkProgressBar(self.record_progress_window, orientation="horizontal") # set value between 1 and 0
         self.record_progress_bar.set(0)
+        self.record_progress_bar.place(relx=0.01, rely=0.5, relwidth=0.98, relheight=0.28, anchor="w")
+        # add label underneath to say recording
+        self.record_progress_label = customtkinter.CTkLabel(self.record_progress_window, text="Recording...", anchor="w")
+        self.record_progress_label.place(relx=0.01, rely=0.8, relwidth=0.98, relheight=0.15)
+        time_recorded = 0
+        standard_dt = 0.1
+        while time_recorded <= RECORDING_DURATION:
+            time.sleep(standard_dt)
+            time_recorded += standard_dt
+            # if window is not destroyed
+            if self.record_progress_window.winfo_exists():
+                self.record_progress_bar.set(time_recorded/(RECORDING_DURATION-0.1))
+            else: 
+                return
+        # change the bar color to green
+        self.record_progress_bar.set(0)
+        self.record_progress_bar.configure(progress_color = ("#6a9955","#6a9955"))
+        time_recorded = 0
+        self.record_progress_label.configure(text="Processing...")
+        while time_recorded <= DATA_PROCESSING_DURATION:
+            time.sleep(standard_dt)
+            time_recorded += standard_dt
+            if self.record_progress_window.winfo_exists():
+                self.record_progress_bar.set(time_recorded/DATA_PROCESSING_DURATION) 
+            else:
+                return
+        self.record_progress_window.destroy()
+        
+        # time_prog = 0
+        # while time_prog < RECORDING_DURATION:
+        #     time.sleep(0.1)
+        #     time_prog += 0.1
+        #     self.record_progress_bar.set(time_prog/RECORDING_DURATION)
+        # self.record_progress_bar.set(0)
         
     # def stop_event_record(self):
     #     self.record_on = False

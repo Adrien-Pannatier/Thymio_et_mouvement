@@ -30,8 +30,9 @@ DEFAULT_PATH_SEQUENCE = "C:/Users/adrie/Desktop/PDS_Thymio/001_code/Python/Thymi
 PIXELS_TO_METERS = 0.01  
 GYRO_SCALING = 20 
 AS_THRESH = 0.05  
-TIMEOUT_CONNECTION = 5  # seconds
-RECORDING_DURATION = 10  # seconds
+TIMEOUT_CONNECTION = 50  # seconds
+RECORDING_DURATION = 20  # seconds 
+DATA_PROCESSING_DURATION = 7 # seconds
 
 # == ui config == #
 SPC = "           "

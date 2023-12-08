@@ -111,7 +111,7 @@ class MotionControl():
                 # info(step)    
                 # info(f"sleeping for {step[DT]/speed_factor/1000} seconds")
                 # info(f"time is {step[T]/1000} seconds")
-                time.sleep(step[DT]/1000/speed_factor) #step in ms  °°°°°°°pourquoi /10 necessaire?°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+                time.sleep(step[DT]/1000/speed_factor) #step in ms 
 
                 left_motor_speed = step[LS]*speed_factor/THYMIO_TO_CM # convert the speed from cm/s to thymio speed
                 right_motor_speed = step[RS]*speed_factor/THYMIO_TO_CM
