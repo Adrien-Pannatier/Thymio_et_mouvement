@@ -323,8 +323,13 @@ class App(customtkinter.CTk):
             self.refresh_choreographies_list()
             self.refresh_sequences_list()
         elif new_tab == "Play":
+            # get the optionemenu
+            opt = self.play_optionemenu.get()
             # refresh the list
-            self.play_refresh_chor_list()
+            if opt == "Choreography":
+                self.play_refresh_chor_list()
+            elif opt == "Sequence":
+                self.play_refresh_seq_list()
         elif new_tab == "Record":
             # refresh the list
             pass
