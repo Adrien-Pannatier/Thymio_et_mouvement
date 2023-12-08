@@ -610,10 +610,7 @@ class App(customtkinter.CTk):
                     sequence_name, _, _, _, _, _ = self.modules.choreographer.sequence_dict[name].get_info()
                     self.play_chor_name_label_across.configure(text=f"{sequence_name}") if index != -1 else None
                 # lock the speed factor entry
-                self.play_speed_factor_entry.delete(0, "end")
-                self.play_speed_factor_entry.configure(state="disabled")
                 # change the color of the entry
-                self.play_speed_factor_entry.configure(fg_color = (LIGHT_COLOR,DARK_COLOR))
                 self.play_nbr_repetition_entry.delete(0, "end")
                 self.play_nbr_repetition_entry.insert(0, "1")
                 # deactivate loop checkbox
@@ -718,10 +715,15 @@ class App(customtkinter.CTk):
         self.play_progress_bar.place(relx=0.01, rely=0.5, relwidth=0.98, relheight=0.48, anchor="w")
         # put progress bar to 0
 
+        # add label play frame over the buttons
+        self.play_play_label = customtkinter.CTkLabel(self.tabview.tab("Play"), text="", anchor="w")
+        self.play_play_label.place(relx=0.4, rely=0.45, relwidth=0.5, relheight=0.1, anchor="w")
+
     def remove_play_layout(self):
         self.play_settings_frame.destroy() if hasattr(self, "play_settings_frame") else None
         self.play_play_frame.destroy() if hasattr(self, "play_play_frame") else None
         self.play_progress_frame.destroy() if hasattr(self, "play_progress_frame") else None
+        self.play_play_label.destroy() if hasattr(self, "play_play_label") else None
 
     def play_event(self):
         # check if a choreography/sequence is selected
@@ -789,6 +791,7 @@ class App(customtkinter.CTk):
             if play_mode == "Choreography":
                 name = self.choreographies_list[index]
                 choreography = self.modules.choreographer.choreography_dict[name]
+                self.play_play_label.configure(text=f"Now playing {name}")
                 # get loop status
                 loop_status = self.play_loop_checkbox.get()
                 if loop_status == True:
@@ -803,6 +806,7 @@ class App(customtkinter.CTk):
                     info("choreography played")
                     self.modules.motion_control.choreography_status = "stop"
                     self.modules.motion_control.stop_motors()
+                self.play_play_label.configure(text="")
             elif play_mode == "Sequence":
                 name = self.sequences_list[index]
                 sequence = self.modules.choreographer.sequence_dict[name]
@@ -824,9 +828,10 @@ class App(customtkinter.CTk):
                     for choreography_index in sequence.sequence_l:
                         # transform the index into a name
                         choreography_name = self.choreographies_list[choreography_index-1]
+                        self.play_play_label.configure(text=f"Now playing:\t{choreography_name}")
                         # get the choreography
                         choreography = self.modules.choreographer.choreography_dict[choreography_name]
-                        info(f"now playing {choreography_name}")
+                        info(f"now playing:\t{choreography_name}")
                         self.modules.motion_control.choreography_status = "play"
                         self.modules.motion_control.play_choreography(choreography, float(speed_factor), "mult", int(nbr_repetition), emotion)
                         if self.modules.motion_control.choreography_status == "stop":
@@ -838,6 +843,7 @@ class App(customtkinter.CTk):
                             self.play_connect_switch.configure(state="normal")
                             self.update_bar_update = False
                             return
+                self.play_play_label.configure(text="")
                 self.modules.motion_control.choreography_status = "stop"
                 self.modules.motion_control.stop_motors()
 
@@ -1763,14 +1769,14 @@ class App(customtkinter.CTk):
         # value = round(float(value), 2)
         value = int(value)
         # create value label
-        self.editor_manage_trim_start_label.configure(text=f"Start:\t\t\t\t\t         {value}")
+        self.editor_manage_trim_start_label.configure(text=f"Start:\t\t\t\t\t         {np.round(value/1000,1)}")
 
     def editor_manage_trim_end_event(self, value):
         # round value to 2 decimals
         # value = round(float(value), 2)
         value = int(value)
         # create value label
-        self.editor_manage_trim_end_label.configure(text=f"End:\t\t\t\t\t         {value}")
+        self.editor_manage_trim_end_label.configure(text=f"End:\t\t\t\t\t         {np.round(value/1000,1)}")
 
     def editor_delete_image(self):
         self.editor_manage_graph_image = Image.open("C:\\Users\\adrie\\Desktop\\PDS_Thymio\\001_code\\Python\\Thymio_et_mouvement\\app\\GUI_assets\\j_dark_graph.png")
