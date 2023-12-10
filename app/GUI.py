@@ -241,6 +241,8 @@ class App(customtkinter.CTk):
         # add tooltip label
         self.record_tooltip_label = customtkinter.CTkLabel(self.record_tooltip_frame, text="❓", anchor="center")
         self.record_tooltip_label.place(relx=0.5, rely=0.5, relwidth=0.98, relheight=0.48, anchor="w")
+        try: self.record_tooltip.hide() 
+        except: pass
         # add tooltip
         self.record_tooltip = CTkToolTip(self.record_tooltip_label, justify="left", message="🤖 This is the record mode, here you can record\n"
                                         + " choreographies with the Mimyo robot. Please\n"
@@ -253,18 +255,6 @@ class App(customtkinter.CTk):
         # add option menu mode between Manager and Create sequence
         self.editor_optionemenu = customtkinter.CTkOptionMenu(self.tabview.tab("Edit"), values=["Manage", "Create Sequence", "Create rand chor", "Set emotions"], command=self.editor_mode_select_event)
         self.editor_optionemenu.place(relx=0.01, rely=0.01, relwidth=0.25, relheight=0.05)
-
-        # add tooltip frame
-        self.editor_tooltip_frame = customtkinter.CTkFrame(self.tabview.tab("Edit"))
-        self.editor_tooltip_frame.place(relx=0.4, rely=0.01, relwidth=0.55, relheight=0.05)
-        # add tooltip label
-        self.editor_tooltip_label = customtkinter.CTkLabel(self.editor_tooltip_frame, text="❓", anchor="center")
-        self.editor_tooltip_label.place(relx=0.5, rely=0.5, relwidth=0.98, relheight=0.48, anchor="w")
-        # add tooltip
-        # self.editor_manage_mode_tooltip_manage_mode = CTkToolTip(self.editor_manage_mode_label, justify="left", message="🤖 This is the manage mode, here you can manage\n"
-        #                                 + " choreographies and sequences. You can select\n"
-        #                                 + " what to manage on the left. You can also delete\n"
-        #                                 + " and trim choreographies and sequences.\n")
         
         # select optionemenu
         self.editor_mode_select_event("Manage")
@@ -614,13 +604,15 @@ class App(customtkinter.CTk):
                     name = self.sequences_list[index]
                     sequence_name, _, _, _, _, _ = self.modules.choreographer.sequence_dict[name].get_info()
                     self.play_chor_name_label_across.configure(text=f"{sequence_name}") if index != -1 else None
-                # lock the speed factor entry
-                # change the color of the entry
                 self.play_nbr_repetition_entry.delete(0, "end")
                 self.play_nbr_repetition_entry.insert(0, "1")
                 # deactivate loop checkbox
                 self.play_loop_checkbox.deselect()
                 self.play_loop_checkbox.configure(state="disabled")
+                # activate the speed factor entry in case loop was selected
+                self.play_nbr_repetition_entry.configure(state="normal")
+                # set the color back to normal
+                self.play_nbr_repetition_entry.configure(fg_color = ("#f9f9fa","#343638"))
                 
         
     def play_loop_event(self):
@@ -919,7 +911,7 @@ class App(customtkinter.CTk):
         self.record_connecting_frame = customtkinter.CTkFrame(self.tabview.tab("Record"))
         self.record_connecting_frame.place(relx=0.5, rely=0.25, relwidth=0.55, relheight=0.65)
         # add label inside in the middle
-        self.record_connecting_label = customtkinter.CTkLabel(self.record_connecting_frame, text="Connecting to Mymio...", anchor="w")
+        self.record_connecting_label = customtkinter.CTkLabel(self.record_connecting_frame, text="Connecting to Mimyo...", anchor="w")
         self.record_connecting_label.place(relx=0.01, rely=0.01, relwidth=0.98, relheight=0.98)
 
     def connect_threading(self):
@@ -939,6 +931,9 @@ class App(customtkinter.CTk):
             self.record_server_switch_var.set(False)
 
     def display_record_layout(self):
+        # add open settings button on top right
+        self.record_settings_button = customtkinter.CTkButton(self.tabview.tab("Record"), text="⚙️", command=self.record_settings_event)
+        self.record_settings_button.place(relx=0.85, rely=0.01, relwidth=0.05, relheight=0.05)
         # add record frame underneath
         self.record_record_frame = customtkinter.CTkFrame(self.tabview.tab("Record"))
         self.record_record_frame.place(relx=0.4, rely=0.1, relwidth=0.55, relheight=0.10)
@@ -966,7 +961,7 @@ class App(customtkinter.CTk):
         self.record_calibration_frame.place(relx=0.75, rely=0.2, relwidth=0.1, relheight=0.05)
         self.record_calibration_label = customtkinter.CTkLabel(self.record_calibration_frame, text="Calibration:", anchor="w")
         self.record_calibration_label.place(relx=0.01, rely=0.3, relwidth=1, relheight=0.5)
-        loaded_calibration = self.modules.process_controler_data.load_calibration()
+        loaded_calibration, self.gyro_offset = self.modules.process_controler_data.load_calibration()
         self.record_calibration_entrybox = customtkinter.CTkEntry(self.tabview.tab("Record"), fg_color=(LIGHT_COLOR, DARK_COLOR))
         self.record_calibration_entrybox.place(relx=0.855, rely=0.2, relwidth=0.08, relheight=0.05)
         self.record_calibration_entrybox.insert(0, loaded_calibration)
@@ -976,14 +971,63 @@ class App(customtkinter.CTk):
         # self.record_calibration_button = customtkinter.CTkButton(self.tabview.tab("Record"), text="Calibrate", command=self.calibrate_event)
         # self.record_calibration_button.place(relx=0.65, rely=0.02, relwidth=0.1, relheight=0.05)
 
+        # change info tooltip
+        # hide the old tooltip
+        self.record_tooltip.hide()
+        self.record_tooltip = CTkToolTip(self.record_tooltip_label, justify="left", message="🤖 This is the record mode, here you can record\n")
+
     def remove_record_layout(self):
         # remove all widgets
-        self.record_calibration_button.destroy() if hasattr(self, "record_calibration_button") else None
         self.record_connecting_frame.destroy() if hasattr(self, "record_connecting_frame") else None
         self.record_record_frame.destroy() if hasattr(self, "record_record_frame") else None
         self.record_info_frame.destroy() if hasattr(self, "record_info_frame") else None
-        self.record_progress_frame.destroy() if hasattr(self, "record_progress_frame") else None
+        self.record_calibration_entrybox.destroy() if hasattr(self, "record_calibration_entrybox") else None
+        self.record_calibration_frame.destroy() if hasattr(self, "record_calibration_frame") else None
 
+    def record_settings_event(self):
+        # load calibration and gyro scaling
+        self.calibration_offset, self.gyro_scaling = self.modules.process_controler_data.load_calibration()
+        # create the top level window
+        self.record_settings_window = ToplevelWindow(self)
+        self.record_settings_window.title("Settings")
+        self.record_settings_window.geometry("200x100")
+        # set location of the window
+        self.record_settings_window.geometry("+%d+%d" % (self.record_settings_window.winfo_screenwidth()/2-100, self.record_settings_window.winfo_screenheight()/2-50))
+        self.record_settings_window.resizable(False, False)
+        self.record_settings_window.after(100,self.record_settings_window.lift) # Workaround for bug where main window takes focus
+        # give the focus to the top level window
+        self.record_settings_window.focus()
+        self.record_settings_window.grab_set()
+        # add calibration and gyro scaling labels and entry boxes
+        self.record_calibration_label = customtkinter.CTkLabel(self.record_settings_window, text="Calibration:", anchor="w")
+        self.record_calibration_label.place(relx=0.01, rely=0.1, relwidth=0.5, relheight=0.15)
+        self.record_calibration_entrybox_tl = customtkinter.CTkEntry(self.record_settings_window, fg_color=(LIGHT_COLOR, DARK_COLOR))
+        self.record_calibration_entrybox_tl.place(relx=0.6, rely=0.1, relwidth=0.3, relheight=0.2)
+        self.record_calibration_entrybox_tl.insert(0, self.calibration_offset)
+        self.record_gyro_label = customtkinter.CTkLabel(self.record_settings_window, text="Gyro scaling:", anchor="w")
+        self.record_gyro_label.place(relx=0.01, rely=0.4, relwidth=0.5, relheight=0.15)
+        self.record_gyro_entrybox = customtkinter.CTkEntry(self.record_settings_window, fg_color=(LIGHT_COLOR, DARK_COLOR))
+        self.record_gyro_entrybox.place(relx=0.6, rely=0.4, relwidth=0.3, relheight=0.2)
+        self.record_gyro_entrybox.insert(0, self.gyro_scaling)
+        # add save button
+        self.record_save_button = customtkinter.CTkButton(self.record_settings_window, text="Save", command=self.save_event)
+        self.record_save_button.place(relx=0.01, rely=0.75, relwidth=0.98, relheight=0.2)
+
+    def save_event(self):
+        # get the calibration offset
+        self.calibration_offset = self.record_calibration_entrybox_tl.get()
+        self.gyro_scaling = self.record_gyro_entrybox.get()
+        # save the calibration offset
+        self.modules.process_controler_data.save_calibration(self.calibration_offset, self.gyro_scaling)
+        # destroy the top level window
+        self.record_settings_window.destroy()
+        # update the calibration offset label
+        if self.record_calibration_entrybox != None:
+            self.record_calibration_entrybox.configure(state="normal")
+            self.record_calibration_entrybox.delete(0, "end")
+            self.record_calibration_entrybox.insert(0, str(self.calibration_offset))
+            self.record_calibration_entrybox.configure(state="disabled")
+        
     def calibrate_event(self):
         self.calibration_offset = self.record_calibration_entrybox.get()
 
@@ -991,7 +1035,7 @@ class App(customtkinter.CTk):
         self.record_server_switch.configure(state="disabled")
 
         # check if the calibration is already done
-        loaded_calibration = self.modules.process_controler_data.load_calibration()
+        loaded_calibration, _ = self.modules.process_controler_data.load_calibration()
 
         if loaded_calibration != None:
             # display the calibration value
@@ -1034,14 +1078,14 @@ class App(customtkinter.CTk):
         self.calibration_offset = self.modules.process_controler_data.calibration()
         last_cal = self.record_calibration_entrybox.get()
         # save the calibration offset
-        self.modules.process_controler_data.save_calibration(self.calibration_offset)
+        self.modules.process_controler_data.save_calibration(self.calibration_offset, self.gyro_offset)
         time.sleep(2)
         # destroy the top level window
         self.record_progress_window.destroy()
         answer = tkinter.messagebox.askquestion("Warning", f"New calibration is {self.calibration_offset}, do you want to keep it?")
         if answer == "no":
             self.calibration_offset = last_cal
-            self.modules.process_controler_data.save_calibration(self.calibration_offset)
+            self.modules.process_controler_data.save_calibration(self.calibration_offset, self.gyro_offset)
         # show the calibration parameter
         self.record_info_textbox.insert("end", f"\nOffset : {self.calibration_offset}")
         # start the calibration thread
@@ -1069,7 +1113,7 @@ class App(customtkinter.CTk):
         # delete all /n
         self.recorded_chor_description = description.replace("\n", " ")
         # load the calibration
-        self.calibration_offset = self.modules.process_controler_data.load_calibration()
+        self.calibration_offset, self.gyro_offset = self.modules.process_controler_data.load_calibration()
         # check if the calibration is done
         if self.calibration_offset == 0:
             tkinter.messagebox.showwarning("Warning", "Please calibrate the robot first")
@@ -1102,7 +1146,7 @@ class App(customtkinter.CTk):
         self.record_info_textbox.insert("end", "\nEnd of communication")
         self.record_info_textbox.configure(state="disabled")
         # process the data
-        choreography_steps_processed = self.modules.process_controler_data.process_data_array(choreography_steps_unprocessed, self.calibration_offset)
+        choreography_steps_processed = self.modules.process_controler_data.process_data_array(choreography_steps_unprocessed, float(self.calibration_offset), self.gyro_offset)
 
         # display choreography
         # debug(choreography_steps_processed)
@@ -1117,9 +1161,9 @@ class App(customtkinter.CTk):
         # refreshes the 
         self.refresh()
 
-        debug("refreshed")
 
     def update_progress_record(self):
+        time.sleep(3) # delay to start recording
         # while thymio is connected
         # open a top level window
         self.record_progress_window = ToplevelWindow(self)
@@ -1159,6 +1203,12 @@ class App(customtkinter.CTk):
             else:
                 return
         self.record_progress_window.destroy()
+        # recorded popup
+        tkinter.messagebox.showinfo("Info", "Choreography recorded")
+
+        # clean name and description boxes
+        self.record_name_entry.delete(0, "end")
+        self.record_description_textbox.delete("1.0", "end")
         
         # time_prog = 0
         # while time_prog < RECORDING_DURATION:
@@ -1318,6 +1368,8 @@ class App(customtkinter.CTk):
             # debug(self.modules.choreographer.sequence_dict[sequence_name].emotion_list)
             self.modules.choreographer.sequence_dict[sequence_name].save_sequence()
             self.refresh()
+            # popup
+            tkinter.messagebox.showinfo("Info", "Emotions desselected")
         # display all sequences emotion lists
         # for i in range(len(self.sequences_list)):
         #     debug(f"{self.modules.choreographer.sequence_dict[self.sequences_list[i]]} : {self.modules.choreographer.sequence_dict[self.sequences_list[i]].emotion_list}")
@@ -1355,9 +1407,12 @@ class App(customtkinter.CTk):
                 self.modules.choreographer.sequence_dict[sequence_name].save_sequence()
                 # debug(f"emotion added to sequence {sequence_name}")
                 self.refresh()
+                # popup
+                tkinter.messagebox.showinfo("Info", f"Emotion {emotion_name} added to sequence {sequence_name}")
             # display all sequences emotion lists
             # for i in range(len(self.sequences_list)):
             #     debug(f"{self.modules.choreographer.sequence_dict[self.sequences_list[i]]} : {self.modules.choreographer.sequence_dict[self.sequences_list[i]].emotion_list}")
+
 
     def editor_display_create_rand_chor_layout(self):
         # create rand chor frame
@@ -1397,6 +1452,7 @@ class App(customtkinter.CTk):
         # add same start checkbox
         self.editor_create_rand_chor_settings_samestart_checkbox = customtkinter.CTkCheckBox(self.editor_create_rand_chor_settings_frame, text="Same start")
         self.editor_create_rand_chor_settings_samestart_checkbox.place(relx=0.01, rely=0.9, relwidth=0.98, relheight=0.1)
+        self.editor_create_rand_chor_settings_samestart_checkbox_hover = CTkToolTip(self.editor_create_rand_chor_settings_samestart_checkbox, message="wether the motors start together or not")
         # add create button
         self.editor_create_rand_chor_settings_create_button = customtkinter.CTkButton(self.editor_create_rand_chor_frame, text="Create", command=self.editor_create_rand_chor_create_event)
         self.editor_create_rand_chor_settings_create_button.place(relx=0.55, rely=0.9, relwidth=0.3, relheight=0.05)
@@ -1415,6 +1471,16 @@ class App(customtkinter.CTk):
         for i, name in enumerate(self.choreographies_list):
             self.scrollable_frame_editor_create_rand_chor_chor_list.append(customtkinter.CTkRadioButton(self.editor_create_rand_chor_chor_list_scrollable_frame,corner_radius=0, state="disabled", radiobutton_width=5, radiobutton_height=5, text=name, variable=self.editor_create_rand_chor_chor_list_radio_var, value=i))
             self.scrollable_frame_editor_create_rand_chor_chor_list[i].pack(fill="both", expand=True)
+
+        try: self.editor_tooltip.hide()
+        except: pass
+        # add tooltip
+        self.editor_tooltip = CTkToolTip(self.editor_tooltip_label, justify="left", message="🤖 This is the create random choreograph mode.\n"
+                                         + "You can create a random choreography and specify\n"
+                                         + "its parameters. To generate the choreography\n"
+                                         + "please click the 'create' button at the bottom\n"
+                                         + "of the page."
+                                        )
 
     def editor_create_rand_chor_create_event(self):
         # get the settings
@@ -1444,6 +1510,8 @@ class App(customtkinter.CTk):
         # refresh the choreography list
         self.refresh()
         self.refresh_editor_rand_chor_list()
+        # popup
+        tkinter.messagebox.showinfo("Info", "Choreography created")
 
     def refresh_editor_rand_chor_list(self):
         # remove all buttons
@@ -1496,8 +1564,10 @@ class App(customtkinter.CTk):
         # add delete button and trim button inside
         self.editor_manage_delete_button = customtkinter.CTkButton(self.editor_manage_buttons_frame, text="🗑", command=self.editor_manage_delete_event)
         self.editor_manage_delete_button.place(relx=0.01, rely=0.5, relwidth=0.15, relheight=0.7, anchor="w")
+        self.editor_manage_delete_button_hover = CTkToolTip(self.editor_manage_delete_button, message="Delete")
         self.editor_manage_trim_button = customtkinter.CTkButton(self.editor_manage_buttons_frame, text="✂", command=self.editor_manage_trim_event)
         self.editor_manage_trim_button.place(relx=0.2, rely=0.5, relwidth=0.15, relheight=0.7, anchor="w")
+        self.editor_manage_trim_button_hover = CTkToolTip(self.editor_manage_trim_button, message="Trim")
         # add save as new choreography checkbox
         self.editor_manage_save_checkbox = customtkinter.CTkCheckBox(self.editor_manage_buttons_frame, text="Save as new choreography")
         self.editor_manage_save_checkbox.place(relx=0.4, rely=0.5, relwidth=0.5, relheight=0.7, anchor="w")
@@ -1507,9 +1577,13 @@ class App(customtkinter.CTk):
         # add a rename button underneath
         self.editor_manage_rename_button = customtkinter.CTkButton(self.editor_manage_buttons_frame_2, text="✎", command=self.editor_manage_rename_event)
         self.editor_manage_rename_button.place(relx=0.01, rely=0.5, relwidth=0.15, relheight=1, anchor="w")
+        self.editor_manage_rename_button_hover = CTkToolTip(self.editor_manage_rename_button, message="Rename")
         # add a copy button on the right
-        self.editor_manage_copy_button = customtkinter.CTkButton(self.editor_manage_buttons_frame_2, text="📋", command=self.editor_manage_copy_event)
+        self.copy_image = Image.open("C:\\Users\\adrie\\Desktop\\PDS_Thymio\\001_code\\Python\\Thymio_et_mouvement\\app\\GUI_assets\\copy.png")
+        self.copy_image = customtkinter.CTkImage(self.copy_image,  size=(18,18))
+        self.editor_manage_copy_button = customtkinter.CTkButton(self.editor_manage_buttons_frame_2, text="", image=self.copy_image, command=self.editor_manage_copy_event)
         self.editor_manage_copy_button.place(relx=0.2, rely=0.5, relwidth=0.15, relheight=1, anchor="w")
+        self.editor_manage_copy_button_hover = CTkToolTip(self.editor_manage_copy_button, message="Copy")
 
         # add graph display underneath
         # self.editor_manage_graph_frame = customtkinter.CTkFrame(self.editor_frame)
@@ -1525,9 +1599,26 @@ class App(customtkinter.CTk):
         self.editor_manage_trim_frame = customtkinter.CTkFrame(self.editor_frame, fg_color=(DEFAULT_LIGHT, DEFAULT_DARK))
         self.editor_manage_trim_frame.place(relx=0.4, rely=0.77, relwidth=0.55, relheight=0.20)
 
+        # add tooltip frame
+        self.editor_tooltip_frame = customtkinter.CTkFrame(self.tabview.tab("Edit"))
+        self.editor_tooltip_frame.place(relx=0.4, rely=0.01, relwidth=0.55, relheight=0.05)
+        # add tooltip label
+        self.editor_tooltip_label = customtkinter.CTkLabel(self.editor_tooltip_frame, text="❓", anchor="center")
+        self.editor_tooltip_label.place(relx=0.5, rely=0.5, relwidth=0.98, relheight=0.48, anchor="w")
+        try: self.editor_tooltip.hide()
+        except: pass
+        # add tooltip
+        self.editor_tooltip = CTkToolTip(self.editor_tooltip_label, justify="left", message="🤖 This is the manage mode, here you can manage\n"
+                                        + " choreographies and sequences. you can do the"
+                                        + " following:\n"
+                                        + " 🗑\t - Delete a choreography/sequence\n"
+                                        + " ✏️\t - Rename a choreography/sequence\n"
+                                        + " ✂️\t - Trim a choreography\n"
+                                        + " 🗒️\t - Copy a choreography/sequence\n"
+                                        )
+
         # select optionemenu
         self.editor_manage_select_event("Choreography")
-
         
     def editor_manage_select_event(self, new_editor_manage_mode: str):
         # get the new editor manage mode
@@ -1565,11 +1656,12 @@ class App(customtkinter.CTk):
         # get if choreography or sequence
         index = self.editor_manage_radio_var.get()
         mode = self.editor_manage_optionemenu.get()
+        name = self.choreographies_list[index] if mode == "Choreography" else self.sequences_list[index]
         # print(f"delete {mode} {index}")
         if index < 0:
             tkinter.messagebox.showwarning("Warning", f"Please select something to delete")
         # pop up window to ask if sure
-        elif tkinter.messagebox.askyesno("Warning", f"Are you sure you want to delete the {mode}: {index}?"):
+        elif tkinter.messagebox.askyesno("Warning", f"Are you sure you want to delete the {mode}: {name}?"):
             if mode == "Choreography":
                 self.modules.choreographer.delete_choreography(self.choreographies_list[index])
                 self.remove_choreography(index)
@@ -1580,6 +1672,9 @@ class App(customtkinter.CTk):
                 self.remove_sequence(index)
                 self.editor_manage_refresh_seq_list()
             self.editor_manage_deselect_button()
+            self.refresh()
+            # popup
+            tkinter.messagebox.showinfo("Info", f"{mode} deleted")
 
     def editor_manage_deselect_button(self):
         # deselect the radiobutton
@@ -1618,6 +1713,8 @@ class App(customtkinter.CTk):
             self.modules.choreographer.load_sequence_dict()
             # refresh the sequence list
             self.editor_manage_refresh_seq_list()
+            # popup
+            tkinter.messagebox.showinfo("Info", "Sequence renamed")
         elif option == "Choreography":
             # ask for a new choreography name
             while True:
@@ -1644,6 +1741,8 @@ class App(customtkinter.CTk):
             self.modules.choreographer.load_choreography_dict()
             # refresh the choreography list
             self.editor_manage_refresh_chor_list()
+            # popup
+            tkinter.messagebox.showinfo("Info", "Choreography renamed")
         self.refresh()
 
     def editor_manage_copy_event(self):
@@ -1669,6 +1768,8 @@ class App(customtkinter.CTk):
             # refresh the sequence list
             self.refresh()
             self.editor_manage_refresh_seq_list()
+            # popup
+            tkinter.messagebox.showinfo("Info", "Sequence copied")
         elif option == "Choreography":
             # get the choreography name
             choreography_name = self.choreographies_list[index]
@@ -1683,6 +1784,8 @@ class App(customtkinter.CTk):
             # refresh the choreography list
             self.refresh()
             self.editor_manage_refresh_chor_list()
+            # popup
+            tkinter.messagebox.showinfo("Info", "Choreography copied")
 
 
     def editor_manage_trim_event(self):
@@ -1742,6 +1845,8 @@ class App(customtkinter.CTk):
             self.editor_manage_radio_var.set(self.choreographies_list.index(name))
             # show the right picture
             self.editor_refresh_image(name)
+            # popup
+            tkinter.messagebox.showinfo("Info", "Choreography trimmed")
 
 
     def refresh_editor_info_chor(self):
@@ -1856,6 +1961,27 @@ class App(customtkinter.CTk):
         self.editor_create_seq_order_button = customtkinter.CTkButton(self.editor_create_seq_order_frame, text="Create Sequence", command=self.editor_create_seq_order_event)
         self.editor_create_seq_order_button.place(relx=0.01, rely=0.5, relwidth=0.98, relheight=0.9, anchor="w")
 
+        # add tooltip frame
+        self.editor_tooltip_frame = customtkinter.CTkFrame(self.tabview.tab("Edit"))
+        self.editor_tooltip_frame.place(relx=0.4, rely=0.01, relwidth=0.55, relheight=0.05)
+        # add tooltip label
+        self.editor_tooltip_label = customtkinter.CTkLabel(self.editor_tooltip_frame, text="❓", anchor="center")
+        self.editor_tooltip_label.place(relx=0.5, rely=0.5, relwidth=0.98, relheight=0.48, anchor="w")
+        try: self.editor_tooltip.hide()
+        except: pass
+        # add tooltip
+        self.editor_tooltip = CTkToolTip(self.editor_tooltip_label, justify="left", message="🤖 This is the create sequence mode, here you can\n"
+                                        + " create sequences. You can see the choreographies you\n"
+                                        + " can add to the sequence on the left. You can also add\n"
+                                        + " a description and a name to the sequence. To create\n"
+                                        + " the sequence, you need to click on the button 'create\n"
+                                        + " sequence' at the bottom of the screen. The sequence\n"
+                                        + " order is the order of the choreographies by number.\n"
+                                        + " For example, if you want to create a sequence with\n"
+                                        + " the choreographies 1, 2 and 3, you need to enter\n"
+                                        + " 1-2-3 in the input dialog.\n"
+                                        )
+
         # self.refresh()
 
     def editor_create_seq_refresh_info_chor(self):
@@ -1917,10 +2043,14 @@ class App(customtkinter.CTk):
             tkinter.messagebox.showwarning("Warning", "Please enter a valid sequence order")
             return
         self.modules.choreographer.create_sequence(name, creation_date, description, sequence_order)
-
         # refresh propositions
         self.refresh()
         self.editor_create_seq_refresh_lists()
+        # popup
+        tkinter.messagebox.showinfo("Info", "Sequence created")
+        # clean description and name
+        self.editor_create_seq_description_textbox.delete("1.0", "end")
+        self.editor_create_seq_name_entry.delete(0, "end")
 
     def editor_create_seq_delete_layout(self):
         # removes all the create seq frames if any

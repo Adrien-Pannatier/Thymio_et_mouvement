@@ -121,7 +121,7 @@ class ProcessControlerData:
                 break
         return data_array
 
-    def process_data_array(self, data_array, calibration_const):
+    def process_data_array(self, data_array, calibration_const, gyro_scaling=GYRO_SCALING):
         # debug(f"calibration_const: {calibration_const}")
         time_offset = data_array[0][0]
         position_x = 0
@@ -148,7 +148,7 @@ class ProcessControlerData:
             positions_y.append(position_y)
 
             # Compute the forward speed and angular speed
-            angular_speed = math.radians(-gyro_z)
+            angular_speed = math.radians(-gyro_z)/gyro_scaling
             rot_speed_x = math.radians(gyro_x)
             rot_speed_y = math.radians(gyro_y)
             tangential_speed = 1000 * (positions_y[i] - positions_y[i-1])/ timestep   # in cm/s
@@ -234,7 +234,7 @@ class ProcessControlerData:
         info(f"offset: {offset}")
         return offset
     
-    def save_calibration(self, offset):
+    def save_calibration(self, offset, gyro_scaling):
         """
         saves the calibration
         """
@@ -242,6 +242,7 @@ class ProcessControlerData:
         with open(SETTINGS_PATH, "r") as f:
             settings = json.load(f)
         settings["calibration"] = offset
+        settings["gyro_scaling"] = gyro_scaling
         with open(SETTINGS_PATH, "w") as f:
             json.dump(settings, f, indent=4)
 
@@ -252,17 +253,12 @@ class ProcessControlerData:
         # check if the file exists
         with open(SETTINGS_PATH, "r") as f:
             settings = json.load(f)
-        if "calibration" in settings:
-            return settings["calibration"]
+        calibration = settings["calibration"] if "calibration" in settings else None
+        gyro_scaling = settings["gyro_scaling"] if "gyro_scaling" in settings else None
+        if calibration != None and gyro_scaling != None:
+            return calibration, gyro_scaling
         else:
-            return None  
-        # try:
-        #     with open("app/settings/calibration.txt", "r") as f:
-        #         offset = f.read()
-        #     return float(offset)
-        # except:
-        #     info("No calibration file found")
-        #     return None
+            return None 
 
     # def debug_start(self):
     #     self.client_socket.send("start".encode('utf-8'))
