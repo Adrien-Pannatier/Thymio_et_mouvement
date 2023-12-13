@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-import time
 import json
 
 from app.config import *
@@ -25,17 +24,8 @@ class Gui:
         ui("Goodbye!")
 
 class BigBrain:
-    def __init__(self):
-
-        # record script choices
-        self.r_asw = None
-
-        # editor script choice
-        self.e_asw = None
-
     def start_thinking(self):
         self.init()
-
         modules = self.init_modules()
         ui("Welcome!")
         self.loop(modules)
@@ -43,7 +33,6 @@ class BigBrain:
 
     def init(self):
         """Initialise the big brain"""
-
         # create settings file if it doesn't exist
         try:
             with open(SETTINGS_PATH, "r") as file:

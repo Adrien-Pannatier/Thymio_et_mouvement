@@ -9,9 +9,8 @@ from matplotlib import pyplot as plt
 import random
 from datetime import datetime
 
-
 from app.utils.console import *
-from app.config import DEFAULT_SPEED_FACT, SLEEP_DURATION, DEFAULT_PATH_CHOREO, DEFAULT_PATH_SEQUENCE, SETTINGS_PATH
+from app.config import DEFAULT_SPEED_FACT, DEFAULT_PATH_CHOREO, DEFAULT_PATH_SEQUENCE, SETTINGS_PATH
 from app.emotions import *
 
 class ChoreographyManager:
