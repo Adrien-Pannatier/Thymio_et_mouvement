@@ -1,7 +1,7 @@
 import math
 from typing import Any
 from app.utils.console import *
-from app.config import PIXELS_TO_METERS, GYRO_SCALING, AS_THRESH, DIAMETER, SETTINGS_PATH, TIMEOUT_CONNECTION
+from app.config import GYRO_SCALING, AS_THRESH, DIAMETER, SETTINGS_PATH
 import numpy as np
 import time
 import socket
