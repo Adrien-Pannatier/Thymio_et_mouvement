@@ -1,7 +1,7 @@
 import tkinter
 import tkinter.messagebox
 import customtkinter
-from PIL import Image
+from PIL import Image, ImageTk
 from threading import Thread
 from CTkToolTip import *
 from datetime import datetime
@@ -280,8 +280,6 @@ class App(customtkinter.CTk):
 
 
 
-
-
         # SET DEFAULT VALUES ===============================================================================================
         self.appearance_mode_optionemenu.set("System")
         # self.scaling_optionemenu.set("100%")
@@ -416,6 +414,11 @@ class App(customtkinter.CTk):
 
     def change_appearance_mode_event(self, new_appearance_mode: str):
         customtkinter.set_appearance_mode(new_appearance_mode)
+        # refresh the graph image if in manage editor mode
+        if self.editor_optionemenu.get() == "Manage":
+            if self.editor_manage_optionemenu.get() == "Choreography":
+                self.refresh_editor_info_chor()
+                debug("ligh")
 
     # def change_scaling_event(self, new_scaling: str):
     #     new_scaling_float = int(new_scaling.replace("%", "")) / 100
@@ -1596,12 +1599,15 @@ class App(customtkinter.CTk):
         # add graph display underneath
         # self.editor_manage_graph_frame = customtkinter.CTkFrame(self.editor_frame)
         self.editor_manage_graph_frame = customtkinter.CTkFrame(self.editor_frame, fg_color=(DEFAULT_LIGHT, DEFAULT_DARK))
-        self.editor_manage_graph_frame.place(relx=0.4, rely=0.25, relwidth=0.55, relheight=0.5)
-        # add image inside
-        self.editor_manage_graph_image = Image.open("C:\\Users\\adrie\\Desktop\\PDS_Thymio\\001_code\\Python\\Thymio_et_mouvement\\app\\GUI_assets\\j_dark_graph.png")
-        self.editor_manage_graph_image = customtkinter.CTkImage(self.editor_manage_graph_image,  size=(300,200))
-        self.editor_manage_graph_image_label = customtkinter.CTkLabel(self.editor_manage_graph_frame, image=self.editor_manage_graph_image, text="")
-        self.editor_manage_graph_image_label.place(relx=0.5, rely=0.5, relwidth=1, relheight=1, anchor="center")
+        self.editor_manage_graph_frame.place(relx=0.4, rely=0.3, relwidth=0.55, relheight=0.5)
+        # add canvas inside
+        self.editor_manage_graph_canvas = tkinter.Canvas(self.editor_manage_graph_frame, width=500, height=250, background=DARK_COLOR)
+        self.editor_manage_graph_canvas.pack()
+        # get image
+        img = (Image.open("app\\GUI_assets\\j_dark_graph.png"))
+        resized_image = img.resize((500,250))
+        self.editor_manage_graph_image= ImageTk.PhotoImage(resized_image)
+        self.editor_manage_graph_image_in = self.editor_manage_graph_canvas.create_image(0, 0, image=self.editor_manage_graph_image, anchor="nw")
 
         # add trim sliders frame underneath
         self.editor_manage_trim_frame = customtkinter.CTkFrame(self.editor_frame, fg_color=(DEFAULT_LIGHT, DEFAULT_DARK))
@@ -1847,66 +1853,90 @@ class App(customtkinter.CTk):
             # refresh the info
             # self.editor_refresh_image(name)
             self.editor_manage_refresh_chor_list()
-            self.refresh_editor_info_chor()
             self.refresh()
             # select the new choreography
             self.editor_manage_radio_var.set(self.choreographies_list.index(name))
+            self.refresh_editor_info_chor()
             # show the right picture
             self.editor_refresh_image(name)
             # popup
             tkinter.messagebox.showinfo("Info", "Choreography trimmed")
-
 
     def refresh_editor_info_chor(self):
         # get the choreography name
         index = self.editor_manage_radio_var.get()
         # get the choreography name
         name = self.choreographies_list[index] 
-        self.editor_manage_graph_image_light = Image.open(f"C:/Users/adrie/Desktop/PDS_Thymio/001_code/Python/Thymio_et_mouvement/app/GUI_assets/temp_fig/{name}_light_graph.png") # open the image
-        self.editor_manage_graph_image_dark = Image.open(f"C:/Users/adrie/Desktop/PDS_Thymio/001_code/Python/Thymio_et_mouvement/app/GUI_assets/temp_fig/{name}_dark_graph.png") # open the image
-        self.editor_manage_graph_image = customtkinter.CTkImage(light_image=self.editor_manage_graph_image_light, dark_image=self.editor_manage_graph_image_dark, size=(400,200)) # convert the image to tkinter format
-        self.editor_manage_graph_image_label.configure(image=self.editor_manage_graph_image) # display the image
+        self.editor_refresh_image(name)
 
         # get last time of the choreography
         last_time = self.modules.choreographer.choreography_dict[name].get_last_time()
+
+        # delete bar objects if any
+        try:
+            self.editor_manage_graph_canvas.delete(self.editor_manage_graph_canvas_left_bar)
+            self.editor_manage_graph_canvas.delete(self.editor_manage_graph_canvas_right_bar)
+        except:
+            pass
+        # add rectangle bar 
+        self.editor_manage_graph_canvas_left_bar = self.editor_manage_graph_canvas.create_rectangle(LEFTBAR_X0, LEFTBAR_Y0, LEFTBAR_X1, LEFTBAR_Y1, fill=BARSTART_COLOR, outline=BARSTART_COLOR)
+        self.editor_manage_graph_canvas_right_bar = self.editor_manage_graph_canvas.create_rectangle(RIGHTBAR_X0, RIGHTBAR_Y0, RIGHTBAR_X1, RIGHTBAR_Y1, fill=BAREND_COLOR, outline=BAREND_COLOR)
 
         # add two sliders in the slider box for start and end of trim
         self.editor_manage_trim_start_label = customtkinter.CTkLabel(self.editor_manage_trim_frame, text="Start:", anchor="w")
         self.editor_manage_trim_start_label.place(relx=0.01, rely=0.1, relwidth=0.98, relheight=0.2)
         self.editor_manage_trim_start_slider_var = tkinter.IntVar(value=0)
-        self.editor_manage_trim_start_slider = customtkinter.CTkSlider(self.editor_manage_trim_frame, orientation="horizontal", to=last_time, variable=self.editor_manage_trim_start_slider_var, command=self.editor_manage_trim_start_event)
-        self.editor_manage_trim_start_slider.place(relx=0.525, rely=0.4, relwidth=0.81, relheight=0.2, anchor="center")
+        self.editor_manage_trim_start_slider = customtkinter.CTkSlider(self.editor_manage_trim_frame, orientation="horizontal", to=last_time, variable=self.editor_manage_trim_start_slider_var, hover=False, button_color=BARSTART_COLOR, command=self.editor_manage_trim_start_event)
+        self.editor_manage_trim_start_slider.place(relx=0.55, rely=0.4, relwidth=0.83, relheight=0.2, anchor="center")
         self.editor_manage_trim_end_label = customtkinter.CTkLabel(self.editor_manage_trim_frame, text="End:", anchor="w")
         self.editor_manage_trim_end_label.place(relx=0.01, rely=0.5, relwidth=0.98, relheight=0.2)
         self.editor_manage_trim_end_slider_var = tkinter.IntVar(value=last_time)
-        self.editor_manage_trim_end_slider = customtkinter.CTkSlider(self.editor_manage_trim_frame, orientation="horizontal", to=last_time, variable=self.editor_manage_trim_end_slider_var, command=self.editor_manage_trim_end_event)
-        self.editor_manage_trim_end_slider.place(relx=0.525, rely=0.8, relwidth=0.83, relheight=0.2, anchor="center")
+        self.editor_manage_trim_end_slider = customtkinter.CTkSlider(self.editor_manage_trim_frame, orientation="horizontal", to=last_time, variable=self.editor_manage_trim_end_slider_var, hover=False, progress_color="#4a4d50", fg_color="#aab0b5", button_color=BAREND_COLOR, command=self.editor_manage_trim_end_event)
+        self.editor_manage_trim_end_slider.place(relx=0.55, rely=0.8, relwidth=0.83, relheight=0.2, anchor="center")
 
     def editor_manage_trim_start_event(self, value):
         # round value to 2 decimals
         # value = round(float(value), 2)
         value = int(value)
+        value_in_percentage = value/self.modules.choreographer.choreography_dict[self.choreographies_list[self.editor_manage_radio_var.get()]].get_last_time()
+        x1,_,_,_= self.editor_manage_graph_canvas.coords(self.editor_manage_graph_canvas_left_bar)
         # create value label
         self.editor_manage_trim_start_label.configure(text=f"Start:\t\t\t\t\t         {np.round(value/1000,1)}")
+        # move the bar
+        self.editor_manage_graph_canvas.move(self.editor_manage_graph_canvas_left_bar, value_in_percentage*LENGTH_IN_PIX-x1+OFFSET_STARTGRAPH,0)
+        # debug(f"x1 = {x1}, value in pix = {value/LENGTH_IN_PIX}")
 
     def editor_manage_trim_end_event(self, value):
         # round value to 2 decimals
         # value = round(float(value), 2)
         value = int(value)
+        value_in_percentage = value/self.modules.choreographer.choreography_dict[self.choreographies_list[self.editor_manage_radio_var.get()]].get_last_time()
+        _,_,x1,_= self.editor_manage_graph_canvas.coords(self.editor_manage_graph_canvas_right_bar)
         # create value label
         self.editor_manage_trim_end_label.configure(text=f"End:\t\t\t\t\t         {np.round(value/1000,1)}")
+        # move the bar
+        self.editor_manage_graph_canvas.move(self.editor_manage_graph_canvas_right_bar, value_in_percentage*LENGTH_IN_PIX-x1+OFFSET_STARTGRAPH,0)
 
     def editor_delete_image(self):
-        self.editor_manage_graph_image = Image.open("C:\\Users\\adrie\\Desktop\\PDS_Thymio\\001_code\\Python\\Thymio_et_mouvement\\app\\GUI_assets\\j_dark_graph.png")
-        self.editor_manage_graph_image = customtkinter.CTkImage(self.editor_manage_graph_image, size=(400,200))
-        self.editor_manage_graph_image_label.configure(image=self.editor_manage_graph_image)
+        self.editor_manage_graph_canvas.itemconfig(self.editor_manage_graph_image_in, image=self.editor_manage_graph_image)
 
     def editor_refresh_image(self, name):
         self.modules.choreographer.choreography_dict[name].graph_speeds()
-        self.editor_manage_graph_image_light = Image.open(f"app/GUI_assets/temp_fig/{name}_light_graph.png")
-        self.editor_manage_graph_image_dark = Image.open(f"app/GUI_assets/temp_fig/{name}_dark_graph.png")
-        self.editor_manage_graph_image = customtkinter.CTkImage(light_image=self.editor_manage_graph_image_light, dark_image=self.editor_manage_graph_image_dark, size=(400,200))
-        self.editor_manage_graph_image_label.configure(image=self.editor_manage_graph_image)
+        light_im = Image.open(f"app/GUI_assets/temp_fig/{name}_light_graph.png") # open the image
+        dark_im = Image.open(f"app/GUI_assets/temp_fig/{name}_dark_graph.png") # open the image
+        light_im_resized = light_im.resize((500,250))
+        dark_im_resized = dark_im.resize((500,250))
+        self.editor_manage_graph_image_light = ImageTk.PhotoImage(light_im_resized)
+        self.editor_manage_graph_image_dark = ImageTk.PhotoImage(dark_im_resized)
+        if self.appearance_mode_optionemenu.get() == "Light":
+            self.editor_manage_graph_canvas.itemconfig(self.editor_manage_graph_image_in, image=self.editor_manage_graph_image_light)
+        else:
+            self.editor_manage_graph_canvas.itemconfig(self.editor_manage_graph_image_in, image=self.editor_manage_graph_image_dark)
+        # self.editor_manage_graph_image_light = Image.open(f"app/GUI_assets/temp_fig/{name}_light_graph.png")
+        # self.editor_manage_graph_image_dark = Image.open(f"app/GUI_assets/temp_fig/{name}_dark_graph.png")
+        # self.editor_manage_graph_image = customtkinter.CTkImage(light_image=self.editor_manage_graph_image_light, dark_image=self.editor_manage_graph_image_dark, size=(400,200))
+        # self.editor_manage_graph_image_label.configure(image=self.editor_manage_graph_image)
+
 
 
     def editor_manage_delete_layout(self):
