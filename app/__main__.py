@@ -5,10 +5,8 @@ from rich.padding import Padding
 from rich.panel import Panel
 
 from app.big_brain import BigBrain
-from app.config import DEBUG, PROCESS_MSG_INTERVAL, RAISE_DEPRECATION_WARNINGS
+from app.config import RAISE_DEPRECATION_WARNINGS
 from app.utils.console import *
-
-import inspect
 
 VERSION_MAJOR = 3
 VERSION_MINOR = 10
@@ -44,9 +42,10 @@ def print_banner():
     console.print(
         Padding(
             Panel(
-                "[bold white]Big Brain - Thymio Controller\n"
-                + "Semester Project - Thymio organic movement\n"
-                + "École Polytechnique Fédérale de Lausanne"
+                "Semester Project - Thymio organic movement\n"
+                + "École Polytechnique Fédérale de Lausanne\n"
+                + "date: 2023-12-13\n"
+                + "Author: Adrien Pannatier\n"
             ),
             (1, 2),
         ),
