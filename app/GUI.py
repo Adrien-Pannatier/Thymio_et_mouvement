@@ -300,8 +300,12 @@ class App(customtkinter.CTk):
             # check the mode
             if self.editor_optionemenu.get() == "Manage":
                 # refresh the list
-                self.refresh_choreographies_list()
-                self.refresh_sequences_list()
+                if self.editor_manage_optionemenu.get() == "Choreography":
+                    self.editor_manage_refresh_chor_list()
+                elif self.editor_manage_optionemenu.get() == "Sequence":
+                    self.editor_manage_refresh_seq_list()
+                else:
+                    error("Unexpected error: editor_manage_optionemenu is not Choreography or Sequence")
             elif self.editor_optionemenu.get() == "Create Sequence":
                 # refresh the list
                 self.play_refresh_chor_list()
@@ -974,7 +978,11 @@ class App(customtkinter.CTk):
         # change info tooltip
         # hide the old tooltip
         self.record_tooltip.hide()
-        self.record_tooltip = CTkToolTip(self.record_tooltip_label, justify="left", message="🤖 This is the record mode, here you can record\n")
+        self.record_tooltip = CTkToolTip(self.record_tooltip_label, justify="left", message="🤖 This is the record mode, here you can record\n"
+                                         + " by pressing the record button. You can also\n"
+                                         + " calibrate the thymio by pressing the calibrate\n"
+                                         + " button or change the calibration manually with\n"
+                                         + " the option button on the top right.\n")
 
     def remove_record_layout(self):
         # remove all widgets
@@ -1146,7 +1154,7 @@ class App(customtkinter.CTk):
         self.record_info_textbox.insert("end", "\nEnd of communication")
         self.record_info_textbox.configure(state="disabled")
         # process the data
-        choreography_steps_processed = self.modules.process_controler_data.process_data_array(choreography_steps_unprocessed, float(self.calibration_offset), self.gyro_offset)
+        choreography_steps_processed = self.modules.process_controler_data.process_data_array(choreography_steps_unprocessed, float(self.calibration_offset), float(self.gyro_offset))
 
         # display choreography
         # debug(choreography_steps_processed)

@@ -9,7 +9,7 @@
 
 char ssid[] = "Adrien's Galaxy A52 5G";      // Your WiFi network SSID
 char pass[] = "mqbm9064";  // Your WiFi network password
-const char server[] = "192.168.100.225"; // IP address of your Python script
+const char server[] = "192.168.55.225"; // IP address of your Python script
 int status = WL_IDLE_STATUS;   // WiFi status
 unsigned long last_time;
 
