@@ -1,14 +1,12 @@
-from sys import version_info, exit
+import sys, os
 
 import numpy as np
 from rich.padding import Padding
 from rich.panel import Panel
 
 from app.big_brain import BigBrain
-from app.config import DEBUG, PROCESS_MSG_INTERVAL, RAISE_DEPRECATION_WARNINGS
+from app.config import RAISE_DEPRECATION_WARNINGS
 from app.utils.console import *
-
-import inspect
 
 VERSION_MAJOR = 3
 VERSION_MINOR = 10
@@ -17,6 +15,17 @@ VERSION_MINOR = 10
 def main():
     print_banner() # presentation banner
 
+    # build paths
+    if getattr(sys, 'frozen', False):
+    # If the application is run as a bundle, the PyInstaller bootloader
+    # extends the sys module by a flag frozen=True and sets the app 
+    # path into variable _MEIPASS'.
+        application_path = os.path.dirname(sys.executable)
+        # remove the "dist" folder and the executable name
+        application_path = os.path.dirname(application_path)
+    else:
+        application_path = os.path.dirname(os.path.abspath(__file__))
+    debug(f"Application path: {application_path}")
     if not check_version(): # check if the Python version is supported
         return
 
@@ -26,7 +35,7 @@ def main():
         )
 
     try:
-        init()
+        init(application_path)
 
     except KeyboardInterrupt:
         warning("Interrupted by user")
@@ -44,9 +53,10 @@ def print_banner():
     console.print(
         Padding(
             Panel(
-                "[bold white]Big Brain - Thymio Controller\n"
-                + "Semester Project - Thymio organic movement\n"
-                + "École Polytechnique Fédérale de Lausanne"
+                "Semester Project - Thymio organic movement\n"
+                + "École Polytechnique Fédérale de Lausanne\n"
+                + "date: 2023-12-13\n"
+                + "Author: Adrien Pannatier\n"
             ),
             (1, 2),
         ),
@@ -56,7 +66,7 @@ def print_banner():
 
 def check_version():
     """Check if the Python version is supported."""
-    (major, minor, _, _, _) = version_info
+    (major, minor, _, _, _) = sys.version_info
 
     if major < VERSION_MAJOR or minor < VERSION_MINOR:
         console.print(
@@ -73,20 +83,20 @@ def check_version():
 
     return True
 
-def init():
+def init(application_path):
     info("Initializing...")
-    start()
+    start(application_path)
 
-def start():
+def start(application_path):
     """Start the application, instantiating the BigBrain."""
 
-    brain = BigBrain()
+    brain = BigBrain(application_path)
     brain.start_thinking()
     
 
 if __name__ == "__main__":
     main()
     try:
-        exit()
+        sys.exit()
     except Exception as e:
         print(e)

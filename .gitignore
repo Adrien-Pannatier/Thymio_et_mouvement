@@ -1,4 +1,10 @@
 **/__pycache__
+app/build/
+app/dist/
+app/GUI_assets/temp_fig/
+app/choreographies/
+app/sequences/
+
 venv
 
 **/.ipynb_checkpoints
@@ -6,3 +12,4 @@ venv
 **/*-checkpoint.py
 **/*-checkpoint.jpg
 **/*-checkpoint.png
+
