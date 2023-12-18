@@ -18,6 +18,7 @@ class ChoreographyManager:
     Class containing the choreography manager
 
     @variables:
+    Var app_path: path of the app
     Var choreography_dict: dictionary containing the choreographies
     Var sequence_dict: dictionary containing the sequences
     Var emotion_dict: dictionary containing the emotions
@@ -48,7 +49,8 @@ class ChoreographyManager:
     Func empty_sequence_dict: empties the sequence dictionary
     Func load_emotions: loads the emotions
     '''
-    def __init__(self):
+    def __init__(self, app_path):
+        self.app_path = app_path
         self.choreography_dict = {}
         self.sequence_dict = {}
         self.emotion_dict = {"fear": None, "curiosity": None}
@@ -66,8 +68,9 @@ class ChoreographyManager:
         Loads the settings
         """
         try:
-            with open(SETTINGS_PATH, "r") as file:
+            with open(self.app_path + SETTINGS_PATH, "r") as file:
                 data = json.load(file)
+                # debug(f"settings: {self.app_path + SETTINGS_PATH}")
             self.choreography_path = data['choreography_path']
             self.sequence_path = data['sequence_path']
         except:
@@ -78,22 +81,22 @@ class ChoreographyManager:
         """
         Saves the settings
         """
-        with open(SETTINGS_PATH, "r") as file:
+        with open(self.app_path + SETTINGS_PATH, "r") as file:
             data = json.load(file)
         data['choreography_path'] = self.choreography_path
         data['sequence_path'] = self.sequence_path
-        with open(SETTINGS_PATH, "w") as file:
+        with open(self.app_path + SETTINGS_PATH, "w") as file:
             json.dump(data, file, indent=4)
 
     def check_repo(self):
         """
         Checks if the choreography and sequence folders exist
         """
-        if not os.path.isdir(self.choreography_path):
-            os.mkdir(self.choreography_path)
+        if not os.path.isdir(self.app_path + self.choreography_path):
+            os.mkdir(self.app_path + self.choreography_path)
             info("Choreography folder created")
-        if not os.path.isdir(self.sequence_path):
-            os.mkdir(self.sequence_path)
+        if not os.path.isdir(self.app_path + self.sequence_path):
+            os.mkdir(self.app_path + self.sequence_path)
             info("Sequence folder created")
 
     def update_database(self):
@@ -124,7 +127,9 @@ class ChoreographyManager:
         """
         if path == None:
             path = self.choreography_path
-        choreography = Choreography(name, creation_date, last_modified, data_array, path, description, speed_fact)
+        # get full path
+        path = self.app_path + path
+        choreography = Choreography(name, creation_date, last_modified, data_array, path, description, speed_fact, self.app_path)
         self.choreography_dict[name] = choreography
         self.save_choreography_dict()
 
@@ -137,6 +142,8 @@ class ChoreographyManager:
         """
         if path == None:
             path = self.choreography_path
+        # get full path
+        path = self.app_path + path
         for file in os.listdir(path):
             success = True
             if file.endswith(".json"):
@@ -157,7 +164,7 @@ class ChoreographyManager:
                 # print(step_list)
                 # if name not in self.choreography_dict and success:
                 if success:
-                    self.choreography_dict[name] = Choreography(name, creation_date, last_modified, step_list, path, description)
+                    self.choreography_dict[name] = Choreography(name, creation_date, last_modified, step_list, path, description, app_path=self.app_path)
     
     def save_choreography_dict(self, path=None):
         """
@@ -168,6 +175,8 @@ class ChoreographyManager:
         """
         if path == None:
             path = self.choreography_path
+        # get full path
+        path = self.app_path + path
         for choreography in self.choreography_dict.values():
             data_to_save = {}
             data_to_save['name'] = choreography.name
@@ -190,6 +199,8 @@ class ChoreographyManager:
         """
         if path == None:
             path = self.choreography_path
+        # get full path
+        path = self.app_path + path
         choreography = self.choreography_dict[name]
         data_to_save = {}
         data_to_save['name'] = choreography.name
@@ -255,7 +266,7 @@ class ChoreographyManager:
         Param samestart: boolean to know if the choreography should start with the same speed on both wheels
         """
         # Define constraints
-        path = self.choreography_path
+        path = self.app_path + self.choreography_path
         # check which is the highest choreography number
         n = 1
         while os.path.exists(path + f"random_chor_smoother_{n}.json"):
@@ -317,6 +328,8 @@ class ChoreographyManager:
         """
         if path == None:
             path = self.sequence_path
+        # get full path
+        path = self.app_path + path
         sequence = Sequence(name, creation_date, path, description, sequence_l, emotion_list)
         self.sequence_dict[name] = sequence
         self.save_sequence_dict()
@@ -330,6 +343,8 @@ class ChoreographyManager:
         """
         if path == None:
             path = self.sequence_path
+        # get full path
+        path = self.app_path + path
         for file in os.listdir(path):
             sucess = True
             if file.endswith(".json"):
@@ -358,6 +373,8 @@ class ChoreographyManager:
         """
         if path == None:
             path = self.sequence_path
+        # get full path
+        path = self.app_path + path
         for sequence in self.sequence_dict.values():
             data_to_save = {}
             data_to_save['name'] = sequence.name
@@ -381,7 +398,7 @@ class ChoreographyManager:
         sequence = self.sequence_dict[name]
         creation_date = (str(datetime.now()))[:-7]
         description = sequence.description + f" (copied from {name})"
-        path = self.sequence_path
+        path = self.app_path + self.sequence_path
         sequence_l = sequence.sequence_l
         emotion_list = sequence.emotion_list
         self.create_sequence(new_name, creation_date, description, sequence_l, path, emotion_list)
@@ -438,6 +455,7 @@ class Choreography:
     Var description: description of the choreography
     Var path: path of the choreography file
     Var speed_fact: speed factor of the choreography
+    Var app_path: path of the app
 
     @functions:
     Func __init__: initiates the class
@@ -450,7 +468,7 @@ class Choreography:
     Func rename: renames the choreography
     Func save_choreography: saves the choreography
     """
-    def __init__(self, name, creation_date, last_modified, step_list, path, description="", speed_fact=DEFAULT_SPEED_FACT):
+    def __init__(self, name, creation_date, last_modified, step_list, path, description="", speed_fact=DEFAULT_SPEED_FACT, app_path=""):
         self.name = name
         self.creation_date = creation_date
         self.last_modified = last_modified
@@ -458,6 +476,7 @@ class Choreography:
         self.description = description
         self.path = path + name + ".json"
         self.speed_fact = speed_fact
+        self.app_path = app_path
 
     def __str__(self):
         return self.name
@@ -495,7 +514,7 @@ class Choreography:
         ax.spines['right'].set_visible(False)
         ax.set_facecolor("#dbdbdb")
         plt.gcf().set_size_inches(10, 5)
-        plt.savefig(f"C:/Users/adrie/Desktop/PDS_Thymio/001_code/Python/Thymio_et_mouvement/app/GUI_assets/temp_fig/{self.name}_light_graph.png")
+        plt.savefig(f"{self.app_path}/GUI_assets/temp_fig/{self.name}_light_graph.png")
         ax.set_facecolor('#2b2b2b')
         ax.spines['bottom'].set_color('white')
         ax.spines['top'].set_color('white')
@@ -504,7 +523,7 @@ class Choreography:
         ax.tick_params(axis='x', colors='white')
         ax.tick_params(axis='y', colors='white')
         ax.set(ylabel=None)
-        plt.savefig(f"C:/Users/adrie/Desktop/PDS_Thymio/001_code/Python/Thymio_et_mouvement/app/GUI_assets/temp_fig/{self.name}_dark_graph.png", transparent=True)  
+        plt.savefig(f"{self.app_path}/GUI_assets/temp_fig/{self.name}_dark_graph.png", transparent=True)  
         plt.clf()
         plt.close()
 

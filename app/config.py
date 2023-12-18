@@ -16,8 +16,8 @@ RS = 3 # right wheel speed index
 
 # == Choreography manager == #
 DEFAULT_SPEED_FACT = 1
-DEFAULT_PATH_CHOREO = "C:/Users/adrie/Desktop/PDS_Thymio/001_code/Python/Thymio_et_mouvement/app/choreographies/"
-DEFAULT_PATH_SEQUENCE = "C:/Users/adrie/Desktop/PDS_Thymio/001_code/Python/Thymio_et_mouvement/app/sequences/"
+DEFAULT_PATH_CHOREO = "\\choreographies\\"
+DEFAULT_PATH_SEQUENCE = "\\sequences\\"
 
 # == Process controller data == #
 GYRO_SCALING = 20 
@@ -43,5 +43,5 @@ BARSTART_COLOR = "#5e9949"
 BAREND_COLOR = "#e74748"
 
 # == settings == #
-SETTINGS_DIR = "C:/Users/adrie/Desktop/PDS_Thymio/001_code/Python/Thymio_et_mouvement/app/settings"
-SETTINGS_PATH = "C:/Users/adrie/Desktop/PDS_Thymio/001_code/Python/Thymio_et_mouvement/app/settings/settings.json"
+SETTINGS_DIR = "\\settings"
+SETTINGS_PATH = "\\settings\\settings.json"

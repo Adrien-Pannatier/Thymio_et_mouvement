@@ -9,8 +9,9 @@ import json
 
 class ProcessControlerData:
      
-    def __init__(self):
+    def __init__(self, app_path: str):
         self.server_socket = None
+        self.app_path = app_path
 
     def init_record(self):
         """
@@ -239,11 +240,11 @@ class ProcessControlerData:
         saves the calibration
         """
         # save in json file
-        with open(SETTINGS_PATH, "r") as f:
+        with open(self.app_path + SETTINGS_PATH, "r") as f:
             settings = json.load(f)
         settings["calibration"] = offset
         settings["gyro_scaling"] = gyro_scaling
-        with open(SETTINGS_PATH, "w") as f:
+        with open(self.app_path + SETTINGS_PATH, "w") as f:
             json.dump(settings, f, indent=4)
 
     def load_calibration(self):
@@ -251,7 +252,7 @@ class ProcessControlerData:
         loads the calibration
         """
         # check if the file exists
-        with open(SETTINGS_PATH, "r") as f:
+        with open(self.app_path + SETTINGS_PATH, "r") as f:
             settings = json.load(f)
         calibration = settings["calibration"] if "calibration" in settings else None
         gyro_scaling = settings["gyro_scaling"] if "gyro_scaling" in settings else None

@@ -17,13 +17,17 @@ class Modules:
     motion_control: MotionControl
 
 class Gui:
-    def __init__(self, modules):
-        self.app = App(modules=modules)
+    def __init__(self, modules, application_path):
+        self.application_path = application_path
+        self.app = App(modules=modules, application_path=application_path)
         self.app.mainloop()
         modules.choreographer.save_settings()
         ui("Goodbye!")
 
 class BigBrain:
+    def __init__(self, application_path):
+        self.application_path = application_path
+
     def start_thinking(self):
         self.init()
         modules = self.init_modules()
@@ -35,21 +39,21 @@ class BigBrain:
         """Initialise the big brain"""
         # create settings file if it doesn't exist
         try:
-            with open(SETTINGS_PATH, "r") as file:
+            with open(self.application_path + SETTINGS_PATH, "r") as file:
                 pass
         except FileNotFoundError:
             # if directory not found, create it
-            if not os.path.exists(SETTINGS_DIR):
-                os.makedirs(SETTINGS_DIR)
+            if not os.path.exists(self.application_path + SETTINGS_DIR):
+                os.makedirs(self.application_path + SETTINGS_DIR)
             # if file not found, create it
-            with open(SETTINGS_PATH, "w") as file:
+            with open(self.application_path + SETTINGS_PATH, "w") as file:
                 json.dump({}, file)
         self.stop_requested = False
 
     def init_modules(self):
         """Initialise the modules"""
-        choreographer = ChoreographyManager()
-        process_controler_data = ProcessControlerData()
+        choreographer = ChoreographyManager(app_path=self.application_path)
+        process_controler_data = ProcessControlerData(app_path=self.application_path)
         motion_control = MotionControl()
 
         return Modules(process_controler_data, choreographer, motion_control)
@@ -57,10 +61,10 @@ class BigBrain:
     def loop(self, modules: Modules):
 
         # start the GUI
-        Gui(modules)
+        Gui(modules, self.application_path)
 
         # delete all temp assets in folder GUI_assets/temp_fig
-        folder_path = "app\\GUI_assets\\temp_fig"
+        folder_path = self.application_path + "app\\GUI_assets\\temp_fig"
         try:
             for file_name in os.listdir(folder_path):
                 if file_name.endswith(".png"):

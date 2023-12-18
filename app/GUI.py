@@ -30,13 +30,15 @@ class ToplevelWindow(customtkinter.CTkToplevel):
         self.label.pack(padx=20, pady=20)
 
 class App(customtkinter.CTk):
-    def __init__(self, modules):
+    def __init__(self, modules, application_path):
         super().__init__()
 
         # init setting window
         self.settings_window = None
         # settings status
         self.settings_changed = False
+
+        self.application_path = application_path
 
 
         # bind key events
@@ -1590,7 +1592,7 @@ class App(customtkinter.CTk):
         self.editor_manage_rename_button.place(relx=0.01, rely=0.5, relwidth=0.15, relheight=1, anchor="w")
         self.editor_manage_rename_button_hover = CTkToolTip(self.editor_manage_rename_button, message="Rename")
         # add a copy button on the right
-        self.copy_image = Image.open("C:\\Users\\adrie\\Desktop\\PDS_Thymio\\001_code\\Python\\Thymio_et_mouvement\\app\\GUI_assets\\copy.png")
+        self.copy_image = Image.open(self.application_path + "\\GUI_assets/copy.png")
         self.copy_image = customtkinter.CTkImage(self.copy_image,  size=(18,18))
         self.editor_manage_copy_button = customtkinter.CTkButton(self.editor_manage_buttons_frame_2, text="", image=self.copy_image, command=self.editor_manage_copy_event)
         self.editor_manage_copy_button.place(relx=0.2, rely=0.5, relwidth=0.15, relheight=1, anchor="w")
@@ -1604,7 +1606,7 @@ class App(customtkinter.CTk):
         self.editor_manage_graph_canvas = tkinter.Canvas(self.editor_manage_graph_frame, width=500, height=250, background=DARK_COLOR)
         self.editor_manage_graph_canvas.pack()
         # get image
-        img = (Image.open("app\\GUI_assets\\j_dark_graph.png"))
+        img = (Image.open(self.application_path + "\\GUI_assets\\j_dark_graph.png"))
         resized_image = img.resize((500,250))
         self.editor_manage_graph_image= ImageTk.PhotoImage(resized_image)
         self.editor_manage_graph_image_in = self.editor_manage_graph_canvas.create_image(0, 0, image=self.editor_manage_graph_image, anchor="nw")
@@ -1922,8 +1924,8 @@ class App(customtkinter.CTk):
 
     def editor_refresh_image(self, name):
         self.modules.choreographer.choreography_dict[name].graph_speeds()
-        light_im = Image.open(f"app/GUI_assets/temp_fig/{name}_light_graph.png") # open the image
-        dark_im = Image.open(f"app/GUI_assets/temp_fig/{name}_dark_graph.png") # open the image
+        light_im = Image.open(f"{self.application_path}/GUI_assets/temp_fig/{name}_light_graph.png") # open the image
+        dark_im = Image.open(f"{self.application_path}/GUI_assets/temp_fig/{name}_dark_graph.png") # open the image
         light_im_resized = light_im.resize((500,250))
         dark_im_resized = dark_im.resize((500,250))
         self.editor_manage_graph_image_light = ImageTk.PhotoImage(light_im_resized)

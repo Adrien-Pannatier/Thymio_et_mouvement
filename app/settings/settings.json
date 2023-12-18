@@ -1,6 +1,6 @@
 {
-    "choreography_path": "C:/Users/adrie/Desktop/PDS_Thymio/001_code/Python/Thymio_et_mouvement/app/choreographies/",
-    "sequence_path": "C:/Users/adrie/Desktop/PDS_Thymio/001_code/Python/Thymio_et_mouvement/app/sequences/",
-    "calibration": "307.35",
+    "choreography_path": "\\choreographies\\",
+    "sequence_path": "\\sequences\\",
+    "calibration": 247.6,
     "gyro_scaling": "0.9"
 }
