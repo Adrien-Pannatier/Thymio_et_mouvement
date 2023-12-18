@@ -25,7 +25,7 @@ def main():
         application_path = os.path.dirname(application_path)
     else:
         application_path = os.path.dirname(os.path.abspath(__file__))
-    debug(f"Application path: {application_path}")
+    # debug(f"Application path: {application_path}")
     if not check_version(): # check if the Python version is supported
         return
 
