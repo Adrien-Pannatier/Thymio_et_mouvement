@@ -420,7 +420,6 @@ class App(customtkinter.CTk):
         if self.editor_optionemenu.get() == "Manage":
             if self.editor_manage_optionemenu.get() == "Choreography":
                 self.refresh_editor_info_chor()
-                debug("ligh")
 
     # def change_scaling_event(self, new_scaling: str):
     #     new_scaling_float = int(new_scaling.replace("%", "")) / 100

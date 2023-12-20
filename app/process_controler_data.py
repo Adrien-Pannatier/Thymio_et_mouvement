@@ -78,8 +78,8 @@ class ProcessControlerData:
 
         self.client_socket.send("start".encode('utf-8'))
 
-        # wait for 10 seconds
-        time.sleep(10)
+        # wait for 20 seconds
+        time.sleep(20)
 
         info("letting the data come in")
         self.client_socket.send("stop".encode('utf-8'))
