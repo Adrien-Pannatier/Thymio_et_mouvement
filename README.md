@@ -60,15 +60,15 @@ To program Thymio, you must first [**download and install the software**](https:
 ### Install the software environment
 1.	Download the source files for TMO by downloading it manually or using GIT.
 	
-        `git clone https://github.com/Adrien-Pannatier/Thymio_et_mouvement.git`
+    `git clone https://github.com/Adrien-Pannatier/Thymio_et_mouvement.git`
 
 3.  Change your working directory to the app folder.
+
+    `cd ...TMO/app/`
         
-        `cd ...TMO/app/`
+5.  Install the necessary dependencies by running
         
-4.  Install the necessary dependencies by running
-        
-        `pip install -r requirements.txt`
+    `pip install -r requirements.txt`
 	   -   In the event that pip doesn't work, also try the following commands:
             -   `pip3 install -r requirements.txt`
             -   `python -m pip install -r requirements.txt`
@@ -127,5 +127,4 @@ This mode allow you to create random choreographies by specifying the speed rang
 This modules allows you to add emotions to the robot. Emotions are reactions to sesor triggering. The two emotions provided with the program are "fear" and "curiosity". "fear" makes the robot flee if it detects something. "curiosity" on the opposite, attracts the robot to the detected object.
 
 ## FAQ
-aefs
 
