@@ -4,6 +4,7 @@ app/dist/
 app/GUI_assets/temp_fig/
 app/choreographies/
 app/sequences/
+Testing/*.mp4
 
 venv
 

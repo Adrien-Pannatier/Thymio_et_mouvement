@@ -1100,6 +1100,11 @@ class App(customtkinter.CTk):
             self.modules.process_controler_data.save_calibration(self.calibration_offset, self.gyro_offset)
         # show the calibration parameter
         self.record_info_textbox.insert("end", f"\nOffset : {self.calibration_offset}")
+        if self.record_calibration_entrybox != None:
+            self.record_calibration_entrybox.configure(state="normal")
+            self.record_calibration_entrybox.delete(0, "end")
+            self.record_calibration_entrybox.insert(0, str(self.calibration_offset))
+            self.record_calibration_entrybox.configure(state="disabled")
         # start the calibration thread
         self.record_info_textbox.configure(state="disabled")
         # unblock connection slider
@@ -1366,6 +1371,16 @@ class App(customtkinter.CTk):
         # add a button to desselect emotions
         self.editor_set_emotions_emotions_desselect_button_act = customtkinter.CTkButton(self.editor_set_emotions_emotions_display_frame_act, text="Desselect", command=self.editor_set_emotions_emotions_desselect_event_act)
         self.editor_set_emotions_emotions_desselect_button_act.place(relx=0.01, rely=0.80, relwidth=0.98, relheight=0.15)
+
+        try: self.editor_tooltip.hide()
+        except: pass
+        # add tooltip
+        self.editor_tooltip = CTkToolTip(self.editor_tooltip_label, justify="left", message="🤖 This is the emotion module. Here you\n"
+                                        + " can add reactions to the robot in\n"
+                                        + " response to sensor activations. These\n"
+                                        + " emotions are added to sequences. The\n"
+                                        * " module is a work in progress."
+                                        )
 
     def editor_set_emotions_emotions_desselect_event_act(self):
         # desselect emotions
