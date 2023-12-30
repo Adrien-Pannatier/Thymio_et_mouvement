@@ -1379,7 +1379,7 @@ class App(customtkinter.CTk):
                                         + " can add reactions to the robot in\n"
                                         + " response to sensor activations. These\n"
                                         + " emotions are added to sequences. The\n"
-                                        * " module is a work in progress."
+                                        + " module is a work in progress."
                                         )
 
     def editor_set_emotions_emotions_desselect_event_act(self):
